@@ -1,0 +1,167 @@
+include "inc/gbhw.inc"                      ; import file definitions 
+
+; Sprite-related constants
+sprite_0_y equ _OAMRAM ; first byte of sprite memory holds the Y position of sprite 0
+sprite_0_x equ _OAMRAM + 1
+sprite_0_tile equ _OAMRAM + 2
+sprite_0_att equ _OAMRAM + 3
+
+; Control Variables
+movx equ _RAM
+movy equ _RAM + 1
+
+section "start", ROM0[$0100]
+    nop
+    jp main
+
+    ; header definition
+    ROM_HEADER  ROM_NOMBC  , ROM_SIZE_32KBYTE, RAM_SIZE_0KBYTE
+
+; main function
+main:
+    nop
+    di
+    ld sp, $ffff
+
+bootup:
+    ld a, %11100100     ; loading pallette
+    ld [rBGP], a        ; right to the pallete register
+
+    ld a, 0
+    ld [rSCX], a        ; scrol 0 (X)
+    ld [rSCY], a        ; scrol 0 (Y)
+
+    call clear_lcd      ; clear screen
+
+    ld hl, Tiles        ; load address of tile TFace
+    ld de, _VRAM        ; load address of video memory
+    ld b, Tiles_end - Tiles            ; amount of bytes to copy
+
+.tile_load_routine:
+    ld a, [hl]              ; load content @ address pointed by HL
+    ld [de], a              ; load the byte in a to the address tored in de
+    dec b                   ; one byte has been sent (subtract 1 from the total)
+    jr z, .tile_loaded       ; leave if b is 0 (all bytes sent to VRAM)
+    inc hl                  ; else, increment hl (next address in the TFace tile bytes)
+    inc de                  ; increment the address in VRAM
+    jr .tile_load_routine
+.tile_loaded:
+
+    ld hl, _SCRN0 - 1       ; load address of background map
+    ld de, 32*32
+    ld b, 0
+.load_bytes:
+    ld a, l
+    add a, 1
+    ld l, a
+    ld a, h
+    adc a, 0
+    ld h, a
+    ld [hl], $00           ; write tile 0 to the first position of the map
+    ld a, b
+    add a, 1
+    ld b, a
+    cp a, 20
+    jr nz, .dont_break_line
+        ld a, l
+        add a, 12
+        ld l, a
+        ld a, h
+        adc a, 0
+        ld h, a
+        ld b, 0
+.dont_break_line:
+    dec de
+    ld a, e ; Check if count is 0, since `dec bc` doesn't update flags
+    or d
+    jr z, .load_bytes_end
+    jr .load_bytes
+.load_bytes_end:
+
+    call clear_sprite_data
+
+    ; Sprite Data Initialziation
+    ld a, 0
+    ld [sprite_0_y], a  ; position Y of sprite 0
+    ld a, 0
+    ld [sprite_0_x], a  ; position X of sprite 0
+    ld a, 0
+    ld [sprite_0_tile], a   ; tile number
+    ld a, 0
+    ld [sprite_0_att], a    ; no sprite attributes
+
+    ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON
+      ld      [rLCDC], a
+ 
+    ld a, 1
+    ld [movx], a
+    ld [movy], a
+
+    ; Main Loop
+main_loop:
+    ; Wait for VRAM to change graphics
+
+.wait_vram:
+    ld a, [rLY]
+    cp 145
+    jr nz, .wait_vram
+
+    ld a, [sprite_0_y]
+    ld hl, movy
+    add a, [hl]
+    ld hl, sprite_0_y
+    ld [hl], a
+
+    ld a, [sprite_0_x]
+    ld hl, movx
+    add a, [hl]
+    ld hl, sprite_0_x
+    ld [hl], a
+    jr main_loop
+
+clear_lcd:
+    ld a, [rLCDC]
+    rlca                ; set higher bit of LCDC in the carry bit 
+    ret nc
+
+.wait_VBLANK
+    ld      a, [rLY]
+    cp      145
+    jr      nz, .wait_VBLANK
+ 
+    ; estamos en VBlank, apagamos el LCD
+    ld      a,[rLCDC]       ; en A, el contenido del LCDC
+    res     7,a             ; ponemos a cero el bit 7 (activado del LCD)
+    ld      [rLCDC],a       ; escribimos en el registro LCDC el contenido de A
+ 
+    ret                     ; volvemos
+
+clear_sprite_data:
+    ld c, 40
+    ld hl, sprite_0_y
+.begin:
+    ld a, 0
+    ld [hl], a  ; position Y of sprite 0
+    inc hl
+    ld a, 0
+    ld [hl], a  ; position X of sprite 0
+    inc hl
+    ld a, 0
+    ld [hl], a   ; tile number
+    inc hl
+    ld a, 0
+    ld [hl], a    ; no sprite attributes
+    inc hl
+    dec c
+    ld a, 0
+    or a, c
+    jr nz, .begin
+    ret
+
+; Demo Tile
+Tiles:
+    DB  $AA, $00, $44, $00, $AA, $00, $11, $00
+    DB  $AA, $00, $44, $00, $AA, $00, $11, $00
+    DB  $7C, $7C, $82, $FE, $82, $D6, $82, $D6
+    DB  $82, $FE, $82, $BA, $82, $C6, $7C, $7C
+Tiles_end:
