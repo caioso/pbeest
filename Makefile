@@ -1,10 +1,10 @@
 all:
 	rgbasm -ogame.obj pbeest.z80
-	rgblink -mgame.map -ngame.sym -ogame.gb game.obj
-	rgbfix -p0 -v game.gb
+	rgblink -mgame.map -ngame.sym -ogame.gbc game.obj
+	rgbfix -p0 -v game.gbc
 
 run:
-	/cygdrive/c/gbdk/tools/bgb.exe game.gb
+	/cygdrive/c/gbdk/tools/bgb.exe game.gbc
 
 clean:
-	rm *.obj *.map *.sym *.gb
+	rm *.obj *.map *.sym *.gbc

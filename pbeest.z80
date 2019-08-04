@@ -9,13 +9,14 @@ sprite_0_att equ _OAMRAM + 3
 ; Control Variables
 movx equ _RAM
 movy equ _RAM + 1
+pad equ _RAM + 2 
 
 section "start", ROM0[$0100]
     nop
     jp main
 
     ; header definition
-    ROM_HEADER  ROM_NOMBC  , ROM_SIZE_32KBYTE, RAM_SIZE_0KBYTE
+    ROM_HEADER  ROM_MBC2, ROM_SIZE_2MBYTE, RAM_SIZE_128KBYTE
 
 ; main function
 main:
@@ -26,6 +27,10 @@ main:
 bootup:
     ld a, %11100100     ; loading pallette
     ld [rBGP], a        ; right to the pallete register
+    ld [rOBP0], a       ; right to the pallete register
+
+    ld a, %00011011     ; loading pallette
+    ld [rOBP1], a       ; right to the pallete register
 
     ld a, 0
     ld [rSCX], a        ; scrol 0 (X)
@@ -81,11 +86,11 @@ bootup:
     call clear_sprite_data
 
     ; Sprite Data Initialziation
-    ld a, 0
+    ld a, 30
     ld [sprite_0_y], a  ; position Y of sprite 0
-    ld a, 0
+    ld a, 30
     ld [sprite_0_x], a  ; position X of sprite 0
-    ld a, 0
+    ld a, 1
     ld [sprite_0_tile], a   ; tile number
     ld a, 0
     ld [sprite_0_att], a    ; no sprite attributes
@@ -93,9 +98,8 @@ bootup:
     ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON
       ld      [rLCDC], a
  
-    ld a, 1
-    ld [movx], a
-    ld [movy], a
+    ; Check input and move character accordingly
+    call read_joypad
 
     ; Main Loop
 main_loop:
@@ -106,17 +110,45 @@ main_loop:
     cp 145
     jr nz, .wait_vram
 
-    ld a, [sprite_0_y]
-    ld hl, movy
-    add a, [hl]
-    ld hl, sprite_0_y
-    ld [hl], a
+    call read_joypad ; Read joypad
+    call wait
 
+    ld a, [pad]
+    and a, %00010000    ; right
+    jr z, .skip_right
     ld a, [sprite_0_x]
-    ld hl, movx
-    add a, [hl]
+    add a, $1
     ld hl, sprite_0_x
     ld [hl], a
+.skip_right:
+
+    ld a, [pad]
+    and a, %00100000    ; right
+    jr z, .skip_left
+    ld a, [sprite_0_x]
+    sub a, $1
+    ld hl, sprite_0_x
+    ld [hl], a
+.skip_left:
+    
+    ld a, [pad]
+    and a, %01000000    ; up
+    jr z, .skip_up
+    ld a, [sprite_0_y]
+    sub a, $1
+    ld hl, sprite_0_y
+    ld [hl], a
+.skip_up:
+
+    ld a, [pad]
+    and a, %10000000    ; down
+    jr z, .skip_down
+    ld a, [sprite_0_y]
+    add a, $1
+    ld hl, sprite_0_y
+    ld [hl], a
+.skip_down:
+    
     jr main_loop
 
 clear_lcd:
@@ -138,7 +170,7 @@ clear_lcd:
 
 clear_sprite_data:
     ld c, 40
-    ld hl, sprite_0_y
+    ld hl, _OAMRAM
 .begin:
     ld a, 0
     ld [hl], a  ; position Y of sprite 0
@@ -157,6 +189,45 @@ clear_sprite_data:
     or a, c
     jr nz, .begin
     ret
+
+read_joypad:
+    ; Read D-Pad Key Status
+    ld a, %00100000
+    ld [rP1], a
+
+    ; debounce
+    ld a, [rP1]
+    ld a, [rP1]
+    ld a, [rP1]
+    ld a, [rP1]
+
+    and a, $0F
+    swap a
+    ld b, a
+
+    ; Read other buttons status
+    ld a, %00010000
+    ld a, [rP1]
+    ld a, [rP1]
+    ld a, [rP1]
+    ld a, [rP1]
+
+    and a, $0F
+    or b    
+
+    cpl 
+    ld [pad], a
+    ret
+
+wait:
+    ld a, $AA
+    ld b, 0
+.decrement_delay:
+    dec a
+    or b
+    jr nz, .decrement_delay
+    ret
+    
 
 ; Demo Tile
 Tiles:
