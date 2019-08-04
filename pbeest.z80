@@ -10,6 +10,7 @@ sprite_0_att equ _OAMRAM + 3
 movx equ _RAM
 movy equ _RAM + 1
 pad equ _RAM + 2 
+current_palette equ _RAM + 3
 
 section "start", ROM0[$0100]
     nop
@@ -27,10 +28,10 @@ main:
 bootup:
     ld a, %11100100     ; loading pallette
     ld [rBGP], a        ; right to the pallete register
-    ld [rOBP0], a       ; right to the pallete register
+    ld [rOBP0], a       ; right to the pallete 0 register
 
     ld a, %00011011     ; loading pallette
-    ld [rOBP1], a       ; right to the pallete register
+    ld [rOBP1], a       ; right to the pallete 1register
 
     ld a, 0
     ld [rSCX], a        ; scrol 0 (X)
@@ -92,8 +93,9 @@ bootup:
     ld [sprite_0_x], a  ; position X of sprite 0
     ld a, 1
     ld [sprite_0_tile], a   ; tile number
-    ld a, 0
+    ld a, 1
     ld [sprite_0_att], a    ; no sprite attributes
+    ld [current_palette], a ; initialize current pallete as 0;
 
     ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON
       ld      [rLCDC], a
@@ -148,8 +150,50 @@ main_loop:
     ld hl, sprite_0_y
     ld [hl], a
 .skip_down:
-    
+
+    ld a, [pad]
+    and a, %00000001   ; A
+    jr z, .skip_a
+    call change_palette
+.skip_a:
+
+    call reset_position
+.reset_position:
+
     jr main_loop
+
+change_palette:
+    ld a, [current_palette]
+    and %00000001
+    jr z, .set_palette_0
+    ld a, [sprite_0_att]
+    set 4, a
+    ld [sprite_0_att], a
+    ld a, 0
+    ld [current_palette], a
+    call wait
+    jr .end_palette_set
+.set_palette_0:
+    ld a, [sprite_0_att]
+    res 4, a
+    ld [sprite_0_att], a
+    ld a, 1
+    ld [current_palette], a
+    call wait
+.end_palette_set:
+    ret
+
+reset_position:
+    ld a, [pad]
+    and a, %00000010
+    jr z, .reset_position_end
+    ld a, 30
+    ld [sprite_0_x], a
+    ld [sprite_0_y], a
+    ld [movx], a
+    ld [movy], a
+.reset_position_end:
+    ret
 
 clear_lcd:
     ld a, [rLCDC]
@@ -191,33 +235,43 @@ clear_sprite_data:
     ret
 
 read_joypad:
-    ; Read D-Pad Key Status
-    ld a, %00100000
-    ld [rP1], a
-
-    ; debounce
-    ld a, [rP1]
-    ld a, [rP1]
-    ld a, [rP1]
-    ld a, [rP1]
-
-    and a, $0F
-    swap a
-    ld b, a
-
-    ; Read other buttons status
-    ld a, %00010000
-    ld a, [rP1]
-    ld a, [rP1]
-    ld a, [rP1]
-    ld a, [rP1]
-
-    and a, $0F
-    or b    
-
-    cpl 
-    ld [pad], a
+    ; vamos a leer la cruzeta:
+    ld      a, %00100000    ; bit 4 a 0, bit 5 a 1 (cruzeta activada, botones no)
+    ld      [rP1], a
+ 
+    ; ahora leemos el estado de la cruzeta, para evitar el bouncing
+    ; hacemos varias lecturas
+    ld      a, [rP1]
+    ld      a, [rP1]
+    ld      a, [rP1]
+    ld      a, [rP1]
+ 
+    and     $0F             ; solo nos importan los 4 bits de abajo.
+    swap    a               ; intercambiamos parte baja y alta.
+    ld      b, a            ; guardamos el estado de la cruzeta en b
+ 
+    ; vamos a por los botones
+    ld      a, %00010000    ; bit 4 a 1, bit 5 a 0 (botones activados, cruzeta no)
+    ld      [rP1], a
+ 
+    ; leemos varias veces para evitar el bouncing
+    ld      a, [rP1]
+    ld      a, [rP1]
+    ld      a, [rP1]
+    ld      a, [rP1]
+ 
+    ; tenemos en A, el estado de los botones
+    and     $0F             ; solo nos importan los 4 bits de abajo.
+    or      b               ; hacemos un or con b, para "meter" en la parte
+                            ; superior de A, el estado de la cruzeta.
+ 
+    ; ahora tenemos en A, el estado de todo, hacemos el complemento y
+    ; lo guardamos en la variable
+    cpl
+    ld      [pad], a
+    ; volvemos
     ret
+ 
 
 wait:
     ld a, $AA
