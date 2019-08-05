@@ -11,6 +11,10 @@ movx equ _RAM
 movy equ _RAM + 1
 pad equ _RAM + 2 
 current_palette equ _RAM + 3
+window_state equ _RAM + 4
+window_y equ _RAM + 5
+arg0 equ _RAM + 6
+window_anim equ _RAM + 7
 
 section "start", ROM0[$0100]
     nop
@@ -37,6 +41,14 @@ bootup:
     ld [rSCX], a        ; scrol 0 (X)
     ld [rSCY], a        ; scrol 0 (Y)
 
+    ld a, 7
+    ld [rWX], a
+    ld a, 144
+    ld [window_y], a
+    ld [rWY], a
+    ld a, 0
+    ld [window_anim], a
+
     call clear_lcd      ; clear screen
 
     ld hl, Tiles        ; load address of tile TFace
@@ -53,37 +65,19 @@ bootup:
     jr .tile_load_routine
 .tile_loaded:
 
-    ld hl, _SCRN0 - 1       ; load address of background map
-    ld de, 32*32
-    ld b, 0
-.load_bytes:
-    ld a, l
-    add a, 1
-    ld l, a
-    ld a, h
-    adc a, 0
-    ld h, a
-    ld [hl], $00           ; write tile 0 to the first position of the map
-    ld a, b
-    add a, 1
-    ld b, a
-    cp a, 20
-    jr nz, .dont_break_line
-        ld a, l
-        add a, 12
-        ld l, a
-        ld a, h
-        adc a, 0
-        ld h, a
-        ld b, 0
-.dont_break_line:
-    dec de
-    ld a, e ; Check if count is 0, since `dec bc` doesn't update flags
-    or d
-    jr z, .load_bytes_end
-    jr .load_bytes
-.load_bytes_end:
+    ; set window mode
+    ld a, 0
+    ld [window_state], a
 
+    ld hl, arg0
+    ld [hl], $00
+    ld hl, _SCRN0 - 1       ; load address of background map
+    call start_map          ; initialize background
+    ld hl, arg0
+    ld [hl], $02
+    ld hl, _SCRN1 - 1       ; load address of window map
+    call start_map          ; initialize window
+    
     call clear_sprite_data
 
     ; Sprite Data Initialziation
@@ -97,8 +91,8 @@ bootup:
     ld [sprite_0_att], a    ; no sprite attributes
     ld [current_palette], a ; initialize current pallete as 0;
 
-    ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON
-      ld      [rLCDC], a
+    ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON|LCDCF_WIN9C00
+    ld      [rLCDC], a
  
     ; Check input and move character accordingly
     call read_joypad
@@ -159,6 +153,19 @@ main_loop:
 
     call reset_position
 .reset_position:
+
+    ld a, [pad]
+    and a, %00001000    ; start
+    jr z, .skip_start
+    call show_window
+
+    ; check_win anim
+    ld a, [window_anim]
+    ld d, 1
+    and a, d
+    jr z, .skip_start
+    call show_window
+.skip_start
 
     jr main_loop
 
@@ -282,6 +289,92 @@ wait:
     jr nz, .decrement_delay
     ret
     
+start_map:
+    ld de, 32*32
+    ld b, 0
+.load_bytes:
+    ld a, l
+    add a, 1
+    ld l, a
+    ld a, h
+    adc a, 0
+    ld h, a
+    ld a, [arg0]
+    ld [hl], a           ; write tile 0 to the first position of the map
+    ld a, b
+    add a, 1
+    ld b, a
+    cp a, 20
+    jr nz, .dont_break_line
+        ld a, l
+        add a, 12
+        ld l, a
+        ld a, h
+        adc a, 0
+        ld h, a
+        ld b, 0
+.dont_break_line:
+    dec de
+    ld a, e ; Check if count is 0, since `dec bc` doesn't update flags
+    or d
+    jr z, .load_bytes_end
+    jr .load_bytes
+.load_bytes_end:
+    ret
+
+show_window:
+    ; if (window_state == 1 && window_y != 144)
+    ; return
+    ld a, [window_state]
+    ld d, a
+    ld a, 1
+    and d
+    jr z, .second_window_check
+    ld a, [window_y]
+    ld d, a
+    ld a, 10
+    sub a, d
+    jr nz, .continue
+    jp .second_window_check
+.continue
+    ld a, [window_y]
+    dec a
+    ld [rWY], a
+    ld [window_y], a
+    ld d, 10
+    sub a, d
+    jr nz, .skip_clean_animation
+    ld a, 0
+    ld [window_anim], a
+.skip_clean_animation:
+    ret
+.second_window_check:
+    ld a, [window_state]
+    ld d, a
+    ld a, 1
+    and d
+    jr z, .display_window
+    
+    ld a, [rLCDC]
+	and ~LCDCF_WINON
+	;res		1, a
+	ld [rLCDC], a
+    ld a, 0
+    ld [window_state], a 
+    ld a, 1
+    ld [window_anim], a
+    jr .end_show_window
+.display_window
+    ld a, [rLCDC]
+	or LCDCF_WINON
+	;res		1, a
+	ld [rLCDC], a
+    ld a, 1
+    ld [window_state], a
+    ld a, 1
+    ld [window_anim], a
+.end_show_window:
+    ret
 
 ; Demo Tile
 Tiles:
@@ -289,4 +382,6 @@ Tiles:
     DB  $AA, $00, $44, $00, $AA, $00, $11, $00
     DB  $7C, $7C, $82, $FE, $82, $D6, $82, $D6
     DB  $82, $FE, $82, $BA, $82, $C6, $7C, $7C
+    DB  $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
+    DB  $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
 Tiles_end:
