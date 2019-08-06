@@ -25,7 +25,7 @@ section "start", ROM0[$0100]
     jp main
 
     ; header definition
-    ROM_HEADER  CART_MBC5_RAM_BATTERY, ROM_1536K, RAM_32K
+    ROM_HEADER_COLOR  CART_MBC5_RAM_BATTERY, ROM_1536K, RAM_32K
 
 ; main function
 main:
@@ -83,6 +83,9 @@ bootup:
     call start_map          ; initialize window
     
     call clear_sprite_data
+
+        ; load pallettes
+    call load_palettes
 
     ; Sprite Data Initialziation
     call target_bank
@@ -396,6 +399,39 @@ show_window:
 .end_show_window:
     ret
 
+load_palettes:
+    ld	    a, %10000000    ; Primera dirección del indice, con autoincremento
+    ld      [rBCPS], a
+    ld hl, rBCPD 
+    ;load bg palettes
+    ld de, BG_Palette
+    ld bc, BG_Palette_end - BG_Palette
+.load_bg_bytes:
+    ld a, [de]
+    ld [rBCPD], a
+    dec bc
+    inc de
+    ld a, b
+    sub a, c
+    jr nz, .load_bg_bytes
+
+    ; Sprites
+    ld	    a, %10000000    ; Primera dirección del indice, con autoincremento
+    ld      [rOCPS], a
+    ld hl, rOCPD 
+    ld de, Sprite_Palette
+    ld bc, Sprite_Palette_end - Sprite_Palette
+
+.load_sprite_bytes:
+    ld a, [de]
+    ld [rOCPD], a
+    dec bc
+    inc de
+    ld a, b
+    sub a, c
+    jr nz, .load_sprite_bytes
+    ret
+
 ; Demo Tile
 Tiles:
     DB  $AA, $00, $44, $00, $AA, $00, $11, $00
@@ -405,6 +441,21 @@ Tiles:
     DB  $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
     DB  $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
 Tiles_end:
+
+BG_Palette:
+    DW  $76BD, $753D, $14B4, $0019
+BG_Palette_end:
+ 
+Sprite_Palette:
+    DW $77DF, $47EB, $7101, $14BD
+    DW $0003, $5B63, $0204, $D671
+    DW $A5D4, $BBFD, $9569, $FFE3
+    DW $2014, $3B09, $4A8E, $934A
+    DW $0416, $96BE, $0164, $B9DA
+    DW $9B62, $35DF, $10B2, $D12F
+    DW $1E09, $F91B, $0445, $48F9
+    DW $FFFF, $FFFF, $FFFF, $FFFF
+Sprite_Palette_end:
 
 
 SECTION "BANK1",ROMX[$4000],BANK[511]
