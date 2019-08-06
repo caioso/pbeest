@@ -1,4 +1,4 @@
-include "inc/gbhw.inc"                      ; import file definitions 
+include "inc/hardware.inc"                      ; import file definitions 
 
 ; Sprite-related constants
 sprite_0_y equ _OAMRAM ; first byte of sprite memory holds the Y position of sprite 0
@@ -16,12 +16,16 @@ window_y equ _RAM + 5
 arg0 equ _RAM + 6
 window_anim equ _RAM + 7
 
+; Bank interruption
+SECTION "Vblank",ROM0[$0040]
+    reti     ; dont do anything
+
 section "start", ROM0[$0100]
     nop
     jp main
 
     ; header definition
-    ROM_HEADER  ROM_MBC2, ROM_SIZE_2MBYTE, RAM_SIZE_128KBYTE
+    ROM_HEADER  CART_MBC5_RAM_BATTERY, ROM_1536K, RAM_32K
 
 ; main function
 main:
@@ -81,9 +85,12 @@ bootup:
     call clear_sprite_data
 
     ; Sprite Data Initialziation
-    ld a, 30
+    call target_bank
+    call read_form_bat_ram
+
+    ld a, [movy]
     ld [sprite_0_y], a  ; position Y of sprite 0
-    ld a, 30
+    ld a, [movx]
     ld [sprite_0_x], a  ; position X of sprite 0
     ld a, 1
     ld [sprite_0_tile], a   ; tile number
@@ -101,10 +108,10 @@ bootup:
 main_loop:
     ; Wait for VRAM to change graphics
 
-.wait_vram:
+wait_vram:
     ld a, [rLY]
     cp 145
-    jr nz, .wait_vram
+    jr nz, wait_vram
 
     call read_joypad ; Read joypad
     call wait
@@ -115,6 +122,7 @@ main_loop:
     ld a, [sprite_0_x]
     add a, $1
     ld hl, sprite_0_x
+    ld [movx], a
     ld [hl], a
 .skip_right:
 
@@ -124,6 +132,7 @@ main_loop:
     ld a, [sprite_0_x]
     sub a, $1
     ld hl, sprite_0_x
+    ld [movx], a
     ld [hl], a
 .skip_left:
     
@@ -133,6 +142,7 @@ main_loop:
     ld a, [sprite_0_y]
     sub a, $1
     ld hl, sprite_0_y
+    ld [movy], a
     ld [hl], a
 .skip_up:
 
@@ -142,13 +152,15 @@ main_loop:
     ld a, [sprite_0_y]
     add a, $1
     ld hl, sprite_0_y
+    ld [movy], a
     ld [hl], a
 .skip_down:
 
     ld a, [pad]
     and a, %00000001   ; A
     jr z, .skip_a
-    call change_palette
+    call target_bank
+    call write_to_bat_ram
 .skip_a:
 
     call reset_position
@@ -158,16 +170,24 @@ main_loop:
     and a, %00001000    ; start
     jr z, .skip_start
     call show_window
-
-    ; check_win anim
-    ld a, [window_anim]
-    ld d, 1
-    and a, d
-    jr z, .skip_start
-    call show_window
 .skip_start
 
-    jr main_loop
+    ld a, [pad]
+    and a, %00000100    ; select
+    jr z, .skip_select
+    ; For GBC, to write to banks higher than 255, use the first bit of address $3001 (using MBC5)
+    call target_bank
+    call move_automatically
+.skip_select:
+
+    jp main_loop
+
+target_bank:
+    ld      hl, $2000
+    ld      [hl], $FF        ; banco 1
+    ld      hl, $3001
+    ld      [hl], $01        ; banco 1
+    ret
 
 change_palette:
     ld a, [current_palette]
@@ -332,7 +352,7 @@ show_window:
     jr z, .second_window_check
     ld a, [window_y]
     ld d, a
-    ld a, 10
+    ld a, 100
     sub a, d
     jr nz, .continue
     jp .second_window_check
@@ -341,7 +361,7 @@ show_window:
     dec a
     ld [rWY], a
     ld [window_y], a
-    ld d, 10
+    ld d, 100
     sub a, d
     jr nz, .skip_clean_animation
     ld a, 0
@@ -385,3 +405,53 @@ Tiles:
     DB  $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
     DB  $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
 Tiles_end:
+
+
+SECTION "BANK1",ROMX[$4000],BANK[511]
+move_automatically:
+    ld e, $FF
+.begin:
+    ld a, [rLY]
+    cp 145
+    jr nz, .begin
+        ld a, [sprite_0_x]
+        add a, $1
+        ld hl, sprite_0_x
+        ld [hl], a
+        ld a, e
+        dec a
+        ld e, a
+        ld d, 0
+        or a, d
+        jr nz, .begin
+    ret
+
+write_to_bat_ram:
+    ; Activate external SRAM
+    ld      a, $0A          ; $0A, activar
+    ld      [$0000], a      ; 
+
+    ;escribimos el dato en el primer byte de la ram externa
+    ld      a, [movx]
+    ld      [$A000], a
+    ld      a, [movy]
+    ld      [$A001], a
+ 
+    ; disable External SRAM
+    ld      a, $00          ; $00, desactivar
+    ld      [$0000], a      ; 
+    ret
+
+read_form_bat_ram:
+     ; vamos a leer el dato guardado
+    ld      a, $0A
+    ld      [$0000], a      ; activamos la RAM externa
+ 
+    ld      a, [$A000]      ; cargamos en a el dato
+    ld      [movx], a            ; lo guardamos
+    ld      a, [$A001]      ; cargamos en a el dato
+    ld      [movx], a            ; lo guardamos
+ 
+    ld      a, $00
+    ld      [$0000], a      ; desactivamos la RAM externa
+    ret
