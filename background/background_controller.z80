@@ -1,0 +1,34 @@
+; Project Beest
+; Background Control Routines
+; Developed by Caio Souza Oliveira
+; 7 Aug 2019
+
+; initialize Background 
+export bgc_initialize_background
+
+bgc_initialize_background:
+    ; set background scrolling to (0,0)
+    ld a, 0
+    ld [rSCX], a
+    ld [rSCY], a
+    
+    ; clear screen
+    call clear_lcd
+    ret
+
+; clear_lcd function
+; args: no arguments
+; return: no return
+clear_lcd:
+    ld a, [rLCDC]
+    rlca
+    ret nc
+
+.wait_vblank
+        ld a, [rLY]
+        cp 145
+        jr nz, .wait_vblank
+        ld a,[rLCDC]
+        res 7, a
+        ld [rLCDC],a 
+        ret 
