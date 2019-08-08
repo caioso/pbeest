@@ -19,6 +19,9 @@ rundemo:
 
 tile:
 	/cygdrive/c/gbdk/tools/GBTD.exe &
+
+map:
+	/cygdrive/c/gbdk/tools/GBMB.exe &
 	
 clean:
 	rm *.obj *.map *.sym *.gbc *.sav

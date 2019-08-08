@@ -1,0 +1,18 @@
+; Project Beest
+; Window Control Routines
+; Developed by Caio Souza Oliveira
+; 8 Aug 2019
+
+; initialize window
+; h: window initial X
+; l: window intiial Y
+; no returns
+wnd_initialize_window:
+    ; load X position
+    ld a, h
+    ld [rWX], a
+    
+    ; load Y position
+    ld a, l
+    ld [rWY], a
+    ret

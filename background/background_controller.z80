@@ -21,14 +21,15 @@ bgc_initialize_background:
 ; de: number of bytes to be loaded
 ; bc: holds palette index
 bgc_load_background_palette:
-    ; set palette write mode (rBCPS)
-    ; setting the MSBit of BCPS will increment allow writing to the palette registers with auto increment
-    ; that after writing to BCPD, the lower 7 bits of BCPDS will be incremented
     ld a, c
+    ; multiplies index by 8, to target individual palettes by index, rather than colors.
     rla
     rla
     rla
     ld c, a
+    ; set palette write mode (rBCPS)
+    ; setting the MSBit of BCPS will increment allow writing to the palette registers with auto increment
+    ; that after writing to BCPD, the lower 7 bits of BCPDS will be incremented
     ld a, $80
     or a, c
     ld [rBCPS], a

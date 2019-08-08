@@ -1,0 +1,121 @@
+; Project Beest
+; HUD Control Routines
+; Developed by Caio Souza Oliveira
+; 8 Aug 2019
+
+; include textbox map
+include "hud/text_box.z80"
+
+hud_initialize_hud:
+    ; initialize hud tiles
+    ld hl, hud_tiles
+    ld bc, hud_tiles_end - hud_tiles
+    ld de, _VRAM
+
+    ; copy hud tiles
+.copy_hud:
+    ld a, [hl]
+    ld [de], a
+    inc hl
+    inc de
+    dec bc
+    ld a, c
+    or b
+    jr nz, .copy_hud
+
+    ; copy text box map
+    ; Video Bank 1 (window/bg tiles)
+    ld a, 0
+    ld [rVBK], a
+
+    ld bc, _SCRN1
+    ld hl, text_box_map
+    ld de, 0
+    push de
+.copy_text_box_map:
+    ld a, [hl]
+    ld [bc], a
+    inc hl
+    inc bc
+
+    ; check whether 20 columns have been reached
+    pop de
+    inc de
+    ld a, 20
+    sub a, e
+    jr nz, .continue_copy
+        ld a, c
+        add a, 12
+        ld c, a
+        ld a, b
+        adc a, 0
+        ld b, a
+        ld de, 0
+.continue_copy:
+    push de
+    ld de, text_box_map_end
+    ld a, e
+    sub a, l
+    ld e, a
+    ld a, d
+    sbc a, h
+    ld d, a
+    or e
+    jr nz, .copy_text_box_map
+
+    ; copy set box map attributes
+    ; Video Bank 1 (window/bg tiles)
+    ld a, 1
+    ld [rVBK], a
+
+    ld bc, _SCRN1
+    ; number of tiles
+
+    ld de, text_box_map_end - text_box_map
+    ld hl, 0
+    ; TEMPORARY
+.copy_text_box_map_attribute:
+    ; load pallete #1
+    ld a, 1
+    ld [bc], a
+    inc bc
+    dec de
+    inc hl
+
+        ; check whether 20 columns have been reached
+        ld a, 20
+        sub l
+        jr nz, .continue_attribute_copy
+            ld a, c
+            add a, 12
+            ld c, a
+            ld a, b
+            adc a, 0
+            ld b, a
+            ld hl, 0
+
+.continue_attribute_copy:
+    ld a, e
+    or d
+    jr nz, .copy_text_box_map_attribute
+    ret
+    ; copy text box map
+    ; Video Bank 1 (window/bg tiles)
+    ld a, 0
+    ld [rVBK], a
+
+    ld a, $4C
+    ld [_SCRN1], a
+
+    ld a, $4E
+    ld [_SCRN1 + 19], a
+
+    ld a, 1
+    ld [rVBK], a
+
+    ld a, $01
+    ld [_SCRN1], a
+    ld [_SCRN1 + 19], a
+    
+    ret
+

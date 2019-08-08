@@ -22,8 +22,15 @@ section "start", rom0[$0100]
 ; include background controlller
 include "background/background_controller.z80"
 
+; include window controller
+include "window/window_controller.z80"
+
 ; include graphics data
-include "graphics/alphabet_palettes.z80"
+include "graphics/hud_palette.z80"
+include "graphics/hud_tiles.z80"
+
+; include hud controller
+include "hud/hud_controller.z80"
 
 ; main function
 ; bootstrap ROM
@@ -38,11 +45,19 @@ main:
     ; initialize background
     call bgc_initialize_background
 
+    ; initialize window
+    ld h, 7
+    ld l, 8*13
+    call wnd_initialize_window
+
+    ; initialize hud
+    call hud_initialize_hud
+
     ; TEMP
     ; load intial background palettes
-    ld hl, alphabet_palette_begin
-    ld de, alphabet_palette_end - alphabet_palette_begin
-    ld bc, 0 ; target palette index (each palette has 4 colors)
+    ld hl, hud_palette_begin
+    ld de, hud_palette_end - hud_palette_begin
+    ld bc, 1 ; target palette index (each palette has 4 colors)
     call bgc_load_background_palette
 
     ; start display register
@@ -52,7 +67,7 @@ main:
     ; set sprite 16 x 8 pixe;s
     ; set sprite layer on
     ; set window memory to 9c000
-    ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON|LCDCF_WIN9C00
+    ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON|LCDCF_WIN9C00|LCDCF_WINON
     ld [rLCDC], a
 
 .main_loop
