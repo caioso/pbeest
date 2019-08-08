@@ -19,8 +19,11 @@ section "start", rom0[$0100]
 ; note: ROM name must have 15 bytes (the number indicate the stable build number)
     ROM_HEADER_COLOR    "PBEEST.00000001", CART_MBC5_RAM_BATTERY, ROM_1536K, RAM_32K
 
-; Include background controlller
+; include background controlller
 include "background/background_controller.z80"
+
+; include graphics data
+include "graphics/alphabet_palettes.z80"
 
 ; main function
 ; bootstrap ROM
@@ -34,6 +37,23 @@ main:
 
     ; initialize background
     call bgc_initialize_background
+
+    ; TEMP
+    ; load intial background palettes
+    ld hl, alphabet_palette_begin
+    ld de, alphabet_palette_end - alphabet_palette_begin
+    ld bc, 0 ; target palette index (each palette has 4 colors)
+    call bgc_load_background_palette
+
+    ; start display register
+    ; set lcd on
+    ; set bg memory to 8000 and 9800
+    ; set bg layer on
+    ; set sprite 16 x 8 pixe;s
+    ; set sprite layer on
+    ; set window memory to 9c000
+    ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON|LCDCF_WIN9C00
+    ld [rLCDC], a
 
 .main_loop
         nop

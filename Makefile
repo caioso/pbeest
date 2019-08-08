@@ -17,6 +17,8 @@ run:
 rundemo:
 	/cygdrive/c/gbdk/tools/bgb.exe demo.gbc
 
-
+tile:
+	/cygdrive/c/gbdk/tools/GBTD.exe &
+	
 clean:
 	rm *.obj *.map *.sym *.gbc *.sav

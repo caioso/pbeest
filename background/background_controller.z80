@@ -16,6 +16,32 @@ bgc_initialize_background:
     call clear_lcd
     ret
 
+; loads background palettes
+; hl: holds address to first byte palette
+; de: number of bytes to be loaded
+; bc: holds palette index
+bgc_load_background_palette:
+    ; set palette write mode (rBCPS)
+    ; setting the MSBit of BCPS will increment allow writing to the palette registers with auto increment
+    ; that after writing to BCPD, the lower 7 bits of BCPDS will be incremented
+    ld a, c
+    rla
+    rla
+    rla
+    ld c, a
+    ld a, $80
+    or a, c
+    ld [rBCPS], a
+.load_palette_bytes:
+    ld a, [hl]
+    ld [rBCPD], a
+    inc hl
+    dec de
+    ld a, e
+    or d
+    jr nz, .load_palette_bytes
+    ret
+
 ; clear_lcd function
 ; args: no arguments
 ; return: no return
