@@ -3,6 +3,12 @@
 ; Developed by Caio Souza Oliveira
 ; 8 Aug 2019
 
+; global variables
+text_buffer equ _RAM + 1
+text_line_1_begin equ _SCRN1 + 32 + 1
+text_line_2_begin equ _SCRN1 + 32*3 + 1
+text_line_size equ 18
+
 ; include textbox map
 include "hud/text_box.z80"
 
@@ -73,6 +79,7 @@ hud_initialize_hud:
 
     ld de, text_box_map_end - text_box_map
     ld hl, 0
+
     ; TEMPORARY
 .copy_text_box_map_attribute:
     ; load pallete #1
@@ -99,23 +106,48 @@ hud_initialize_hud:
     or d
     jr nz, .copy_text_box_map_attribute
     ret
-    ; copy text box map
+
+; Shows text stored in the address held by text_buffer, with size of de
+; This function assumes that the window tiles have already their attributes are set correctly (only the tiles will be updated)
+; de: text size
+; return: no return
+hud_show_text:
     ; Video Bank 1 (window/bg tiles)
+    ld a, $00
+    ld [rVBK], a
+
+    ld hl, text_line_1_begin
+    ld bc, text_buffer
     ld a, 0
-    ld [rVBK], a
-
-    ld a, $4C
-    ld [_SCRN1], a
-
-    ld a, $4E
-    ld [_SCRN1 + 19], a
-
-    ld a, 1
-    ld [rVBK], a
-
-    ld a, $01
-    ld [_SCRN1], a
-    ld [_SCRN1 + 19], a
-    
+    push de
+.load_text_bytes
+    ld a, [bc]
+    ld [hl], a
+    inc bc
+    inc hl
+    pop de
+    dec de
+    push de
+    ld a, d
+    or e
+    jr nz, .load_text_bytes
     ret
 
+; copy text constant to text buffer
+; hl: text constant address
+; de: text size
+hud_copy_text_buffer:
+    ld bc, text_buffer
+    push de
+.text_copy:
+    ld a, [hl]
+    ld [bc], a
+    inc hl
+    inc bc
+    pop de
+    dec de
+    push de
+    ld a, d
+    or e
+    jr nz, .text_copy
+    ret

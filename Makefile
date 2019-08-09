@@ -4,6 +4,11 @@ all: $(DEPS)
 	rgbasm -opbeest.obj pbeest.z80
 	rgblink -mpbeest.map -npbeest.sym -opbeest.gbc pbeest.obj
 	rgbfix -p0 -v pbeest.gbc
+	
+pbeest.gbc: $(DEPS)
+	rgbasm -opbeest.obj pbeest.z80
+	rgblink -mpbeest.map -npbeest.sym -opbeest.gbc pbeest.obj
+	rgbfix -p0 -v pbeest.gbc
 
 demo: demo/demo.z80
 	rgbasm -odemo.obj demo/demo.z80
@@ -11,7 +16,7 @@ demo: demo/demo.z80
 	rgbfix -p0 -v demo.gbc
 
 
-run:
+run: pbeest.gbc
 	/cygdrive/c/gbdk/tools/bgb.exe pbeest.gbc
 
 rundemo:

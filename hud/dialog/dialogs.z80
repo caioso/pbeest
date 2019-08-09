@@ -1,0 +1,11 @@
+; Project Beest
+; Global dialog constants
+; Developed by Caio Souza Oliveira
+; 8 Aug 2019
+
+; To move to another bank
+
+; HELLO
+hello_world_text:
+db $07, $04, $0B, $0B, $0E, $34, $34, $34
+hello_world_text_end:

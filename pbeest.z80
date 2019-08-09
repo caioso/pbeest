@@ -35,6 +35,9 @@ include "graphics/hud_tiles.z80"
 ; include hud controller
 include "hud/hud_controller.z80"
 
+; include dialogs files
+include "hud/dialog/dialogs.z80"
+
 ; main function
 ; bootstrap ROM
 ; clear pallete, background, window and sprite maps
@@ -43,7 +46,7 @@ main:
     ; disable interrupts
     di
     ; load stack
-    ld sp, $ffff
+    ld sp, $FFFF
 
     ; initialize background
     call bgc_initialize_background
@@ -91,10 +94,20 @@ main:
 .next_key_1:
     ld l, key_b
     call is_key_down
-    jr z, .no_key_detected
+    jr z, .next_key_2
         ld h, 7
         ld l, 8*5
         call window_set_window_position
+
+.next_key_2
+    ld l, key_start
+    call is_key_down
+    jr z, .no_key_detected
+        ld de, hello_world_text_end - hello_world_text
+        ld hl, hello_world_text
+        call hud_copy_text_buffer
+        ld de, hello_world_text_end - hello_world_text
+        call hud_show_text
 
 .no_key_detected:
     jp .main_loop
