@@ -19,6 +19,9 @@ section "start", rom0[$0100]
 ; note: ROM name must have 15 bytes (the number indicate the stable build number)
     ROM_HEADER_COLOR    "PBEEST.00000001", CART_MBC5_RAM_BATTERY, ROM_1536K, RAM_32K
 
+; include input handler
+include "joypad/input.z80"
+
 ; include background controlller
 include "background/background_controller.z80"
 
@@ -46,8 +49,6 @@ main:
     call bgc_initialize_background
 
     ; initialize window
-    ld h, 7
-    ld l, 8*13
     call wnd_initialize_window
 
     ; initialize hud
@@ -71,5 +72,29 @@ main:
     ld [rLCDC], a
 
 .main_loop
-        nop
-        jp .main_loop
+    nop
+
+    ; read input
+    call joypad
+
+
+    ; TEMP 
+    ; joypad test
+    ld l, key_a
+    call is_key_down
+    jr z, .next_key_1
+        ld h, 7
+        ld l, 8*13
+        call window_set_window_position
+        jr .no_key_detected
+
+.next_key_1:
+    ld l, key_b
+    call is_key_down
+    jr z, .no_key_detected
+        ld h, 7
+        ld l, 8*5
+        call window_set_window_position
+
+.no_key_detected:
+    jp .main_loop

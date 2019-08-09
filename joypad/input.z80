@@ -1,0 +1,76 @@
+; Project Beest
+; Input Handler
+; Developed by Caio Souza Oliveira
+; 7 Aug 2019
+
+; global variable
+; RAM bank 0, position 0
+current_key equ _RAM
+
+; key event constants
+key_a equ $01
+key_b equ $02
+key_select equ $04
+key_start equ $08
+
+key_right equ $10
+key_left equ $20
+key_up equ $40
+key_down equ $80
+
+; read current key input. Stores current key in in current_key.
+joypad:
+    ; save current bc
+    push bc
+
+    ; read d-pad state
+    ld a, %00100000
+    ld [rP1], a
+
+    ; debounnce 
+    ld a, [rP1]
+    ld a, [rP1]
+    ld a, [rP1]
+    ld a, [rP1]
+    ld a, [rP1]
+
+    ; clear reading
+    and a, $0F
+    swap a
+    ld b, a
+
+    ; read buttons state
+    ld a, %00010000
+    ld [rP1], a
+
+    ; debounnce 
+    ld a, [rP1]
+    ld a, [rP1]
+    ld a, [rP1]
+    ld a, [rP1]
+    ld a, [rP1]
+
+    ; clear reading and combine with d-pad reading
+    and $0F
+    or b
+
+    ; apply complement
+    cpl
+    ld [current_key], a
+
+    ; restore bc
+    pop bc
+    ret
+
+; checks whether a specific key is down
+; l: keycode
+; return (l): 1 true, 0 false
+is_key_down:
+    ld a, [current_key]
+    and a, l
+    jr z, .not_detected
+    ld a, $01
+    ret
+.not_detected:
+    ld a, $00
+    ret
