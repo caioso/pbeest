@@ -1,3 +1,18 @@
+ifeq (color,$(firstword $(MAKECMDGOALS)))
+  # use the rest as arguments for "run"
+  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  # ...and turn them into do-nothing targets
+  $(eval $(RUN_ARGS):;@:)
+endif
+
+ifeq (string,$(firstword $(MAKECMDGOALS)))
+  # use the rest as arguments for "run"
+  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  # ...and turn them into do-nothing targets
+  $(eval $(RUN_ARGS):;@:)
+endif
+
+
 DEPS	:= background/background_controller.z80 infra/interrupt_vector.z80
 
 all: $(DEPS)
@@ -27,6 +42,12 @@ tile:
 
 map:
 	/cygdrive/c/gbdk/tools/GBMB.exe &
-	
+
+color:
+	node tools/palette_maker.js $(RUN_ARGS)
+
+string:
+	node tools/string_maker.js $(RUN_ARGS)
+
 clean:
 	rm *.obj *.map *.sym *.gbc *.sav

@@ -19,8 +19,14 @@ section "start", rom0[$0100]
 ; note: ROM name must have 15 bytes (the number indicate the stable build number)
     ROM_HEADER_COLOR    "PBEEST.00000001", CART_MBC5_RAM_BATTERY, ROM_1536K, RAM_32K
 
+; include time handlers
+include "time/delay.z80"
+
 ; include input handler
 include "joypad/input.z80"
+
+; include display handler
+include "graphics/display.z80"
 
 ; include background controlller
 include "background/background_controller.z80"
@@ -79,7 +85,6 @@ main:
 
     ; read input
     call joypad
-
 
     ; TEMP 
     ; joypad test

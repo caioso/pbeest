@@ -3,11 +3,15 @@
 ; Developed by Caio Souza Oliveira
 ; 8 Aug 2019
 
-; global variables
-text_buffer equ _RAM + 1
+; constants or labels
+text_buffer_size equ 36
 text_line_1_begin equ _SCRN1 + 32 + 1
 text_line_2_begin equ _SCRN1 + 32*3 + 1
 text_line_size equ 18
+
+; global variables
+text_buffer equ _RAM + 1
+text_line equ text_buffer + text_buffer_size
 
 ; include textbox map
 include "hud/text_box.z80"
@@ -116,15 +120,51 @@ hud_show_text:
     ld a, $00
     ld [rVBK], a
 
+    ; initialize line controller
+    ld hl, text_line
+    ld a, 0
+    ld [hl], a
     ld hl, text_line_1_begin
     ld bc, text_buffer
     ld a, 0
     push de
 .load_text_bytes
+    
+    ; call delay
+    push hl
+    ; $FF -> outer loop control (255 times)
+    ; $20 -> inner loop contorl (32 times)
+    ld hl, $FF10 
+    call time_controlled_two_step_delay 
+    pop hl
+
+    ; wait for vline interrupt
+    call display_wait_vblank
+
     ld a, [bc]
-    ld [hl], a
+    cp a, $FF
+    jr z, .skip_char
+        ld [hl], a
+; space detected
+.skip_char 
     inc bc
     inc hl
+
+    ; check whether the current line is finished
+    push bc
+    ld bc, text_line_size + text_line_1_begin
+    ld a, c
+    sub a, l
+    ld c, a
+    ld a, b
+    sbc a, h
+    ld b, a
+    or c
+    jr nz, .continue_in_the_same_line
+        ld hl, text_line_2_begin
+
+.continue_in_the_same_line:
+    pop bc
     pop de
     dec de
     push de

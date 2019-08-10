@@ -5,7 +5,7 @@
 
 ; To move to another bank
 
-; HELLO
+; HELLO...
 hello_world_text:
-db $07, $04, $0B, $0B, $0E, $34, $34, $34
+db $07, $04, $0B, $0B, $0E, $FF, $16, $0E, $11, $0B, $03, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $08, $FF, $00, $0C, $FF, $07, $04, $11, $04, $FF
 hello_world_text_end:

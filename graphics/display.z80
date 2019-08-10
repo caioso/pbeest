@@ -1,0 +1,15 @@
+; Project Beest
+; LCD control routines
+; Developed by Caio Souza Oliveira
+; 10 Aug 2019
+
+; wait for appropriate moement to render graphics on screen
+; (wait for display vertical line controller to  be ready)
+; no arguments
+; no return
+display_wait_vblank:
+.wait_vblank
+    ld     a, [rLY]
+    cp     145
+    jr     nz, .wait_vblank
+    ret

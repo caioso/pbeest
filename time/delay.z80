@@ -1,0 +1,26 @@
+; Project Beest
+; Global delay functions
+; Developed by Caio Souza Oliveira
+; 10 Aug 2019
+
+; h: outer loop repetition count
+; l: inner loop repetition count
+; return: no return
+time_controlled_two_step_delay:
+    push de
+    ld d, h
+    ld e, l
+.outer_loop:
+    ld l, e
+.inner_loop:
+        nop
+        dec l
+        ld a, 0
+        or l
+        jr nz, .inner_loop
+    dec h
+    ld a, 0
+    or h
+    jr nz, .outer_loop
+    pop de
+    ret
