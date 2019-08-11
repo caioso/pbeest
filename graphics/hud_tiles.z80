@@ -276,5 +276,8 @@ DB $4F,$B0,$4F,$B0,$4F,$B0,$4F,$B0
 hud_tilesTLE84::
 DB $FF,$00,$FF,$00,$FF,$00,$FF,$00
 DB $FF,$00,$FF,$00,$FF,$00,$FF,$00
+hud_tilesTLE85::
+DB $FF,$00,$FF,$00,$FF,$00,$FF,$00
+DB $80,$7F,$C1,$3E,$E3,$1C,$F7,$08
 hud_tiles_end:
 ; End of HUD.Z80

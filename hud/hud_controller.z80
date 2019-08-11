@@ -7,11 +7,14 @@
 text_buffer_size equ 36
 text_line_1_begin equ _SCRN1 + 32 + 1
 text_line_2_begin equ _SCRN1 + 32*3 + 1
-text_line_size equ 18
+text_line_1_size equ 18
+text_line_2_size equ 16
+text_cursor_position equ text_line_2_begin + text_line_2_size + 1
 
 ; global variables
 text_buffer equ _RAM + 1
 text_line equ text_buffer + text_buffer_size
+text_box_state equ text_line + 1
 
 ; include textbox map
 include "hud/text_box.z80"
@@ -116,6 +119,65 @@ hud_initialize_hud:
 ; de: text size
 ; return: no return
 hud_show_text:
+    ; save previous hl
+    push hl
+
+    ; save de (function argument), to be used in step 2
+    push de
+
+    ; clear window text before starting
+    call hud_clear_text
+
+    ; position the window on the screen bottom (for the animation)
+    ld h, 7
+    ld l, 8*18
+    call wnd_set_window_position
+
+    ; initialize current text box state
+    ld a, $00
+    ld [text_box_state], a
+
+.check_current_state:
+    ; check current state
+    ld a, [text_box_state]
+    cp $00
+    jr z, .run_text_box_state_1
+    cp $01
+    jr z, .run_text_box_state_2
+    cp $02
+    jp z, .run_text_box_state_3
+
+; STATE MACHINE STATE 1: MOVE WINDOW UP
+.run_text_box_state_1:
+    ; initialize current position
+    ld e, 8*18
+    ld d, 7
+.move_window:
+    push de
+    ld l, e
+    ld h, d
+    call wnd_set_window_position
+    pop de
+    dec de
+    push de
+    ld h, $FF
+    ld l, $01
+    call time_controlled_two_step_delay
+    pop de
+    ld a, 8*13
+    cp e
+    jr nz, .move_window
+        ; Move up animation is complete, to the next state (text rendering)
+        ld a, [text_box_state]
+        inc a
+        ld [text_box_state], a
+        jp .check_current_state
+
+; STATE MACHINE STATE 2: RENDER TEXT (WITH ANIMATION)
+.run_text_box_state_2:
+    ; recover de received as function argument (text size)
+    pop de
+
     ; Video Bank 1 (window/bg tiles)
     ld a, $00
     ld [rVBK], a
@@ -128,12 +190,12 @@ hud_show_text:
     ld bc, text_buffer
     ld a, 0
     push de
-.load_text_bytes
+.load_text_bytes:
     
     ; call delay
     push hl
     ; $FF -> outer loop control (255 times)
-    ; $20 -> inner loop contorl (32 times)
+    ; $10 -> inner loop contorl (16 times)
     ld hl, $FF10 
     call time_controlled_two_step_delay 
     pop hl
@@ -146,13 +208,20 @@ hud_show_text:
     jr z, .skip_char
         ld [hl], a
 ; space detected
-.skip_char 
+.skip_char:
     inc bc
     inc hl
 
     ; check whether the current line is finished
     push bc
-    ld bc, text_line_size + text_line_1_begin
+    ld a, [text_line]
+    cp $00
+    jr nz, .line_2_check
+        ld bc, text_line_1_size + text_line_1_begin
+        jr .check_if_line_is_full
+.line_2_check:
+        ld bc, text_line_2_size + text_line_2_begin
+.check_if_line_is_full:
     ld a, c
     sub a, l
     ld c, a
@@ -161,8 +230,11 @@ hud_show_text:
     ld b, a
     or c
     jr nz, .continue_in_the_same_line
+        ld a, [text_line]
+        inc a
+        ld [text_line], a
         ld hl, text_line_2_begin
-
+        
 .continue_in_the_same_line:
     pop bc
     pop de
@@ -171,6 +243,44 @@ hud_show_text:
     ld a, d
     or e
     jr nz, .load_text_bytes
+
+        ; Finished Rendering current page. Change current state
+        ld a, [text_box_state]
+        inc a
+        ld [text_box_state], a
+        jp .check_current_state
+
+; STATE MACHINE STATE 3: BLINK CURSOR
+.run_text_box_state_3:
+    ; wait for vline interrupt
+    call display_wait_vblank
+
+    ; check whether the arrow is on screen
+    ld a, [text_cursor_position]
+    ; check if it is an empty tile (same as the 'space' tile)
+    cp $54
+    jr z, .show_arrow
+
+    ; hide arrow
+    ld a, $54
+    ld [text_cursor_position], a
+    jr .arrow_delay
+
+
+.show_arrow:
+    ; show arrow
+    ld a, $55
+    ld [text_cursor_position], a
+
+.arrow_delay:
+    ; $FF -> outer loop control (255 times)
+    ; $10 -> inner loop contorl (16 times)
+    ld hl, $FFAA
+    call time_controlled_two_step_delay 
+    jr .run_text_box_state_3
+
+.leave_text_box_loop:
+    pop hl
     ret
 
 ; copy text constant to text buffer
@@ -191,3 +301,57 @@ hud_copy_text_buffer:
     or e
     jr nz, .text_copy
     ret
+
+; clears both text lines in the window
+hud_clear_text:
+    push hl
+    push de
+
+    ; ensures that tile RAM bank is selected
+    ld a, 0
+    ld [rVBK], a
+    
+    ; initia line
+    ld de, 0
+
+    ; outer loop
+.outer_loop:
+    ; Wait for vblank interrupt
+    call display_wait_vblank
+
+    ; d holds the current character in the line
+    ld d, 0
+    ld a, 0
+    or e
+    jr nz, .clear_line_2
+        ld hl, text_line_1_begin
+        jr .inner_loop
+
+.clear_line_2:
+    ld hl, text_line_2_begin
+
+.inner_loop:
+
+    ; Clear the current line
+    ld a, $54
+    ld [hl], a
+    inc hl
+    inc d
+    ; use line 1 length because all characters of line 1 and 2 must be erased (including the arrow)
+    ld a, text_line_1_size
+    cp d
+    jr z, .finish_inner_loop
+    jr .inner_loop
+
+.finish_inner_loop:
+    inc e
+    ld a, 2
+    cp e
+    jr nz, .outer_loop
+
+    ; restore the saved registers
+    pop de
+    pop hl
+
+    ret
+

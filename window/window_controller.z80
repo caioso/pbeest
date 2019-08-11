@@ -7,15 +7,15 @@
 ; no returns
 wnd_initialize_window:
     ld h, $07
-    ld l, $00
-    call window_set_window_position
+    ld l, 8*18
+    call wnd_set_window_position
     ret
 
 ; scroll window
 ; h: target window X position
 ; l: target window Y position
 ; no returns
-window_set_window_position:
+wnd_set_window_position:
      ; load X position
     ld a, h
     ld [rWX], a

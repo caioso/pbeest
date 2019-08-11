@@ -88,23 +88,6 @@ main:
 
     ; TEMP 
     ; joypad test
-    ld l, key_a
-    call is_key_down
-    jr z, .next_key_1
-        ld h, 7
-        ld l, 8*13
-        call window_set_window_position
-        jr .no_key_detected
-
-.next_key_1:
-    ld l, key_b
-    call is_key_down
-    jr z, .next_key_2
-        ld h, 7
-        ld l, 8*5
-        call window_set_window_position
-
-.next_key_2
     ld l, key_start
     call is_key_down
     jr z, .no_key_detected
