@@ -147,6 +147,8 @@ hud_show_text:
     jr z, .run_text_box_state_2
     cp $02
     jp z, .run_text_box_state_3
+    cp $03
+    jp z, .run_text_box_state_4
 
 ; STATE MACHINE STATE 1: MOVE WINDOW UP
 .run_text_box_state_1:
@@ -282,39 +284,84 @@ hud_show_text:
         ld a, [text_box_state]
         inc a
         ld [text_box_state], a
+
+        ; Arrow blink delay
+        ld bc, $0600
+        
         jp .check_current_state
 
 ; STATE MACHINE STATE 3: BLINK CURSOR
 .run_text_box_state_3:
-    ; wait for vline interrupt
-    call display_wait_vblank
+    ld a, b
+    or c
+    jr nz, .arrow_delay
+        ; reset bc (set as arrow blink delay)
+        ld bc, $0600
 
-    ; check whether the arrow is on screen
-    ld a, [text_cursor_position]
-    ; check if it is an empty tile (same as the 'space' tile)
-    cp $54
-    jr z, .show_arrow
+        ; wait for vline interrupt
+        call display_wait_vblank
 
-    ; hide arrow
-    ld a, $54
-    ld [text_cursor_position], a
-    jr .arrow_delay
+        ; check whether the arrow is on screen
+        ld a, [text_cursor_position]
+        ; check if it is an empty tile (same as the 'space' tile)
+        cp $54
+        jr z, .show_arrow
 
+        ; hide arrow
+        ld a, $54
+        ld [text_cursor_position], a
+        jr .arrow_delay
 
 .show_arrow:
-    ; show arrow
-    ld a, $55
-    ld [text_cursor_position], a
+        ; show arrow
+        ld a, $55
+        ld [text_cursor_position], a
 
 .arrow_delay:
-    ; $FF -> outer loop control (255 times)
-    ; $10 -> inner loop contorl (16 times)
-    ld hl, $FFAA
-    call time_controlled_two_step_delay 
+    dec bc
+    jr .read_joypad
+
+.read_joypad:
+    ; check previous key_state
+    ld a, [text_box_key_state]
+    cp $01
+    jr z, .previous_state_key_pressed
+
+    ; read input
+    call joypad
+    ld l, key_a
+    call is_key_down
+    jr z, .end_key_check
+    jr .key_press_detected
+
+.previous_state_key_pressed:
+    call joypad
+    ld l, key_a
+    call is_key_down
+    jr nz, .end_key_check
+    jr .clear_previous_key
+
+.clear_previous_key:
+    ld a, $00
+    ld [text_box_key_state], a
+    jr .end_key_check
+
+.key_press_detected: 
+    ; Finished Rendering current page. Change current state
+    ld a, [text_box_state]
+    inc a
+    ld [text_box_state], a
+    jp .check_current_state
+
+.end_key_check:
     jr .run_text_box_state_3
 
+; STATE MACHINE STATE 4: CHECK FOR NEXT TEXT
+.run_text_box_state_4:
+    nop 
+    jr .run_text_box_state_4
+
 .leave_text_box_loop:
-    pop hl
     ret
 
 ; copy text constant to text buffer
