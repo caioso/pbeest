@@ -4,7 +4,7 @@
 ; 8 Aug 2019
 
 ; constants or labels
-text_buffer_size equ 36
+text_buffer_size equ 50
 text_line_1_begin equ _SCRN1 + 32 + 1
 text_line_2_begin equ _SCRN1 + 32*3 + 1
 text_line_1_size equ 18
@@ -12,10 +12,11 @@ text_line_2_size equ 16
 text_cursor_position equ text_line_2_begin + text_line_2_size + 1
 
 ; global variables
-text_buffer equ _RAM + 1
+text_buffer equ _RAM + 1 ;C001
 text_line equ text_buffer + text_buffer_size
 text_box_state equ text_line + 1
 text_box_key_state equ text_box_state + 1
+text_current_char equ text_box_key_state + 1
 
 ; include textbox map
 include "hud/text_box.z80"
@@ -138,6 +139,13 @@ hud_show_text:
     ld a, $00
     ld [text_box_state], a
 
+    ; initialize text counter 
+    push hl
+    ld hl, text_current_char
+    ld a, $00
+    ld [hl], a
+    pop hl
+
 .check_current_state:
     ; check current state
     ld a, [text_box_state]
@@ -149,6 +157,10 @@ hud_show_text:
     jp z, .run_text_box_state_3
     cp $03
     jp z, .run_text_box_state_4
+    cp $04
+    jp z, .run_text_box_state_5
+    cp $05
+    jp z, .run_text_box_state_6
 
 ; STATE MACHINE STATE 1: MOVE WINDOW UP
 .run_text_box_state_1:
@@ -192,7 +204,15 @@ hud_show_text:
     ld a, 0
     ld [hl], a
     ld hl, text_line_1_begin
-    ld bc, text_buffer
+
+    ; restore current char
+    push hl
+    ld hl, text_current_char
+    ld a, [hl]
+    ld c, a
+    ld b, $00
+    pop hl
+
     ld a, 0
     push de
 .load_text_bytes:
@@ -239,24 +259,37 @@ hud_show_text:
     ; wait for vline interrupt
     call display_wait_vblank
 
+    ; add text_buffer address offset to bc
+    ld a, [text_current_char]
+    ld c, a
+    ld b, $00
+    push bc
+    ld a, c
+    add a, $01
+    ld c, a
+    ld a, b
+    adc a, $C0
+    ld b, a
     ld a, [bc]
     cp a, $FF
     jr z, .skip_char
         ld [hl], a
 ; space detected
 .skip_char:
+    pop bc
     inc bc
     inc hl
 
     ; check whether the current line is finished
-    push bc
+    ld a, c
+    ld [text_current_char], a
     ld a, [text_line]
     cp $00
     jr nz, .line_2_check
         ld bc, text_line_1_size + text_line_1_begin
         jr .check_if_line_is_full
 .line_2_check:
-        ld bc, text_line_2_size + text_line_2_begin
+        ld bc, text_line_2_size + text_line_2_begin - 1
 .check_if_line_is_full:
     ld a, c
     sub a, l
@@ -266,20 +299,35 @@ hud_show_text:
     ld b, a
     or c
     jr nz, .continue_in_the_same_line
+
+        ; if already in line 2, change state and wait for user input (text should coninue in the next page)
         ld a, [text_line]
-        inc a
-        ld [text_line], a
-        ld hl, text_line_2_begin
+        cp $00
+        jr nz, .should_continue_in_next_page
+            ld a, [text_line]
+            inc a
+            ld [text_line], a
+            ld hl, text_line_2_begin
+            jr .continue_in_the_same_line
+.should_continue_in_next_page
+            ; clear current text line
+            ld a, $00
+            ld [text_line], a
+            pop de
+            dec de
+            push de
+            jr .go_to_arrow_blinking
         
 .continue_in_the_same_line:
-    pop bc
+    ;pop bc
     pop de
     dec de
     push de
     ld a, d
     or e
-    jr nz, .load_text_bytes
+    jp nz, .load_text_bytes
 
+.go_to_arrow_blinking:
         ; Finished Rendering current page. Change current state
         ld a, [text_box_state]
         inc a
@@ -358,8 +406,56 @@ hud_show_text:
 
 ; STATE MACHINE STATE 4: CHECK FOR NEXT TEXT
 .run_text_box_state_4:
-    nop 
-    jr .run_text_box_state_4
+    ; Finished Rendering current page. Check whether is ther still text to be rendered
+    pop de
+    pop bc
+    ld a, e
+    ld l, d
+    push de
+    or l
+    jr z, .hide_window
+        ; return to state 2
+        ld a, $01
+        ld [text_box_state], a
+        call hud_clear_text
+        jp .check_current_state
+.hide_window:
+    ; go to state 5 otherwise
+    ld a, [text_box_state]
+    inc a
+    ld [text_box_state], a
+    jp .check_current_state
+
+; STATE MACHINE STATE 5: CHECK FOR NEXT TEXT
+.run_text_box_state_5:
+    ld e, 8*13
+    ld d, 7
+.move_window_down:
+    push de
+    ld l, e
+    ld h, d
+    call wnd_set_window_position
+    pop de
+    inc de
+    push de
+    ; delay settings
+    ; $FF -> outer loop control (255 times)
+    ; $02 -> inner loop contorl (2 times)
+    ld hl, $FF02
+    call time_controlled_two_step_delay
+    pop de
+    ld a, 8*18+ 1
+    cp e
+    jr nz, .move_window_down
+        ; Move up animation is complete, to the next state (text rendering)
+        ld a, [text_box_state]
+        inc a
+        ld [text_box_state], a
+        jp .check_current_state
+
+.run_text_box_state_6:
+    nop
+    jr .run_text_box_state_6
 
 .leave_text_box_loop:
     ret
