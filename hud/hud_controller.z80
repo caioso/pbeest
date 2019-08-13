@@ -10,6 +10,9 @@ text_line_2_begin equ _SCRN1 + 32*3 + 1
 text_line_1_size equ 18
 text_line_2_size equ 16
 text_cursor_position equ text_line_2_begin + text_line_2_size + 1
+arrow_blinking_delay equ $0800
+arrow_character equ $55
+blank_character equ $54
 
 ; global variables
 text_buffer equ _RAM + 1 ;C001
@@ -319,7 +322,6 @@ hud_show_text:
             jr .go_to_arrow_blinking
         
 .continue_in_the_same_line:
-    ;pop bc
     pop de
     dec de
     push de
@@ -334,7 +336,7 @@ hud_show_text:
         ld [text_box_state], a
 
         ; Arrow blink delay
-        ld bc, $0600
+        ld bc, arrow_blinking_delay
         
         jp .check_current_state
 
@@ -344,7 +346,7 @@ hud_show_text:
     or c
     jr nz, .arrow_delay
         ; reset bc (set as arrow blink delay)
-        ld bc, $0600
+        ld bc, arrow_blinking_delay
 
         ; wait for vline interrupt
         call display_wait_vblank
@@ -352,17 +354,17 @@ hud_show_text:
         ; check whether the arrow is on screen
         ld a, [text_cursor_position]
         ; check if it is an empty tile (same as the 'space' tile)
-        cp $54
+        cp blank_character
         jr z, .show_arrow
 
         ; hide arrow
-        ld a, $54
+        ld a, blank_character
         ld [text_cursor_position], a
         jr .arrow_delay
 
 .show_arrow:
         ; show arrow
-        ld a, $55
+        ld a, arrow_character
         ld [text_cursor_position], a
 
 .arrow_delay:
@@ -408,7 +410,6 @@ hud_show_text:
 .run_text_box_state_4:
     ; Finished Rendering current page. Check whether is ther still text to be rendered
     pop de
-    pop bc
     ld a, e
     ld l, d
     push de
@@ -454,8 +455,8 @@ hud_show_text:
         jp .check_current_state
 
 .run_text_box_state_6:
-    nop
-    jr .run_text_box_state_6
+    pop hl
+    jr .leave_text_box_loop
 
 .leave_text_box_loop:
     ret
@@ -510,7 +511,7 @@ hud_clear_text:
 .inner_loop:
 
     ; Clear the current line
-    ld a, $54
+    ld a, blank_character
     ld [hl], a
     inc hl
     inc d
