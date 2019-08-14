@@ -13,6 +13,8 @@ text_cursor_position equ text_line_2_begin + text_line_2_size + 1
 arrow_blinking_delay equ $0800
 arrow_character equ $55
 blank_character equ $54
+blank_character_code equ $FF
+end_of_text_character_code equ $FE
 
 ; global variables
 text_buffer equ _RAM + 1 ;C001
@@ -20,6 +22,7 @@ text_line equ text_buffer + text_buffer_size
 text_box_state equ text_line + 1
 text_box_key_state equ text_box_state + 1
 text_current_char equ text_box_key_state + 1
+text_current_line_char equ text_current_char + 1
 
 ; include textbox map
 include "hud/text_box.z80"
@@ -128,6 +131,8 @@ hud_show_text:
     push hl
 
     ; save de (function argument), to be used in step 2
+    ; the last character must not be counted (MUST ALWAYS BE $FE)
+    dec de
     push de
 
     ; clear window text before starting
@@ -141,6 +146,7 @@ hud_show_text:
     ; initialize current text box state
     ld a, $00
     ld [text_box_state], a
+    ld [text_current_line_char], a
 
     ; initialize text counter 
     push hl
@@ -262,6 +268,30 @@ hud_show_text:
     ; wait for vline interrupt
     call display_wait_vblank
 
+    ; check if line must be broken
+    push de
+    push bc
+    ld a, [text_current_char]
+    ld c, a
+    ld b, $00
+    ld a, c
+    add a, $01
+    ld c, a
+    ld a, b
+    adc a, $C0
+    ld b, a
+    call hud_check_word_break
+    pop bc
+    pop de
+
+    cp $01
+    jr z, .break_line
+
+    ; inclrement current line counter
+    ld a, [text_current_line_char]
+    inc a
+    ld [text_current_line_char], a
+
     ; add text_buffer address offset to bc
     ld a, [text_current_char]
     ld c, a
@@ -275,6 +305,8 @@ hud_show_text:
     ld b, a
     ld a, [bc]
     cp a, $FF
+    jr z, .skip_char
+    cp a, $FE
     jr z, .skip_char
         ld [hl], a
 ; space detected
@@ -302,6 +334,16 @@ hud_show_text:
     ld b, a
     or c
     jr nz, .continue_in_the_same_line
+    jr .normal_line_check
+
+.break_line:
+    pop de
+    inc de
+    push de
+.normal_line_check:
+        ; clear line counter
+        ld a, $00
+        ld [text_current_line_char], a
 
         ; if already in line 2, change state and wait for user input (text should coninue in the next page)
         ld a, [text_line]
@@ -533,3 +575,55 @@ hud_clear_text:
 
     ret
 
+; bc: current char of the string
+; return a: must go to next line/page
+hud_check_word_break:
+    ; current char is an space. return false
+    ld a, [bc]
+    cp $FF
+    ld a, $00
+    jr nz, .intialize_loop
+    cp $FE
+    ld a, $00
+    jr nz, .intialize_loop
+    ret
+
+.intialize_loop:
+    ; load current char
+    ld a, [text_current_line_char]
+    ld e, a
+.continue_processing:
+    ld a, [bc]
+    inc bc
+    inc e
+    cp $FF
+    jr nz, .check_second_value
+    jr .check_meet
+.check_second_value:
+    cp $FE
+    jr z, .check_meet
+    jr .continue_processing
+
+.check_meet:
+    ; check if line counter has been exceeded
+    ld a, [text_line]
+    cp $00
+    jr .limit_18
+        ld a, 16
+        sub e
+        jr c, .exceeded
+        jr .not_exceeded
+
+.limit_18:
+        ld a, 18
+        sub e
+        jr c, .exceeded
+        jr .not_exceeded
+
+.exceeded:
+    ld a, $01
+    ret
+
+.not_exceeded:
+    ld a, $00
+    ret

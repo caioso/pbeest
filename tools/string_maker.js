@@ -77,6 +77,8 @@ var translation =
     '/': "$4A",
     '\'': "$4B",
 
+    // Text Termination character
+    '$': "$FE",
 }
 
 // Combine strings
@@ -86,17 +88,18 @@ for (var i = 2; i < process.argv.length; i++)
     text += process.argv[i];
     text += " "
 }
-
+text = text.substr(0, text.length - 1);
+text += "$"
 if (text.length > 36)
     console.log("The text does not fit in the buffer. Split will be required...")
 
-var constants = "; " + text + "\n";
+var constants = "; " + text.substr(0, text.length - 1) + "\n";
 var page_counter = 0;
 var page_limit = 50
 var char_counter = 0;
 constants += "dialog_page_" + page_counter + ":"
 
-for (var i = 0; i < text.length -1; i++, char_counter++)
+for (var i = 0; i < text.length; i++, char_counter++)
 {   
     if (char_counter%20 == 0)
     {
@@ -106,9 +109,13 @@ for (var i = 0; i < text.length -1; i++, char_counter++)
     }
 
     if (translation[text[i]] != undefined)
+    {
         constants += translation[text[i]] + ", "
+    }
     else
+    {
         constants += "$FF" + ", "
+    }
 
     if (char_counter%page_limit == 0 && char_counter != 0)
     {
