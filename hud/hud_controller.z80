@@ -4,7 +4,7 @@
 ; 8 Aug 2019
 
 ; constants or labels
-text_buffer_size equ 50
+text_buffer_size equ 68
 text_line_1_begin equ _SCRN1 + 32 + 1
 text_line_2_begin equ _SCRN1 + 32*3 + 1
 text_line_1_size equ 18
@@ -23,6 +23,7 @@ text_box_state equ text_line + 1
 text_box_key_state equ text_box_state + 1
 text_current_char equ text_box_key_state + 1
 text_current_line_char equ text_current_char + 1
+text_remaining_chars equ text_current_line_char + 1
 
 ; include textbox map
 include "hud/text_box.z80"
@@ -132,8 +133,9 @@ hud_show_text:
 
     ; save de (function argument), to be used in step 2
     ; the last character must not be counted (MUST ALWAYS BE $FE)
-    dec de
-    push de
+    dec e
+    ld a, e
+    ld [text_remaining_chars], a
 
     ; clear window text before starting
     call hud_clear_text
@@ -201,9 +203,6 @@ hud_show_text:
 
 ; STATE MACHINE STATE 2: RENDER TEXT (WITH ANIMATION)
 .run_text_box_state_2:
-    ; recover de received as function argument (text size)
-    pop de
-
     ; Video Bank 1 (window/bg tiles)
     ld a, $00
     ld [rVBK], a
@@ -269,7 +268,6 @@ hud_show_text:
     call display_wait_vblank
 
     ; check if line must be broken
-    push de
     push bc
     ld a, [text_current_char]
     ld c, a
@@ -282,12 +280,11 @@ hud_show_text:
     ld b, a
     call hud_check_word_break
     pop bc
-    pop de
 
     cp $01
     jr z, .break_line
 
-    ; inclrement current line counter
+    ; increment current line counter
     ld a, [text_current_line_char]
     inc a
     ld [text_current_line_char], a
@@ -303,18 +300,52 @@ hud_show_text:
     ld a, b
     adc a, $C0
     ld b, a
+
+    ; if first char in the line, skip all spaces (it has already been incremented above)
+    ld a, [text_current_line_char]
+    cp $01
+    jr nz, .skip_entire_blank_first_char_checking
+    ld e, c
+    ld d, b
+    ; get real value of bc (current char, without the address offset $C001)
+    pop bc
+.skip_char_until_it_is_not_first_line
+    ld a, [de]
+    cp $FF
+    jr nz, .break_first_space_checking_loop
+    inc de
+    inc bc
+    ; decrement text size (overal remaining characters to be rendered)
+    ld a, [text_remaining_chars]
+    dec a
+    ld [text_remaining_chars], a
+    jr .skip_char_until_it_is_not_first_line
+
+.break_first_space_checking_loop:
+    ; save bc back to stack
+    push bc
+    ld c, e
+    ld b, d
+
+    ; no registers must be restored if the loop has not been executed
+.skip_entire_blank_first_char_checking:
     ld a, [bc]
     cp a, $FF
     jr z, .skip_char
     cp a, $FE
-    jr z, .skip_char
+    jr z, .go_to_arrow_blinking
         ld [hl], a
+
 ; space detected
 .skip_char:
     pop bc
     inc bc
     inc hl
+    ld a, [text_remaining_chars]
+    dec a
+    ld [text_remaining_chars], a
 
+.continue_char_skip:
     ; check whether the current line is finished
     ld a, c
     ld [text_current_char], a
@@ -336,10 +367,7 @@ hud_show_text:
     jr nz, .continue_in_the_same_line
     jr .normal_line_check
 
-.break_line:
-    pop de
-    inc de
-    push de
+.break_line:   
 .normal_line_check:
         ; clear line counter
         ld a, $00
@@ -358,15 +386,9 @@ hud_show_text:
             ; clear current text line
             ld a, $00
             ld [text_line], a
-            pop de
-            dec de
-            push de
             jr .go_to_arrow_blinking
         
 .continue_in_the_same_line:
-    pop de
-    dec de
-    push de
     ld a, d
     or e
     jp nz, .load_text_bytes
@@ -451,11 +473,8 @@ hud_show_text:
 ; STATE MACHINE STATE 4: CHECK FOR NEXT TEXT
 .run_text_box_state_4:
     ; Finished Rendering current page. Check whether is ther still text to be rendered
-    pop de
-    ld a, e
-    ld l, d
-    push de
-    or l
+    ld a, [text_remaining_chars]
+    cp $00
     jr z, .hide_window
         ; return to state 2
         ld a, $01
