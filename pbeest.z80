@@ -19,6 +19,9 @@ section "start", rom0[$0100]
 ; note: ROM name must have 15 bytes (the number indicate the stable build number)
     ROM_HEADER_COLOR    "PBEEST.00000001", CART_MBC5_RAM_BATTERY, ROM_1536K, RAM_32K
 
+; RAM general use utilities
+include "ram/ram_utils.z80"
+
 ; include time handlers
 include "time/delay.z80"
 
@@ -91,12 +94,72 @@ main:
     ld l, key_start
     call is_key_down
     jr z, .no_key_detected
+        ; First Page
         ld de, dialog_page_0_end - dialog_page_0
         ld hl, dialog_page_0
         call hud_copy_text_buffer
         ld de, dialog_page_0_end - dialog_page_0
+        ld a, $01
+        call hud_show_text
+
+        ; Intermediate Page
+        ld de, dialog_page_1_end - dialog_page_1
+        ld hl, dialog_page_1
+        call hud_copy_text_buffer
+        ld de, dialog_page_1_end - dialog_page_1
         ld a, $00
         call hud_show_text
+
+        ; Final Page
+        ld de, dialog_page_2_end - dialog_page_2
+        ld hl, dialog_page_2
+        call hud_copy_text_buffer
+        ld de, dialog_page_2_end - dialog_page_2
+        ld a, $02
+        call hud_show_text
+
+        ; delay settings
+        ; $FF -> outer loop control (255 times)
+        ; $02 -> inner loop contorl (2 times)
+        ld hl, $FFFF
+        call time_controlled_two_step_delay
+
+        ; Standalone Page
+        ld de, dialog_page_3_end - dialog_page_3
+        ld hl, dialog_page_3
+        call hud_copy_text_buffer
+        ld de, dialog_page_3_end - dialog_page_3
+        ld a, $03
+        call hud_show_text
+
+        ; delay settings
+        ; $FF -> outer loop control (255 times)
+        ; $02 -> inner loop contorl (2 times)
+        ld hl, $FFFF
+        call time_controlled_two_step_delay
+
+        ; Standalone Page
+        ld de, dialog_page_4_end - dialog_page_4
+        ld hl, dialog_page_4
+        call hud_copy_text_buffer
+        ld de, dialog_page_4_end - dialog_page_4
+        ld a, $03
+        call hud_show_text
+
+        ; delay settings
+        ; $FF -> outer loop control (255 times)
+        ; $02 -> inner loop contorl (2 times)
+        ld hl, $FFFF
+        call time_controlled_two_step_delay
+
+        ; Standalone Page
+        ld de, dialog_page_5_end - dialog_page_5
+        ld hl, dialog_page_5
+        call hud_copy_text_buffer
+        ld de, dialog_page_5_end - dialog_page_5
+        ld a, $03
+        call hud_show_text
+        
 
 .no_key_detected:
     jp .main_loop

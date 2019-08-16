@@ -140,8 +140,6 @@ hud_initialize_hud:
 ; a: operation mode
 ; return: no return
 hud_show_text:
-    ; save previous hl
-    push hl
     ld bc, text_operation_mode
     ld [bc], a
 
@@ -150,6 +148,9 @@ hud_show_text:
     dec e
     ld a, e
     ld [text_remaining_chars], a
+
+    ld a, $00
+    ld [text_current_line_char], a
 
     ; clear window text before starting
     call hud_clear_text
@@ -167,20 +168,18 @@ hud_show_text:
         ; initialize current text box with animation
         ld a, state_one__show_window
         ld [text_box_state], a
-        ld [text_current_line_char], a
 
         jr .continue_initialization
 
 .skip_start_animation:
         ; Window does not animatio
         ld h, 7
-        ld l, 8*13
+        ld l, 8*13 + 1
         call wnd_set_window_position
 
         ; initialize current text box with animation
         ld a, state_two__render_characters_in_page
         ld [text_box_state], a
-        ld [text_current_line_char], a
 
 
 .continue_initialization:
@@ -214,19 +213,17 @@ hud_show_text:
     ld e, 8*18
     ld d, 7
 .move_window:
-    push de
+    ;push de
     ld l, e
     ld h, d
     call wnd_set_window_position
-    pop de
     dec de
-    push de
+
     ; delay settings
     ; $FF -> outer loop control (255 times)
     ; $02 -> inner loop contorl (2 times)
     ld hl, $FF02
     call time_controlled_two_step_delay
-    pop de
     ld a, 8*13
     cp e
     jr nz, .move_window
@@ -256,7 +253,7 @@ hud_show_text:
     pop hl
 
     ld a, 0
-    push de
+    ;push de
 .load_text_bytes:
     ; saves current value of hl for (used as argument for is_key_down)
     push hl
@@ -516,6 +513,9 @@ hud_show_text:
     cp $00
     jr z, .hide_window_or_leave
         ; return to state 2
+        ld a, $00
+        ld [text_current_line_char], a
+        
         ld a, state_two__render_characters_in_page
         ld [text_box_state], a
         call hud_clear_text
@@ -532,6 +532,7 @@ hud_show_text:
         jp .check_current_state
 
 .leave_without_hiding:    
+        ; clear screen
         ; Remain on screen
         ld a, state_six__leave_text_box_loop
         ld [text_box_state], a
@@ -539,7 +540,7 @@ hud_show_text:
 
 ; STATE MACHINE STATE 5: HIDE WINDOW
 .run_text_box_state_5:
-    ld e, 8*13
+    ld e, 8*13 + 4
     ld d, 7
 .move_window_down:
     push de
@@ -564,7 +565,6 @@ hud_show_text:
         jp .check_current_state
 
 .run_text_box_state_6:
-    pop hl
     jr .leave_text_box_loop
 
 .leave_text_box_loop:
