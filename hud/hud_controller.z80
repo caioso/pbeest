@@ -30,6 +30,11 @@ text_box_key_state equ text_box_state + 1
 text_current_char equ text_box_key_state + 1
 text_current_line_char equ text_current_char + 1
 text_remaining_chars equ text_current_line_char + 1
+text_operation_mode equ text_remaining_chars + 1
+
+; operation modes
+text_box_start_animation equ $01
+text_box_end_animation equ $02
 
 ; include textbox map
 include "hud/text_box.z80"
@@ -132,10 +137,13 @@ hud_initialize_hud:
 ; Shows text stored in the address held by text_buffer, with size of de
 ; This function assumes that the window tiles have already their attributes are set correctly (only the tiles will be updated)
 ; de: text size
+; a: operation mode
 ; return: no return
 hud_show_text:
     ; save previous hl
     push hl
+    ld bc, text_operation_mode
+    ld [bc], a
 
     ; save de (function argument), to be used in step 2
     ; the last character must not be counted (MUST ALWAYS BE $FE)
@@ -147,14 +155,35 @@ hud_show_text:
     call hud_clear_text
 
     ; position the window on the screen bottom (for the animation)
-    ld h, 7
-    ld l, 8*18
-    call wnd_set_window_position
+    ld a, [text_operation_mode]
+    ; Check whether "start animation bit" is set
+    bit 0, a
+    jr z, .skip_start_animation
+        ; Animate before starting
+        ld h, 7
+        ld l, 8*18
+        call wnd_set_window_position
 
-    ; initialize current text box state
-    ld a, $00
-    ld [text_box_state], a
-    ld [text_current_line_char], a
+        ; initialize current text box with animation
+        ld a, state_one__show_window
+        ld [text_box_state], a
+        ld [text_current_line_char], a
+
+        jr .continue_initialization
+
+.skip_start_animation:
+        ; Window does not animatio
+        ld h, 7
+        ld l, 8*13
+        call wnd_set_window_position
+
+        ; initialize current text box with animation
+        ld a, state_two__render_characters_in_page
+        ld [text_box_state], a
+        ld [text_current_line_char], a
+
+
+.continue_initialization:
 
     ; initialize text counter 
     push hl
@@ -485,17 +514,28 @@ hud_show_text:
     ; Finished Rendering current page. Check whether is ther still text to be rendered
     ld a, [text_remaining_chars]
     cp $00
-    jr z, .hide_window
+    jr z, .hide_window_or_leave
         ; return to state 2
         ld a, state_two__render_characters_in_page
         ld [text_box_state], a
         call hud_clear_text
         jp .check_current_state
-.hide_window:
-    ; go to state 5 otherwise
-    ld a, state_five__hide_window
-    ld [text_box_state], a
-    jp .check_current_state
+.hide_window_or_leave:
+    ; position the window on the screen bottom (for the animation)
+    ld a, [text_operation_mode]
+    ; Check whether "start animation bit" is set
+    bit 1, a
+    jr z, .leave_without_hiding
+        ; Animate when leaving
+        ld a, state_five__hide_window
+        ld [text_box_state], a
+        jp .check_current_state
+
+.leave_without_hiding:    
+        ; Remain on screen
+        ld a, state_six__leave_text_box_loop
+        ld [text_box_state], a
+        jp .check_current_state
 
 ; STATE MACHINE STATE 5: HIDE WINDOW
 .run_text_box_state_5:

@@ -95,6 +95,7 @@ main:
         ld hl, dialog_page_0
         call hud_copy_text_buffer
         ld de, dialog_page_0_end - dialog_page_0
+        ld a, $00
         call hud_show_text
 
 .no_key_detected:
