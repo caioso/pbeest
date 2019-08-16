@@ -1,0 +1,41 @@
+; Project Beest
+; Sprite Control Routines
+; Developed by Caio Souza Oliveira
+; 16 Aug 2019
+
+; include sprites
+; Move to another bank in the future
+include "graphics/hero.z80"
+
+; Sprite Constants
+sprite_y equ 0
+sprite_x equ 1
+sprite_tile equ 2
+sprite_attr equ 3
+sprite_size equ 4
+
+; Sprite 1
+sprite_1 equ _OAMRAM 
+sprite_2 equ _OAMRAM + sprite_size
+
+; initialize Sprite
+; bc: sprite ID
+; h: sprite X
+; l: sprite Y
+; d: sprite tile
+; e: sprite attribute
+; no returns
+sptr_initialize_sprite:
+    ; initialize sprite
+    ld a, l
+    ld [bc], a
+    inc bc
+    ld a, h
+    ld [bc], a
+    inc bc
+    ld a, d
+    ld [bc], a
+    inc bc
+    ld a, e
+    ld [bc], a
+    ret

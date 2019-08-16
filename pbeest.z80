@@ -47,6 +47,9 @@ include "hud/hud_controller.z80"
 ; include dialogs files
 include "hud/dialog/dialogs.z80"
 
+; include sprite controller
+include "sprite/sprite_controller.z80"
+
 ; main function
 ; bootstrap ROM
 ; clear pallete, background, window and sprite maps
@@ -80,8 +83,16 @@ main:
     ; set sprite 16 x 8 pixe;s
     ; set sprite layer on
     ; set window memory to 9c000
-    ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON|LCDCF_WIN9C00|LCDCF_WINON
+    ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ16|LCDCF_OBJON|LCDCF_WIN9C00|LCDCF_WINON
     ld [rLCDC], a
+
+    ; Intialize Sprite
+    ld bc, sprite_1
+    ld l, $1A
+    ld h, $1A
+    ld d, $02
+    ld e, $00
+    call sptr_initialize_sprite
 
 .main_loop
     nop
