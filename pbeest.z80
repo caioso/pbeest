@@ -47,14 +47,17 @@ include "graphics/hud_tiles.z80"
 include "graphics/hero.z80"
 include "graphics/hero_palette.z80"
 
+; include sprite controller
+include "sprite/sprite_controller.z80"
+
 ; include hud controller
 include "hud/hud_controller.z80"
 
 ; include dialogs files
 include "hud/dialog/dialogs.z80"
 
-; include sprite controller
-include "sprite/sprite_controller.z80"
+; include character contoller
+include "character/character_controller.z80"
 
 ; main function
 ; bootstrap ROM
@@ -87,42 +90,15 @@ main:
     ld bc, 1 ; target palette index (each palette has 4 colors)
     call bgc_load_background_palette
 
-    ; load sprite tiles
-    ; initialize hero tiles
-    ld hl, hero_begin
-    ld bc, hero_end - hero_begin
-    ld a, $00
-    ; load hero tukes
-    call tilecrt_load_tiles
+    ; Intialize character tiles
+    call chr_load_character_tiles_and_palettes
 
-    ; load sprite palletes
-    ld hl, hero_palette_begin
-    ld de, hero_palette_end - hero_palette_begin
-    ld bc, 0 ; target palette index (each palette has 4 colors)
-    call sprt_load_sprite_palette
-
-    ; Intialize Hero Sprite
-    ld bc, sprite_1
-    ; Y
-    ld l, $1A
-    ; X
-    ld h, $1A
-    ; Sprite
-    ld d, $56
-    ; Metadata
-    ld e, $00
-    call sptr_initialize_sprite
-
-    ld bc, sprite_2
-    ; Y
-    ld l, $1A
-    ; X (+ 8)
-    ld h, $22
-    ; Sprite
-    ld d, $58
-    ; Metadata
-    ld e, $00
-    call sptr_initialize_sprite
+    ; Intialize character 0
+    ld hl, character_0
+    ld c, $1A
+    ld b, $1A
+    ld a, $56
+    call chr_initialize_character
 
     ; start display register
     ; set lcd on

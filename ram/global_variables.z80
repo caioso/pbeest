@@ -23,3 +23,11 @@ text_operation_mode equ text_remaining_chars + 1
 ; Tile Loader's Variables
 tiles_counter_byte_1_bank0 equ text_operation_mode + 1
 tiles_counter_byte_2_bank0 equ text_operation_mode + 2
+
+; Character Controller's Variables
+character_0_x equ tiles_counter_byte_2_bank0 + 1
+character_0_y equ character_0_x + 1
+character_0_tile equ character_0_y + 1
+
+; Control constants
+character_0 equ character_0_x

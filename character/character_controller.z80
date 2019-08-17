@@ -1,0 +1,84 @@
+; Project Beest
+; Character Controller -> Character are assumed to always be 16x16 (4 tiles)
+; Developed by Caio Souza Oliveira
+; 17 Aug 2019
+
+; load character tiles
+chr_load_character_tiles_and_palettes:
+    ; load sprite tiles
+    ; initialize hero tiles
+    ld hl, hero_begin
+    ld bc, hero_end - hero_begin
+    ld a, $00
+    ; load hero tukes
+    call tilecrt_load_tiles
+
+    ; load sprite palletes
+    ld hl, hero_palette_begin
+    ld de, hero_palette_end - hero_palette_begin
+    ld bc, 0 ; target palette index (each palette has 4 colors)
+    call sprt_load_sprite_palette
+
+    ret
+
+
+; Initialize character variables
+; hl: character variable address
+; bc: character position (c:X, b:Y)
+; a: character tile (all 4 tiles *MUST* be in sequence)
+; return: no return
+chr_initialize_character:
+    ; update character variable
+    push hl
+    ld [hl], c
+    inc hl
+    ld [hl], b
+    inc hl
+    ld [hl], a
+    pop hl
+    ld e, l
+    ld d, h
+    push de
+
+    ; get sprite number
+    call sptr_get_sprite_number_by_character_id
+    push bc
+    ld c, l
+    ld b, h
+    ; Intialize Hero Sprite
+    ; X
+    ld a, [de]
+    ld h, a
+    inc de
+    ; Y
+    ld a, [de]
+    ld l, a
+    inc de
+    ; Sprite
+    ld a, [de]
+    ld d, a
+    ; Metadata
+    ld e, $00
+    call sptr_initialize_sprite
+
+    pop bc
+    pop de
+    ld bc, sprite_2
+    ; X (+ 8)
+    ld a, [de]
+    add $08
+    ld h, a 
+    inc de
+    ; Y
+    ld a, [de]
+    ld l, a
+    inc de
+    ; Sprite (+ 2), assumed always to be in sequence
+    ld a, [de]
+    add $02
+    ld d, a
+    ; Metadata
+    ld e, $00
+    call sptr_initialize_sprite
+
+    ret

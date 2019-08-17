@@ -62,3 +62,31 @@ sprt_load_sprite_palette:
     or d
     jr nz, .load_palette_bytes
     ret
+
+; converts character number to real (dual) sprite number 
+; hl: character numner
+; return (hl): corresponding sprite number (character sprite 1)
+; return (bc): corresponding sprite number (character sprite 2)
+sptr_get_sprite_number_by_character_id:
+    push hl
+    ld a, c
+    sub l
+    ld l, a
+    ld a, b
+    sbc h
+    or c
+    jr z, .sprite_1
+    jr .default_sprite
+    
+.sprite_1:
+    pop hl
+    ld hl, sprite_1
+    ld bc, sprite_2
+    ret
+
+.default_sprite:
+    pop hl
+    ld hl, sprite_1
+    ld bc, sprite_2
+    ret
+    
