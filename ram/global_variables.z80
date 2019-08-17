@@ -1,0 +1,25 @@
+; Project Beest
+; Ram utilities
+; Developed by Caio Souza Oliveira
+; 17 Aug 2019
+
+; RAM BANK 0
+; Joypad's Variables
+current_key equ _RAM
+
+; HUD Controller's variables
+; Adjustable textbox buffer size
+text_buffer_size equ 68
+
+text_buffer equ _RAM + 1
+text_line equ text_buffer + text_buffer_size
+text_box_state equ text_line + 1
+text_box_key_state equ text_box_state + 1
+text_current_char equ text_box_key_state + 1
+text_current_line_char equ text_current_char + 1
+text_remaining_chars equ text_current_line_char + 1
+text_operation_mode equ text_remaining_chars + 1
+
+; Tile Loader's Variables
+tiles_counter_byte_1_bank0 equ text_operation_mode + 1
+tiles_counter_byte_2_bank0 equ text_operation_mode + 2

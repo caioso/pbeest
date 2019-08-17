@@ -3,10 +3,6 @@
 ; Developed by Caio Souza Oliveira
 ; 16 Aug 2019
 
-; include sprites
-; Move to another bank in the future
-include "graphics/hero.z80"
-
 ; Sprite Constants
 sprite_y equ 0
 sprite_x equ 1
@@ -38,4 +34,31 @@ sptr_initialize_sprite:
     inc bc
     ld a, e
     ld [bc], a
+    ret
+
+; loads background palettes
+; hl: holds address to first byte palette
+; de: number of bytes to be loaded
+; bc: holds palette index
+sprt_load_sprite_palette:
+    ld a, c
+    ; multiplies index by 8, to target individual palettes by index, rather than colors.
+    rla
+    rla
+    rla
+    ld c, a
+    ; set palette write mode (rOCPS)
+    ; setting the MSBit of BCPS will increment allow writing to the palette registers with auto increment
+    ; that after writing to BCPD, the lower 7 bits of BCPDS will be incremented
+    ld a, $80
+    or a, c
+    ld [rOCPS], a
+.load_palette_bytes:
+    ld a, [hl]
+    ld [rOCPD], a
+    inc hl
+    dec de
+    ld a, e
+    or d
+    jr nz, .load_palette_bytes
     ret

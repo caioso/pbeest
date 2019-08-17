@@ -3,10 +3,6 @@
 ; Developed by Caio Souza Oliveira
 ; 7 Aug 2019
 
-; global variable
-; RAM bank 0, position 0
-current_key equ _RAM
-
 ; key event constants
 key_a equ $01
 key_b equ $02

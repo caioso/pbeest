@@ -1,0 +1,5 @@
+; Hero Pallete
+
+hero_palette_begin:
+dw $7FFF, $0000, $2382, $43BF
+hero_palette_end:

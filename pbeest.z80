@@ -21,12 +21,16 @@ section "start", rom0[$0100]
 
 ; RAM general use utilities
 include "ram/ram_utils.z80"
+include "ram/global_variables.z80"
 
 ; include time handlers
 include "time/delay.z80"
 
 ; include input handler
 include "joypad/input.z80"
+
+; include tile loader
+include "graphics/tiles_loader.z80"
 
 ; include display handler
 include "graphics/display.z80"
@@ -40,6 +44,8 @@ include "window/window_controller.z80"
 ; include graphics data
 include "graphics/hud_palette.z80"
 include "graphics/hud_tiles.z80"
+include "graphics/hero.z80"
+include "graphics/hero_palette.z80"
 
 ; include hud controller
 include "hud/hud_controller.z80"
@@ -60,6 +66,11 @@ main:
     ; load stack
     ld sp, $FFFF
 
+    ; intialize global tile counter
+    ld hl, $00
+    ld bc, $00
+    call initialize_tile_counter
+
     ; initialize background
     call bgc_initialize_background
 
@@ -76,6 +87,43 @@ main:
     ld bc, 1 ; target palette index (each palette has 4 colors)
     call bgc_load_background_palette
 
+    ; load sprite tiles
+    ; initialize hero tiles
+    ld hl, hero_begin
+    ld bc, hero_end - hero_begin
+    ld a, $00
+    ; load hero tukes
+    call tilecrt_load_tiles
+
+    ; load sprite palletes
+    ld hl, hero_palette_begin
+    ld de, hero_palette_end - hero_palette_begin
+    ld bc, 0 ; target palette index (each palette has 4 colors)
+    call sprt_load_sprite_palette
+
+    ; Intialize Hero Sprite
+    ld bc, sprite_1
+    ; Y
+    ld l, $1A
+    ; X
+    ld h, $1A
+    ; Sprite
+    ld d, $56
+    ; Metadata
+    ld e, $00
+    call sptr_initialize_sprite
+
+    ld bc, sprite_2
+    ; Y
+    ld l, $1A
+    ; X (+ 8)
+    ld h, $22
+    ; Sprite
+    ld d, $58
+    ; Metadata
+    ld e, $00
+    call sptr_initialize_sprite
+
     ; start display register
     ; set lcd on
     ; set bg memory to 8000 and 9800
@@ -85,14 +133,6 @@ main:
     ; set window memory to 9c000
     ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ16|LCDCF_OBJON|LCDCF_WIN9C00|LCDCF_WINON
     ld [rLCDC], a
-
-    ; Intialize Sprite
-    ld bc, sprite_1
-    ld l, $1A
-    ld h, $1A
-    ld d, $02
-    ld e, $00
-    call sptr_initialize_sprite
 
 .main_loop
     nop
@@ -110,7 +150,7 @@ main:
         ld hl, dialog_page_0
         call hud_copy_text_buffer
         ld de, dialog_page_0_end - dialog_page_0
-        ld a, $01
+        ld a, text_box_start_animation
         call hud_show_text
 
         ; Intermediate Page
@@ -118,7 +158,7 @@ main:
         ld hl, dialog_page_1
         call hud_copy_text_buffer
         ld de, dialog_page_1_end - dialog_page_1
-        ld a, $00
+        ld a, text_box_no_animations
         call hud_show_text
 
         ; Final Page
@@ -126,7 +166,7 @@ main:
         ld hl, dialog_page_2
         call hud_copy_text_buffer
         ld de, dialog_page_2_end - dialog_page_2
-        ld a, $02
+        ld a, text_box_end_animation
         call hud_show_text
 
         ; delay settings
@@ -140,7 +180,7 @@ main:
         ld hl, dialog_page_3
         call hud_copy_text_buffer
         ld de, dialog_page_3_end - dialog_page_3
-        ld a, $03
+        ld a, text_box_all_animations
         call hud_show_text
 
         ; delay settings
@@ -154,7 +194,7 @@ main:
         ld hl, dialog_page_4
         call hud_copy_text_buffer
         ld de, dialog_page_4_end - dialog_page_4
-        ld a, $03
+        ld a, text_box_all_animations
         call hud_show_text
 
         ; delay settings
@@ -168,7 +208,7 @@ main:
         ld hl, dialog_page_5
         call hud_copy_text_buffer
         ld de, dialog_page_5_end - dialog_page_5
-        ld a, $03
+        ld a, text_box_all_animations
         call hud_show_text
         
 

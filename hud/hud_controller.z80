@@ -4,7 +4,6 @@
 ; 8 Aug 2019
 
 ; constants or labels
-text_buffer_size equ 68
 text_line_1_begin equ _SCRN1 + 32 + 1
 text_line_2_begin equ _SCRN1 + 32*3 + 1
 text_line_1_size equ 18
@@ -22,19 +21,11 @@ state_four__check_next_action_after_leaving_page equ $03
 state_five__hide_window equ $04
 state_six__leave_text_box_loop equ $05
 
-; global variables
-text_buffer equ _RAM + 1 ;C001
-text_line equ text_buffer + text_buffer_size
-text_box_state equ text_line + 1
-text_box_key_state equ text_box_state + 1
-text_current_char equ text_box_key_state + 1
-text_current_line_char equ text_current_char + 1
-text_remaining_chars equ text_current_line_char + 1
-text_operation_mode equ text_remaining_chars + 1
-
 ; operation modes
+text_box_no_animations equ $00
 text_box_start_animation equ $01
 text_box_end_animation equ $02
+text_box_all_animations equ $03
 
 ; include textbox map
 include "hud/text_box.z80"
@@ -43,18 +34,9 @@ hud_initialize_hud:
     ; initialize hud tiles
     ld hl, hud_tiles
     ld bc, hud_tiles_end - hud_tiles
-    ld de, _VRAM
-
-    ; copy hud tiles
-.copy_hud:
-    ld a, [hl]
-    ld [de], a
-    inc hl
-    inc de
-    dec bc
-    ld a, c
-    or b
-    jr nz, .copy_hud
+    ld a, 0
+    ; load hud tukes
+    call tilecrt_load_tiles
 
     ; copy text box map
     ; Video Bank 1 (window/bg tiles)

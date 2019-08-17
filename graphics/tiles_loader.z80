@@ -1,0 +1,59 @@
+; Project Beest
+; Tiles loading and handling Routines
+; Developed by Caio Souza Oliveira
+; 17 Aug 2019
+
+; load tiles, based on global tile counter
+; hl: first tile address
+; bc: number of bytes
+; a: target bank
+; return: no returns
+tilecrt_load_tiles:
+    ; TODO: Make this conpatible with multiple banks (tiles_counter_byte_1_bank0 and tiles_counter_byte_1_bank1)
+    ld [rVBK], a
+
+    push hl
+    push bc
+    ; calculate next loading address, based on (tiles_counter_byte_1_bank0|tiles_counter_byte_2<<8)
+    ld de, _VRAM
+    ld a, [tiles_counter_byte_1_bank0]
+    add a, e
+    ld e, a
+    ld a, [tiles_counter_byte_2_bank0]
+    adc a, d
+    ld d, a
+    pop bc
+    pop hl
+    push bc
+
+    ; copy tiles
+.copy_tile:
+    ld a, [hl]
+    ld [de], a
+    inc hl
+    inc de
+    dec bc
+    ld a, c
+    or b
+    jr nz, .copy_tile
+
+    ; update tile coutner
+    pop bc
+    ld a, [tiles_counter_byte_1_bank0]
+    add a, c
+    ld [tiles_counter_byte_1_bank0], a
+    ld a, [tiles_counter_byte_2_bank0]
+    adc a, b
+    ld [tiles_counter_byte_2_bank0], a
+    ret
+
+; initialize global tile loader
+; hl: tile counter target value byte 0
+; bc: tile counter target value byte 1
+initialize_tile_counter:
+    ; TODO: Make this conpatible with multiple banks (tiles_counter_byte_1_bank0 and tiles_counter_byte_1_bank1)
+    ld hl, tiles_counter_byte_1_bank0
+    ld [hl], c
+    inc bc
+    ld [hl], b
+    ret
