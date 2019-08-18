@@ -63,15 +63,14 @@ include "character/character_controller.z80"
 ; bootstrap ROM
 ; clear pallete, background, window and sprite maps
 main:
-    nop 
     ; disable interrupts
     di
     ; load stack
     ld sp, $FFFF
 
     ; intialize global tile counter
-    ld hl, $00
-    ld bc, $00
+    ld hl, $0
+    ld bc, $0
     call initialize_tile_counter
 
     ; initialize background
@@ -89,8 +88,8 @@ main:
     ld de, hud_palette_end - hud_palette_begin
     ld bc, 1 ; target palette index (each palette has 4 colors)
     call bgc_load_background_palette
-
     ; Intialize character tiles
+
     call chr_load_character_tiles_and_palettes
 
     ; Intialize character 0
@@ -113,8 +112,13 @@ main:
 .main_loop
     nop
 
+    call display_wait_vblank
+
     ; read input
     call joypad
+    
+    ; Player Controlled Loop Iteration
+    call chr_player_controlled_character_loop
 
     ; TEMP 
     ; joypad test

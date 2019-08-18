@@ -52,8 +52,9 @@ tilecrt_load_tiles:
 ; bc: tile counter target value byte 1
 initialize_tile_counter:
     ; TODO: Make this conpatible with multiple banks (tiles_counter_byte_1_bank0 and tiles_counter_byte_1_bank1)
+    ld e, l
     ld hl, tiles_counter_byte_1_bank0
+    ld [hl], e
+    ld hl, tiles_counter_byte_2_bank0
     ld [hl], c
-    inc bc
-    ld [hl], b
     ret
