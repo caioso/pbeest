@@ -30,6 +30,7 @@ text_box_all_animations equ $03
 ; include textbox map
 include "hud/text_box.z80"
 
+; TODO: move tile/attribute routines to window controller.
 hud_initialize_hud:
     ; initialize hud tiles
     ld hl, hud_tiles
@@ -91,8 +92,8 @@ hud_initialize_hud:
 
     ; TEMPORARY
 .copy_text_box_map_attribute:
-    ; load pallete #1
-    ld a, 1
+    ; load pallete #8
+    ld a, 7
     ld [bc], a
     inc bc
     dec de

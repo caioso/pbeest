@@ -6,5 +6,97 @@
 ; load specific room
 ; hl: Room initial address
 map_load_room:
+    ; load room width
+    ld a, [hl]
+    ; store room width
+    push hl
+    ld hl, map_current_width
+    ld [hl], a
+    pop hl
+    inc hl
+    ; load room height
+    ld a, [hl]
+    ; store room height
+    push hl
+    ld hl, map_current_height
+    ld [hl], a
+    pop hl
 
+    ; load palettes
+    ; Skip for now: palette bank
+    inc hl
+    ; load palette initial address (2 bytes) - LSByte first
+    inc hl
+    ld e, [hl]
+    inc hl
+    ld d, [hl]
+    inc hl
+    ; load number of palettes to be loaded
+    ld a, [hl]
+
+    ; store hl
+    push hl
+    ld h, d
+    ld l, e
+    ld d, $00
+    ld e, a
+    ld bc, 0 ; target palette index (each palette has 4 colors)
+    call bgc_load_background_palette
+
+    ; restore hl
+    pop hl
+
+     ; store current tile offset before loading new tiles. This will be needed when rendering the map tiles
+    push hl
+    ld hl, tiles_counter_byte_1_bank0
+    ld b, [hl]
+    ld hl, tiles_counter_byte_2_bank0
+    ld c, [hl]
+    pop hl
+
+    ; save bc for use later
+    push bc
+
+    ; Load map tiles (starting at the global tile counter)
+    ; load tiles bank
+    inc hl
+    ld b, [hl]
+    ; load tile mlistap address
+    inc hl
+    ld e, [hl]
+    inc hl
+    ld d, [hl]
+    ; load number of bytes
+    inc hl
+    ld c, [hl]
+    push hl
+    ld l, e
+    ld h, d
+    ld a, b
+    ld d, a
+    ld b, $00
+    ld a, d
+
+    call tilecrt_load_tiles
+
+    ; restore hl, bc
+    pop hl
+    pop bc
+
+    ; load room tile map 
+    push hl
+    ld hl, map_current_width
+    ld d, [hl]
+    ld hl, map_current_height
+    ld e, [hl]
+    pop hl
+
+    ; tile map initial address
+    inc hl    
+    ; store hl
+    push hl
+    call bgc_load_background_tiles
+
+    ; restore hl
+    pop hl
     ret

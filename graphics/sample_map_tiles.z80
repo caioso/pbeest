@@ -1,0 +1,13 @@
+; CGBpalette entries.
+sample_map_tilesCGB::
+DB $00
+
+; Start of tile array.
+sample_map_tiles_begin:
+DB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
+DB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
+DB $00,$FF,$00,$FF,$00,$FF,$00,$FF
+DB $00,$FF,$00,$FF,$00,$FF,$00,$FF
+sample_map_tiles_end:
+
+; End of SAMPLE_MAP_TILES.Z80

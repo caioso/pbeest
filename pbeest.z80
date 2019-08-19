@@ -19,6 +19,9 @@ section "start", rom0[$0100]
 ; note: ROM name must have 15 bytes (the number indicate the stable build number)
     ROM_HEADER_COLOR    "PBEEST.00000001", CART_MBC5_RAM_BATTERY, ROM_1536K, RAM_32K
 
+; External functions
+include "external/math.z80"
+
 ; RAM general use utilities
 include "ram/ram_utils.z80"
 include "ram/global_variables.z80"
@@ -92,10 +95,11 @@ main:
     ; load intial background palettes
     ld hl, hud_palette_begin
     ld de, hud_palette_end - hud_palette_begin
-    ld bc, 1 ; target palette index (each palette has 4 colors)
+    ; the hud palette must be the last one!
+    ld bc, 7 ; target palette index (each palette has 4 colors)
     call bgc_load_background_palette
-    ; Intialize character tiles
-
+    
+    ; Intialize character tiles and palettes
     call chr_load_character_tiles_and_palettes
 
     ; Intialize character 0
@@ -104,6 +108,10 @@ main:
     ld b, $1A
     ld a, $56
     call chr_initialize_character
+
+    ; load *sample* room
+    ld hl, sample_room_begin
+    call map_load_room
 
     ; start display register
     ; set lcd on
