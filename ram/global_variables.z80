@@ -20,6 +20,18 @@ text_current_line_char equ text_current_char + 1
 text_remaining_chars equ text_current_line_char + 1
 text_operation_mode equ text_remaining_chars + 1
 
+; Map Controller's Variables
+; Adjustable map constants
+map_max_width equ 32
+map_max_height equ 32
+
+; holds map's graphics ID
+map_tiles equ text_operation_mode + (map_max_height*map_max_width)
+; holds map's graphcis metadata (palette, etc)
+map_metadata equ map_tiles + (map_max_height*map_max_width)
+; hold map's event/collision data
+map_logic equ map_metadata + (map_max_height*map_max_width)
+
 ; Tile Loader's Variables
 tiles_counter_byte_1_bank0 equ text_operation_mode + 1
 tiles_counter_byte_2_bank0 equ text_operation_mode + 2

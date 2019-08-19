@@ -1,0 +1,10 @@
+; Project Beest
+; Map Controller
+; Developed by Caio Souza Oliveira
+; 19 Aug 2019
+
+; load specific room
+; hl: Room initial address
+map_load_room:
+
+    ret
