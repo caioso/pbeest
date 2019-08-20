@@ -95,8 +95,77 @@ map_load_room:
     inc hl    
     ; store hl
     push hl
+    ld a, 0
     call bgc_load_background_tiles
 
     ; restore hl
     pop hl
+    ; 16 bit division
+    ; DE = DE / BC, BC = remainder
+
+    push hl
+    
+    ; Skip Tile map bytes
+    ld a, [map_current_width]
+    ld e, a
+    ld d, $00
+    ld a, [map_current_height]
+    ld l, a
+    ld h, $00
+    call mul_DE_HL_BCDEu
+
+    pop hl
+    ld a, e
+    add l
+    ld l, a
+    ld a, d
+    adc h 
+    ld h, a
+    push hl
+    
+    ; load background attributes
+    ; No offset to be applied to the map values
+    ld b, $00
+    ld c, $00
+    ld a, [map_current_width]
+    ld d, a
+    ld a, [map_current_height]
+    ld e, a
+    ; VBK 1
+    ld a, 1
+    call bgc_load_background_tiles
+
+    pop hl
+
+    push hl
+    
+    ; Skip Tile map bytes (prepare to load map's logic data)
+    ld a, [map_current_width]
+    ld e, a
+    ld d, $00
+    ld a, [map_current_height]
+    ld l, a
+    ld h, $00
+    call mul_DE_HL_BCDEu
+
+    pop hl
+    ld a, e
+    add l
+    ld l, a
+    ld a, d
+    adc h 
+    ld h, a
+
+    ; load map's logic data
+    ld bc, map_logic
+.copy_logic_bytes:
+    ld a, [hl]
+    ld [bc], a
+    inc hl 
+    inc bc
+    dec de
+    ld a, d
+    or e
+    jr nz, .copy_logic_bytes
+
     ret

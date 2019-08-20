@@ -65,10 +65,9 @@ clear_lcd:
 ; bc: tiles map offset
 ; d: map width
 ; e: map height
+; a: VBK bank
 bgc_load_background_tiles:
-    ; copy text box map
-    ; Video Bank 1 (window/bg tiles)
-    ld a, 0
+    ; set VBK bank
     ld [rVBK], a
 
     ; TODO: initial position to be loaded (X,Y). for now, starting at (0,0)

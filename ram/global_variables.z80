@@ -25,21 +25,17 @@ text_operation_mode equ text_remaining_chars + 1
 map_max_width equ 32
 map_max_height equ 32
 
-; holds map's graphics ID
-map_tiles equ text_operation_mode + (map_max_height*map_max_width)
-; holds map's graphcis metadata (palette, etc)
-map_metadata equ map_tiles + (map_max_height*map_max_width)
+; Tile Loader's Variables (per bytes)
+tiles_counter_byte_1_bank0 equ text_operation_mode + 1
+tiles_counter_byte_2_bank0 equ tiles_counter_byte_1_bank0 + 1
+
 ; hold map's event/collision data
-map_logic equ map_metadata + (map_max_height*map_max_width)
-map_current_width equ map_logic + 1
+map_logic equ tiles_counter_byte_2_bank0 + 1
+map_current_width equ map_logic + (map_max_width*map_max_height)
 map_current_height equ map_current_width + 1
 
-; Tile Loader's Variables (per bytes)
-tiles_counter_byte_1_bank0 equ map_current_height + 1
-tiles_counter_byte_2_bank0 equ map_current_height + 2
-
 ; Character Controller's Variables
-character_0_x equ tiles_counter_byte_2_bank0 + 1
+character_0_x equ map_current_height + 1
 character_0_y equ character_0_x + 1
 character_0_tile equ character_0_y + 1
 
