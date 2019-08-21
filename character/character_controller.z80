@@ -96,6 +96,15 @@ chr_move_character_down:
     ld [hl], a
     pop hl
 
+    ; check whether movement is allowed
+    push hl
+    push de
+    call chr_position_to_pixel
+    pop de
+    ;ld e, l
+    ;ld d, h
+    pop hl
+
     ; get sprite number for the target character (stored in hl)
     ; save a (holds final Y position)
     ld e, a
@@ -244,4 +253,64 @@ chr_player_controlled_character_loop:
         call chr_move_character_right
 
 .end_character_movement:
+    ret
+
+; Detect Character position on Map (convert pixel into position)
+; hl: character base address
+; return h: X position; l: Y position;
+chr_position_to_pixel:
+    ; load Character X and convert it to Tile position
+    ld e, [hl]
+    ld a, $00
+    ld d, e
+    ld a, $08
+    ld c, a
+    ld a, $00
+    ld b, a
+    push hl
+    call div_DE_BC_DEBCu
+    pop hl
+    push de
+
+    ; generate address to character Y
+    inc hl
+    ld e, [hl]
+    ld a, $00
+    ld d, e
+    ld a, $08
+    ld c, a
+    ld a, $00
+    ld b, a
+    call div_DE_BC_DEBCu
+    ld l, d
+    pop de
+    ld h, d
+    ret
+
+; checks whether movement is alowed
+; de, character position
+chr_is_map_movement_allowed:
+    ld hl, map_current_width
+    ld a, [hl]
+    ld l, a
+    ld h, $00
+
+    push de
+    ld d, $00
+    call mul_DE_HL_BCDEu
+    ld c, e
+    ld b, d
+    pop de
+    ld a, d
+    ld e, a
+    ld d, $00
+    ld a, c
+    add a, e
+    ld e, a
+    ld a, b
+    adc $00
+    ld b, a
+
+    ; calculate address in logic map
+
     ret

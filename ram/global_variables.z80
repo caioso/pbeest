@@ -39,5 +39,8 @@ character_0_x equ map_current_height + 1
 character_0_y equ character_0_x + 1
 character_0_tile equ character_0_y + 1
 
+; division algorith temp varibles (3 bytes must be reserved)
+division_temp equ character_0_tile + 1
+
 ; Control constants
 character_0 equ character_0_x

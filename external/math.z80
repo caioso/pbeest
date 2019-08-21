@@ -1,16 +1,21 @@
 ; 16 bit division
 ; DE = DE / BC, BC = remainder
 
-        PUSHS
 
-        SECTION "Math Div 16 Ram",wram0
+_MD16temp    equ  division_temp
+_MD16count   equ  division_temp + 2
 
-_MD16temp    ds 2
-_MD16count   db
-
-        POPS
+        
 
 div_DE_BC_DEBCu:
+        ; initialize memory locations
+        ld      hl,_MD16temp
+        ld      [hl], $00
+        inc     hl
+        ld      [hl], $00 
+        inc     hl
+        ld      [hl], $00 
+
         ld      hl,_MD16temp
         ld      [hl],c
         inc     hl
@@ -56,7 +61,7 @@ div_DE_BC_DEBCu:
 .noadd:
         ccf
         jr      .nxtbit
-
+        
 
 ;*
 ;* 16/16/32 Bit Unsigned Math, Version A

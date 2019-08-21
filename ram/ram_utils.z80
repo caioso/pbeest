@@ -4,7 +4,7 @@
 ; 16 Aug 2019
 
 ; Reserved general use variables
-ram_general_use_variable_1 equ _RAM + 100
+ram_general_use_variable_1 equ _RAM + 2000
 ram_general_use_variable_2 equ ram_general_use_variable_1 + 1
 ram_general_use_variable_3 equ ram_general_use_variable_2 + 1
 ram_general_use_variable_4 equ ram_general_use_variable_3 + 1

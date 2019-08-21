@@ -157,7 +157,7 @@ hud_show_text:
 .skip_start_animation:
         ; Window does not animatio
         ld h, 7
-        ld l, 8*13 + 1
+        ld l, 8*13
         call wnd_set_window_position
 
         ; initialize current text box with animation
@@ -207,7 +207,7 @@ hud_show_text:
     ; $02 -> inner loop contorl (2 times)
     ld hl, $FF02
     call time_controlled_two_step_delay
-    ld a, 8*13
+    ld a, 8*13 - 1
     cp e
     jr nz, .move_window
         ; Move up animation is complete, to the next state (text rendering)
