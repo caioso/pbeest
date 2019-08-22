@@ -144,66 +144,66 @@ main:
         ld hl, dialog_page_0
         call hud_copy_text_buffer
         ld de, dialog_page_0_end - dialog_page_0
-        ld a, text_box_start_animation
+        ld a, text_box_all_animations ;text_box_start_animation
         call hud_show_text
 
         ; Intermediate Page
-        ld de, dialog_page_1_end - dialog_page_1
-        ld hl, dialog_page_1
-        call hud_copy_text_buffer
-        ld de, dialog_page_1_end - dialog_page_1
-        ld a, text_box_no_animations
-        call hud_show_text
+        ;ld de, dialog_page_1_end - dialog_page_1
+        ;ld hl, dialog_page_1
+        ;call hud_copy_text_buffer
+        ;ld de, dialog_page_1_end - dialog_page_1
+        ;ld a, text_box_end_animation ;text_box_no_animations
+        ;call hud_show_text
 
         ; Final Page
-        ld de, dialog_page_2_end - dialog_page_2
-        ld hl, dialog_page_2
-        call hud_copy_text_buffer
-        ld de, dialog_page_2_end - dialog_page_2
-        ld a, text_box_end_animation
-        call hud_show_text
+        ;ld de, dialog_page_2_end - dialog_page_2
+        ;ld hl, dialog_page_2
+        ;call hud_copy_text_buffer
+        ;ld de, dialog_page_2_end - dialog_page_2
+        ;ld a, text_box_end_animation
+        ;call hud_show_text
 
         ; delay settings
         ; $FF -> outer loop control (255 times)
         ; $02 -> inner loop contorl (2 times)
-        ld hl, $FFFF
-        call time_controlled_two_step_delay
+        ;ld hl, $FFFF
+        ;call time_controlled_two_step_delay
 
         ; Standalone Page
-        ld de, dialog_page_3_end - dialog_page_3
-        ld hl, dialog_page_3
-        call hud_copy_text_buffer
-        ld de, dialog_page_3_end - dialog_page_3
-        ld a, text_box_all_animations
-        call hud_show_text
+        ;ld de, dialog_page_3_end - dialog_page_3
+        ;ld hl, dialog_page_3
+        ;call hud_copy_text_buffer
+        ;ld de, dialog_page_3_end - dialog_page_3
+        ;ld a, text_box_all_animations
+        ;call hud_show_text
 
         ; delay settings
         ; $FF -> outer loop control (255 times)
         ; $02 -> inner loop contorl (2 times)
-        ld hl, $FFFF
-        call time_controlled_two_step_delay
+        ;ld hl, $FFFF
+        ;call time_controlled_two_step_delay
 
         ; Standalone Page
-        ld de, dialog_page_4_end - dialog_page_4
-        ld hl, dialog_page_4
-        call hud_copy_text_buffer
-        ld de, dialog_page_4_end - dialog_page_4
-        ld a, text_box_all_animations
-        call hud_show_text
+        ;ld de, dialog_page_4_end - dialog_page_4
+        ;ld hl, dialog_page_4
+        ;call hud_copy_text_buffer
+        ;ld de, dialog_page_4_end - dialog_page_4
+        ;ld a, text_box_all_animations
+        ;call hud_show_text
 
         ; delay settings
         ; $FF -> outer loop control (255 times)
         ; $02 -> inner loop contorl (2 times)
-        ld hl, $FFFF
-        call time_controlled_two_step_delay
+        ;ld hl, $FFFF
+        ;call time_controlled_two_step_delay
 
         ; Standalone Page
-        ld de, dialog_page_5_end - dialog_page_5
-        ld hl, dialog_page_5
-        call hud_copy_text_buffer
-        ld de, dialog_page_5_end - dialog_page_5
-        ld a, text_box_all_animations
-        call hud_show_text
+        ;ld de, dialog_page_5_end - dialog_page_5
+        ;ld hl, dialog_page_5
+        ;call hud_copy_text_buffer
+        ;ld de, dialog_page_5_end - dialog_page_5
+        ;ld a, text_box_all_animations
+        ;call hud_show_text
         
 
 .no_key_detected:
