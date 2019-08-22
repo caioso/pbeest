@@ -1,12 +1,12 @@
 ; Hero Sprites
 
 hero_begin:
-DB $00,$00,$03,$00,$04,$03,$0D,$02
-DB $1E,$09,$1D,$0A,$1F,$08,$1F,$0C
-DB $0F,$06,$0F,$06,$17,$0B,$37,$18
-DB $3C,$13,$18,$07,$0F,$00,$1F,$07
-DB $00,$00,$E0,$00,$10,$E0,$8C,$70
-DB $0A,$F4,$EE,$14,$FE,$04,$FE,$0C
-DB $FC,$D8,$FC,$D8,$FA,$F4,$FA,$04
-DB $3A,$DC,$3C,$D8,$18,$E0,$FC,$00
+DB $FF,$00,$FF,$18,$FF,$08,$FF,$08
+DB $FF,$08,$FF,$08,$FF,$3C,$FF,$00
+DB $00,$FF,$00,$FF,$18,$FF,$24,$FF
+DB $08,$FF,$10,$FF,$3C,$FF,$00,$FF
+DB $FF,$FF,$FF,$C3,$FF,$FB,$FF,$E7
+DB $FF,$FB,$FF,$FB,$FF,$C7,$FF,$FF
+DB $FF,$00,$FF,$08,$FF,$18,$FF,$28
+DB $FF,$7C,$FF,$08,$FF,$08,$FF,$00
 hero_end:
