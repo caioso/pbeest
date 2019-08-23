@@ -87,20 +87,46 @@ chr_initialize_character:
 ; hl: character variable address
 chr_move_character_down:
     push hl
-
     push hl
-    push de
     
     ; Convert pixel position to map position
+    ; Load X position
+    ld b, [hl]
+    inc hl
+    ; Load Y position
+    ld c, [hl]
+    ; compesate for sprite size (16 pixels + movement direction)
+    ld a, c
+    add a, 16
+    ld c, a
     call chr_position_to_pixel
 
+    ; save DE
+    push de
     ; Check whether movement is allowed
     call chr_check_movement
-    
     pop de
     pop hl
+    cp a, $00
+    jr z, .movement_allowed_might_be_allowed
+        ; clear stack before returning
+        pop hl
+        ret
 
+.movement_allowed_might_be_allowed:
+    ; check second sprite   
+    inc d
+    ; Check whether movement is allowed
+    push hl
+    call chr_check_movement
+    pop hl
+    cp a, $00
+    jr z, .movement_allowed
+        ; clear stack before returning
+        pop hl
+        ret
 
+.movement_allowed:
     ; if allowed, generate address of character Y
     inc hl
     ; load current Y, move it down and store it back
@@ -261,21 +287,17 @@ chr_player_controlled_character_loop:
     ret
 
 ; Detect Character position on Map (convert pixel into position)
-; hl: character base address
+; bc: character position in pixels (b: x, c: y)
 ; return d: X position; e: Y position;
 chr_position_to_pixel:
-    ; load Character X and convert it to Tile position
-    ld a, [hl]
-    ; compensate for extra 8 pixels
+    ld a, b
     sub a, $08
     srl a
     srl a
     srl a
     ld d, a
 
-    ; generate address to character Y
-    inc hl
-    ld a, [hl]
+    ld a, c
     ; compensate for extra 16 pixels
     sub a, $10
     srl a
@@ -285,7 +307,7 @@ chr_position_to_pixel:
     ret
 
 ; checks whether movement is alowed
-; de: d[x], d[y] character position (in tiles)
+; de: d[x], e[y] character position (in tiles)
 ; return a: 1 allowed, 0 not allowed
 chr_check_movement:
     ld hl, map_current_width
