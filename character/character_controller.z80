@@ -100,12 +100,13 @@ chr_move_character_down:
     add a, 16
     ld c, a
     call chr_position_to_pixel
-
+    push bc
     ; save DE
     push de
     ; Check whether movement is allowed
     call chr_check_movement
     pop de
+    pop bc
     pop hl
     cp a, $00
     jr z, .movement_allowed_might_be_allowed
@@ -114,19 +115,39 @@ chr_move_character_down:
         ret
 
 .movement_allowed_might_be_allowed:
-    ; check second sprite   
+    push bc
+    ; check second sprite 
     inc d
     ; Check whether movement is allowed
+    push de
     push hl
     call chr_check_movement
     pop hl
+    pop de
     cp a, $00
-    jr z, .movement_allowed
+    jr z, .check_wheter_not_absoltue
         ; clear stack before returning
+        pop bc
         pop hl
         ret
 
-.movement_allowed:
+.check_wheter_not_absoltue:
+    pop bc
+    ld a, b
+    and a, $07
+    jr z, .movement_allowed
+        ; check whether the next tile (to the right) does not generate a colision
+        inc d
+        push hl
+        call chr_check_movement
+        pop hl
+        cp a, $00
+        jr z, .movement_allowed
+            ; clear stack before returning
+            pop hl
+            ret
+
+.movement_allowed
     ; if allowed, generate address of character Y
     inc hl
     ; load current Y, move it down and store it back
