@@ -147,7 +147,7 @@ chr_move_character_down:
             pop hl
             ret
 
-.movement_allowed
+.movement_allowed:
     ; if allowed, generate address of character Y
     inc hl
     ; load current Y, move it down and store it back
@@ -155,116 +155,259 @@ chr_move_character_down:
     inc a
     ld [hl], a
     pop hl
-
-
-    ; get sprite number for the target character (stored in hl)
-    ; save a (holds final Y position)
-    ld e, a
-    push de
-    call sptr_get_sprite_number_by_character_id
-    pop de
-    ld a, e
-
-    ; target sprite left and right (16x8 times 2) Y coordinate
-    ; hl holds address of the first sprite of the target character
-    call sptr_set_sprite_y
-
-    ; load address of second sprite from bc to hl
-    ld l, c
-    ld h, b
-    call sptr_set_sprite_y
     ret
 
 ; Move Character Down
 ; hl: character variable address
 chr_move_character_up:
     push hl
-    ; generate address of character Y
+    push hl
+    
+    ; Convert pixel position to map position
+    ; Load X position
+    ld b, [hl]
     inc hl
+    ; Load Y position
+    ld c, [hl]
+    ; compesate for sprite size (16 pixels + movement direction)
+    ld a, c
+    sub a, 1
+    ld c, a
+    call chr_position_to_pixel
+    push bc
+    ; save DE
+    push de
+    ; Check whether movement is allowed
+    call chr_check_movement
+    pop de
+    pop bc
+    pop hl
+    cp a, $00
+    jr z, .movement_allowed_might_be_allowed
+        ; clear stack before returning
+        pop hl
+        ret
 
+.movement_allowed_might_be_allowed:
+    push bc
+    ; check second sprite 
+    inc d
+    ; Check whether movement is allowed
+    push de
+    push hl
+    call chr_check_movement
+    pop hl
+    pop de
+    cp a, $00
+    jr z, .check_wheter_not_absoltue
+        ; clear stack before returning
+        pop bc
+        pop hl
+        ret
+
+.check_wheter_not_absoltue:
+    pop bc
+    ld a, b
+    and a, $07
+    jr z, .movement_allowed
+        ; check whether the next tile (to the right) does not generate a colision
+        inc d
+        push hl
+        call chr_check_movement
+        pop hl
+        cp a, $00
+        jr z, .movement_allowed
+            ; clear stack before returning
+            pop hl
+            ret
+
+.movement_allowed:
+    ; if allowed, generate address of character Y
+    inc hl
     ; load current Y, move it down and store it back
     ld a, [hl]
     dec a
     ld [hl], a
     pop hl
-
-    ; get sprite number for the target character (stored in hl)
-    ; save a (holds final Y position)
-    ld e, a
-    push de
-    call sptr_get_sprite_number_by_character_id
-    pop de
-    ld a, e
-
-    ; target sprite left and right (16x8 times 2) Y coordinate
-    ; hl holds address of the first sprite of the target character
-    call sptr_set_sprite_y
-
-    ; load address of second sprite from bc to hl
-    ld l, c
-    ld h, b
-    call sptr_set_sprite_y
     ret
 
 ; Move Character Left
 ; hl: character variable address
 chr_move_character_left:
     push hl
+    push hl
+    
+    ; Convert pixel position to map position
+    ; Load X position
+    ld b, [hl]
+    inc hl
+    ; Load Y position
+    ld c, [hl]
+    ; compesate for sprite size (16 pixels + movement direction)
+    ld a, b
+    sub a, 1
+    ld b, a
+    call chr_position_to_pixel
+    push bc
+    ; save DE
+    push de
+    ; Check whether movement is allowed
+    call chr_check_movement
+    pop de
+    pop bc
+    pop hl
+    cp a, $00
+    jr z, .movement_allowed_might_be_allowed
+        ; clear stack before returning
+        pop hl
+        ret
 
+.movement_allowed_might_be_allowed:
+    push bc
+    ; check second sprite 
+    inc e
+    ; Check whether movement is allowed
+    push de
+    push hl
+    call chr_check_movement
+    pop hl
+    pop de
+    cp a, $00
+    jr z, .check_wheter_not_absoltue
+        ; clear stack before returning
+        pop bc
+        pop hl
+        ret
+
+.check_wheter_not_absoltue:
+    pop bc
+    ld a, c
+    and a, $07
+    jr z, .movement_allowed
+        ; check whether the next tile (to the right) does not generate a colision
+        inc e
+        push hl
+        call chr_check_movement
+        pop hl
+        cp a, $00
+        jr z, .movement_allowed
+            ; clear stack before returning
+            pop hl
+            ret
+
+.movement_allowed:
     ; load current X, move it down and store it back
     ld a, [hl]
     dec a
     ld [hl], a
     pop hl
-
-    ; get sprite number for the target character (stored in hl)
-    ; save a (holds final X position)
-    ld e, a
-    push de
-    call sptr_get_sprite_number_by_character_id
-    pop de
-    ld a, e
-
-    ; target sprite left and right (16x8 times 2) X coordinate
-    ; hl holds address of the first sprite of the target character
-    call sptr_set_sprite_x
-
-    ; load address of second sprite from bc to hl
-    add a, $08
-    ld l, c
-    ld h, b
-    call sptr_set_sprite_x
     ret
 
 ; Move Character Right
 ; hl: character variable address
 chr_move_character_right:
     push hl
+    push hl
+    
+    ; Convert pixel position to map position
+    ; Load X position
+    ld b, [hl]
+    inc hl
+    ; Load Y position
+    ld c, [hl]
+    ; compesate for sprite size (16 pixels + movement direction)
+    ld a, b
+    add a, 16
+    ld b, a
+    call chr_position_to_pixel
+    push bc
+    ; save DE
+    push de
+    ; Check whether movement is allowed
+    call chr_check_movement
+    pop de
+    pop bc
+    pop hl
+    cp a, $00
+    jr z, .movement_allowed_might_be_allowed
+        ; clear stack before returning
+        pop hl
+        ret
 
+.movement_allowed_might_be_allowed:
+    push bc
+    ; check second sprite 
+    inc e
+    ; Check whether movement is allowed
+    push de
+    push hl
+    call chr_check_movement
+    pop hl
+    pop de
+    cp a, $00
+    jr z, .check_wheter_not_absoltue
+        ; clear stack before returning
+        pop bc
+        pop hl
+        ret
+
+.check_wheter_not_absoltue:
+    pop bc
+    ld a, c
+    and a, $07
+    jr z, .movement_allowed
+        ; check whether the next tile (to the right) does not generate a colision
+        inc e
+        push hl
+        call chr_check_movement
+        pop hl
+        cp a, $00
+        jr z, .movement_allowed
+            ; clear stack before returning
+            pop hl
+            ret
+
+.movement_allowed:
     ; load current X, move it down and store it back
     ld a, [hl]
     inc a
     ld [hl], a
     pop hl
+    ret
 
-    ; get sprite number for the target character (stored in hl)
-    ; save a (holds final X position)
-    ld e, a
-    push de
+; Render sprite(s) on screen, based on their index
+; hl: target sprite index
+chr_render_character:
+    ; get character's sprites (will be stored in hl/bc)
     call sptr_get_sprite_number_by_character_id
-    pop de
-    ld a, e
+
+    ; load character position
+    ; load X
+    ld e, [hl]
+    inc hl
+    ld d, [hl]
 
     ; target sprite left and right (16x8 times 2) X coordinate
     ; hl holds address of the first sprite of the target character
+    push hl
+    ld a, d
     call sptr_set_sprite_x
-
+    ld a, e
+    inc hl
+    call sptr_set_sprite_y
+    pop hl
+    ret
     ; load address of second sprite from bc to hl
+    ld a, d
     add a, $08
     ld l, c
     ld h, b
     call sptr_set_sprite_x
+    ld a, e
+    inc hl
+    call sptr_set_sprite_y
     ret
+
 
 ; Character control loop iteration
 ; Reads input and handles movement and interactions
@@ -305,6 +448,10 @@ chr_player_controlled_character_loop:
         call chr_move_character_right
 
 .end_character_movement:
+    ; render sprite on its new position
+    ld hl, character_0
+    call chr_render_character
+
     ret
 
 ; Detect Character position on Map (convert pixel into position)
