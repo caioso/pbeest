@@ -101,11 +101,12 @@ chr_move_character_down:
     ld c, a
     call chr_position_to_pixel
     push bc
-    ; save DE
-    push de
     ; Check whether movement is allowed
     call chr_check_movement
-    pop de
+    ; After the function call, bc holds the relative tile address (in the map_logic)
+    ; copy it yo de to save calculation time.
+    ld e, c
+    ld d, b
     pop bc
     pop hl
     cp a, $00
@@ -115,32 +116,25 @@ chr_move_character_down:
         ret
 
 .movement_allowed_might_be_allowed:
-    push bc
-    ; check second sprite 
-    inc d
+    ; check second sprite (increment the address in de by 1, to see whether the next tile in the map_logic is allowed)
+    inc de
     ; Check whether movement is allowed
-    push de
-    push hl
-    call chr_check_movement
-    pop hl
-    pop de
+    ld a, [de]
+    and a, $80
     cp a, $00
     jr z, .check_wheter_not_absoltue
         ; clear stack before returning
-        pop bc
         pop hl
         ret
 
 .check_wheter_not_absoltue:
-    pop bc
     ld a, b
     and a, $07
     jr z, .movement_allowed
         ; check whether the next tile (to the right) does not generate a colision
-        inc d
-        push hl
-        call chr_check_movement
-        pop hl
+        inc de
+        ld a, [de]
+        and a, $80
         cp a, $00
         jr z, .movement_allowed
             ; clear stack before returning
@@ -175,11 +169,12 @@ chr_move_character_up:
     ld c, a
     call chr_position_to_pixel
     push bc
-    ; save DE
-    push de
     ; Check whether movement is allowed
     call chr_check_movement
-    pop de
+    ; After the function call, bc holds the relative tile address (in the map_logic)
+    ; copy it to de to save calculation time.
+    ld e, c
+    ld d, b
     pop bc
     pop hl
     cp a, $00
@@ -189,32 +184,25 @@ chr_move_character_up:
         ret
 
 .movement_allowed_might_be_allowed:
-    push bc
-    ; check second sprite 
-    inc d
+    ; check second sprite (increment the address in de by 1, to see whether the next tile in the map_logic is allowed)
+    inc de
     ; Check whether movement is allowed
-    push de
-    push hl
-    call chr_check_movement
-    pop hl
-    pop de
+    ld a, [de]
+    and a, $80
     cp a, $00
     jr z, .check_wheter_not_absoltue
         ; clear stack before returning
-        pop bc
         pop hl
         ret
 
 .check_wheter_not_absoltue:
-    pop bc
     ld a, b
     and a, $07
     jr z, .movement_allowed
         ; check whether the next tile (to the right) does not generate a colision
-        inc d
-        push hl
-        call chr_check_movement
-        pop hl
+        inc de
+        ld a, [de]
+        and a, $80
         cp a, $00
         jr z, .movement_allowed
             ; clear stack before returning
@@ -249,11 +237,12 @@ chr_move_character_left:
     ld b, a
     call chr_position_to_pixel
     push bc
-    ; save DE
-    push de
     ; Check whether movement is allowed
     call chr_check_movement
-    pop de
+    ; After the function call, bc holds the relative tile address (in the map_logic)
+    ; copy it to de to save calculation time.
+    ld e, c
+    ld d, b
     pop bc
     pop hl
     cp a, $00
@@ -263,32 +252,30 @@ chr_move_character_left:
         ret
 
 .movement_allowed_might_be_allowed:
-    push bc
     ; check second sprite 
-    inc e
+    ; add map widh to de (for further calculation)
+    ; de will be updated
+    call chr_inc_next_line
+
     ; Check whether movement is allowed
-    push de
-    push hl
-    call chr_check_movement
-    pop hl
-    pop de
+    ld a, [de]
+    and a, $80
     cp a, $00
     jr z, .check_wheter_not_absoltue
         ; clear stack before returning
-        pop bc
         pop hl
         ret
 
 .check_wheter_not_absoltue:
-    pop bc
     ld a, c
     and a, $07
     jr z, .movement_allowed
-        ; check whether the next tile (to the right) does not generate a colision
-        inc e
-        push hl
-        call chr_check_movement
-        pop hl
+        ; check second sprite 
+        ; add map widh to de (for further calculation)
+        ; de will be updated
+        call chr_inc_next_line
+        ld a, [de]
+        and a, $80
         cp a, $00
         jr z, .movement_allowed
             ; clear stack before returning
@@ -322,10 +309,12 @@ chr_move_character_right:
     call chr_position_to_pixel
     push bc
     ; save DE
-    push de
     ; Check whether movement is allowed
     call chr_check_movement
-    pop de
+    ; After the function call, bc holds the relative tile address (in the map_logic)
+    ; copy it to de to save calculation time.
+    ld e, c
+    ld d, b
     pop bc
     pop hl
     cp a, $00
@@ -335,32 +324,32 @@ chr_move_character_right:
         ret
 
 .movement_allowed_might_be_allowed:
-    push bc
     ; check second sprite 
-    inc e
+    ; add map widh to de (for further calculation)
+    ; de will be updated
+    call chr_inc_next_line
+
     ; Check whether movement is allowed
-    push de
-    push hl
-    call chr_check_movement
-    pop hl
-    pop de
+    ld a, [de]
+    and a, $80
     cp a, $00
     jr z, .check_wheter_not_absoltue
         ; clear stack before returning
-        pop bc
         pop hl
         ret
 
 .check_wheter_not_absoltue:
-    pop bc
     ld a, c
     and a, $07
     jr z, .movement_allowed
-        ; check whether the next tile (to the right) does not generate a colision
-        inc e
-        push hl
-        call chr_check_movement
-        pop hl
+        ; check second sprite 
+        ; add map widh to de (for further calculation)
+        ; de will be updated
+        call chr_inc_next_line
+
+        ; Check whether movement is allowed
+        ld a, [de]
+        and a, $80
         cp a, $00
         jr z, .movement_allowed
             ; clear stack before returning
@@ -378,36 +367,48 @@ chr_move_character_right:
 ; Render sprite(s) on screen, based on their index
 ; hl: target sprite index
 chr_render_character:
+    ld a, h
+    ld d, a
+    ld a, l
+    ld e, a
     ; get character's sprites (will be stored in hl/bc)
     call sptr_get_sprite_number_by_character_id
 
-    ; load character position
-    ; load X
-    ld e, [hl]
-    inc hl
-    ld d, [hl]
-
     ; target sprite left and right (16x8 times 2) X coordinate
     ; hl holds address of the first sprite of the target character
-    push hl
-    ld a, d
+    ld a, [de]
+    inc de
     call sptr_set_sprite_x
-    ld a, e
-    inc hl
+    ld a, [de]
+    dec de
+    dec hl
     call sptr_set_sprite_y
-    pop hl
-    ret
+    
     ; load address of second sprite from bc to hl
-    ld a, d
+    ld a, [de]
     add a, $08
     ld l, c
     ld h, b
     call sptr_set_sprite_x
-    ld a, e
-    inc hl
+    inc de
+    ld a, [de]
+    dec hl
     call sptr_set_sprite_y
     ret
 
+; Increment next line to the current value of DE
+; de: current base address
+chr_inc_next_line:
+    push hl
+    ld hl, map_current_width
+    ld a, [hl]
+    add a, e
+    ld e, a
+    ld a, d
+    adc $00
+    ld d, a
+    pop hl
+    ret
 
 ; Character control loop iteration
 ; Reads input and handles movement and interactions
@@ -506,12 +507,15 @@ chr_check_movement:
     ld b, a
 
     ; Check MSBit of the target map entry
+    push bc
     ld a, [bc]
     and a, $80
     jr z, .may_pass
         ; the target tile is not crossable
         ld a, $01
+        pop bc
         ret
 .may_pass:
     ld a, $00
+    pop bc
     ret
