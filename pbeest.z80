@@ -136,14 +136,29 @@ main:
 
     ; TEMP 
     ; joypad test
-    ld l, key_start
+    ld l, key_a
     call is_key_down
     jr z, .no_key_detected
-        ; First Page
-        ld de, dialog_page_0_end - dialog_page_0
-        ld hl, dialog_page_0
+        ; check colision target, to show correct message
+        ld hl, collision_target
+        ld a, [hl]
+        cp a, $01
+        jr nz, .dialog_2
+            ; First Target
+            ld de, dialog_page_0_end - dialog_page_0
+            ld hl, dialog_page_0
+            call hud_copy_text_buffer
+            ld de, dialog_page_0_end - dialog_page_0
+            jr .show_text
+.dialog_2:
+            ; First Page
+        ld de, dialog_page_1_end - dialog_page_1
+        ld hl, dialog_page_1
         call hud_copy_text_buffer
-        ld de, dialog_page_0_end - dialog_page_0
+        ld de, dialog_page_1_end - dialog_page_1
+
+.show_text:
+
         ld a, text_box_all_animations ;text_box_start_animation
         call hud_show_text
 

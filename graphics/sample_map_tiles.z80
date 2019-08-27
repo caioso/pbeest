@@ -1,14 +1,50 @@
+; SAMPLE_MAP_TILES.Z80
+;
+; Tile Source File.
+;
+; Info:
+;   Section              : Tiles
+;   Bank                 : 0
+;   Form                 : All tiles as one unit.
+;   Format               : Gameboy 4 color.
+;   Compression          : None.
+;   Counter              : None.
+;   Tile size            : 8 x 8
+;   Tiles                : 0 to 11
+;
+;   Palette colors       : None.
+;   SGB Palette          : None.
+;   CGB Palette          : 4 Bits per entry.
+;
+;   Convert to metatiles : No.
+;
+
 ; Start of tile array.
 sample_map_tiles_begin:
 DB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
 DB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
 DB $00,$FF,$00,$FF,$00,$FF,$00,$FF
 DB $00,$FF,$00,$FF,$00,$FF,$00,$FF
-DB $FF,$00,$BD,$42,$DB,$24,$E7,$18
-DB $E7,$18,$DB,$24,$BD,$42,$FF,$00
+DB $EF,$10,$FF,$00,$DF,$20,$DB,$24
+DB $FF,$00,$BF,$40,$BF,$40,$FF,$00
 DB $FF,$00,$FF,$00,$E7,$18,$C3,$3C
 DB $C3,$3C,$E7,$18,$FF,$00,$FF,$00
-DB $00,$00,$00,$00,$00,$00,$00,$00
-DB $00,$00,$00,$00,$00,$00,$00,$00
+DB $00,$00,$00,$00,$3F,$3F,$3F,$3F
+DB $30,$30,$30,$30,$30,$30,$30,$30
+DB $3F,$3F,$3F,$3F,$30,$30,$30,$30
+DB $30,$30,$30,$30,$30,$30,$00,$00
+DB $00,$00,$00,$00,$F8,$F8,$F8,$F8
+DB $18,$18,$18,$18,$18,$18,$18,$18
+DB $F8,$F8,$F8,$F8,$18,$18,$18,$18
+DB $18,$18,$18,$18,$18,$18,$00,$00
+DB $00,$00,$3F,$3F,$3F,$3F,$30,$30
+DB $30,$30,$30,$30,$30,$30,$3F,$3F
+DB $3F,$3F,$30,$30,$30,$30,$30,$30
+DB $30,$30,$3F,$3F,$3F,$3F,$00,$00
+DB $00,$00,$E0,$E0,$E0,$E0,$18,$18
+DB $18,$18,$18,$18,$18,$18,$E0,$E0
+DB $E0,$E0,$18,$18,$18,$18,$18,$18
+DB $18,$18,$E0,$E0,$E0,$E0,$00,$00
 sample_map_tiles_end:
+
 ; End of SAMPLE_MAP_TILES.Z80

@@ -1,3 +1,4 @@
 sample_map_palette_begin:
 DW  $15C4, $22E7, $17BC, $14E0
+DW  $7DC0, $37FF, $37FF, $7FB7
 sample_map_palette_end:

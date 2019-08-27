@@ -111,6 +111,9 @@ chr_move_character_down:
     pop hl
     cp a, $00
     jr z, .movement_allowed_might_be_allowed
+        ; load colliding ID
+        call chr_get_collision_id
+
         ; clear stack before returning
         pop hl
         ret
@@ -123,6 +126,9 @@ chr_move_character_down:
     and a, $80
     cp a, $00
     jr z, .check_wheter_not_absoltue
+        ; load colliding ID
+        call chr_get_collision_id
+
         ; clear stack before returning
         pop hl
         ret
@@ -137,6 +143,9 @@ chr_move_character_down:
         and a, $80
         cp a, $00
         jr z, .movement_allowed
+            ; load colliding ID
+            call chr_get_collision_id
+
             ; clear stack before returning
             pop hl
             ret
@@ -179,6 +188,9 @@ chr_move_character_up:
     pop hl
     cp a, $00
     jr z, .movement_allowed_might_be_allowed
+        ; load colliding ID
+        call chr_get_collision_id
+
         ; clear stack before returning
         pop hl
         ret
@@ -191,6 +203,9 @@ chr_move_character_up:
     and a, $80
     cp a, $00
     jr z, .check_wheter_not_absoltue
+        ; load colliding ID
+        call chr_get_collision_id
+
         ; clear stack before returning
         pop hl
         ret
@@ -205,6 +220,9 @@ chr_move_character_up:
         and a, $80
         cp a, $00
         jr z, .movement_allowed
+            ; load colliding ID
+            call chr_get_collision_id
+
             ; clear stack before returning
             pop hl
             ret
@@ -247,6 +265,9 @@ chr_move_character_left:
     pop hl
     cp a, $00
     jr z, .movement_allowed_might_be_allowed
+        ; load colliding ID
+        call chr_get_collision_id
+
         ; clear stack before returning
         pop hl
         ret
@@ -262,6 +283,9 @@ chr_move_character_left:
     and a, $80
     cp a, $00
     jr z, .check_wheter_not_absoltue
+        ; load colliding ID
+        call chr_get_collision_id
+
         ; clear stack before returning
         pop hl
         ret
@@ -278,6 +302,9 @@ chr_move_character_left:
         and a, $80
         cp a, $00
         jr z, .movement_allowed
+            ; load colliding ID
+            call chr_get_collision_id
+
             ; clear stack before returning
             pop hl
             ret
@@ -319,6 +346,9 @@ chr_move_character_right:
     pop hl
     cp a, $00
     jr z, .movement_allowed_might_be_allowed
+        ; load colliding ID
+        call chr_get_collision_id
+
         ; clear stack before returning
         pop hl
         ret
@@ -334,6 +364,9 @@ chr_move_character_right:
     and a, $80
     cp a, $00
     jr z, .check_wheter_not_absoltue
+        ; load colliding ID
+        call chr_get_collision_id
+
         ; clear stack before returning
         pop hl
         ret
@@ -352,6 +385,9 @@ chr_move_character_right:
         and a, $80
         cp a, $00
         jr z, .movement_allowed
+            ; load colliding ID
+            call chr_get_collision_id
+            
             ; clear stack before returning
             pop hl
             ret
@@ -362,6 +398,17 @@ chr_move_character_right:
     inc a
     ld [hl], a
     pop hl
+    ret
+
+; Extract ID of colliding object
+; de: colliding tile
+; modified: a, hl
+chr_get_collision_id:
+    ld a, [de]
+    ld hl, collision_target
+    ; clear the MSBit and provide the 7 bits map ID
+    and a, $7F
+    ld [hl], a
     ret
 
 ; Render sprite(s) on screen, based on their index
