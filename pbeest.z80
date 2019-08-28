@@ -151,6 +151,8 @@ main:
             ld de, dialog_page_0_end - dialog_page_0
             jr .show_text
 .dialog_2:
+        cp a, $02
+        jr nz, .nothing_to_show
             ; First Page
         ld de, dialog_page_1_end - dialog_page_1
         ld hl, dialog_page_1
@@ -162,6 +164,7 @@ main:
         ld a, text_box_all_animations ;text_box_start_animation
         call hud_show_text
 
+.nothing_to_show:
         ; Intermediate Page
         ;ld de, dialog_page_1_end - dialog_page_1
         ;ld hl, dialog_page_1

@@ -70,3 +70,16 @@ is_key_down:
 .not_detected:
     ld a, $00
     ret
+
+; Checks whether any key in the DPAD has been pressed (any key).
+; return a: 0 not pressed, 1 pressed
+joypad_is_dpad_pressed:
+    ld a, [current_key]
+    and $F0
+    jr z, .not_pressed
+        ld a, $01
+        ret
+.not_pressed:
+    ld a, $00
+    ret
+

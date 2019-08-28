@@ -460,7 +460,16 @@ chr_inc_next_line:
 ; Character control loop iteration
 ; Reads input and handles movement and interactions
 chr_player_controlled_character_loop:
+    ; This algorithm clears the "collision target" every time a directional key is detected.
+    ; Thats because the movement may or may not lead to a collision (the player can face away from a target object, or face another object).
+    call joypad_is_dpad_pressed
+    cp a, $01
+    jr nz, .continue_movement_processing
+        ; clear colision target
+        ld hl, collision_target
+        ld [hl], $00
 
+.continue_movement_processing:
     ; read key for directiona movement
     ld l, key_down
     call is_key_down
