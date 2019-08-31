@@ -36,6 +36,8 @@ hud_initialize_hud:
     ld hl, hud_tiles
     ld bc, hud_tiles_end - hud_tiles
     ld a, 0
+    ; automatic tile placement in memory (incremental)
+    ld de, automatic_tile_placement
     ; load hud tukes
     call tilecrt_load_tiles
 

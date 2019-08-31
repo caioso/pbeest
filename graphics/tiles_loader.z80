@@ -3,7 +3,10 @@
 ; Developed by Caio Souza Oliveira
 ; 17 Aug 2019
 
+automatic_tile_placement equ $FFFF
+
 ; load tiles, based on global tile counter
+; de: initial load address or automatic ($00)
 ; hl: first tile address
 ; bc: number of bytes
 ; a: target bank
@@ -12,18 +15,32 @@ tilecrt_load_tiles:
     ; TODO: Make this conpatible with multiple banks (tiles_counter_byte_1_bank0 and tiles_counter_byte_1_bank1)
     ld [rVBK], a
 
-    push hl
-    push bc
-    ; calculate next loading address, based on (tiles_counter_byte_1_bank0|tiles_counter_byte_2<<8)
-    ld de, _VRAM
-    ld a, [tiles_counter_byte_1_bank0]
-    add a, e
-    ld e, a
-    ld a, [tiles_counter_byte_2_bank0]
-    adc a, d
-    ld d, a
-    pop bc
-    pop hl
+    ; check whether automatic placent should be used (in case of automatic placement, de must be $FFFF)
+    ld a, e
+    cp $FF
+    jr z, .check_second_byte
+        ; if not FF, skip immediately
+        jr .skip_auto_placement
+.check_second_byte:  
+    ld a, d
+    cp $FF
+    jr nz, .skip_auto_placement
+.auto_placement:
+        ; Automaitcally place next tiles after the lastly loaded address
+        push hl
+        push bc
+        ; calculate next loading address, based on (tiles_counter_byte_1_bank0|tiles_counter_byte_2<<8)
+        ld de, _VRAM
+        ld a, [tiles_counter_byte_1_bank0]
+        add a, e
+        ld e, a
+        ld a, [tiles_counter_byte_2_bank0]
+        adc a, d
+        ld d, a
+        pop bc
+        pop hl
+
+.skip_auto_placement:
     push bc
 
     ; copy tiles

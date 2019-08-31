@@ -10,6 +10,8 @@ chr_load_character_tiles_and_palettes:
     ld hl, hero_begin
     ld bc, hero_end - hero_begin
     ld a, $00
+    ; automatic tile placement in memory (incremental)
+    ld de, automatic_tile_placement
     ; load hero tukes
     call tilecrt_load_tiles
 

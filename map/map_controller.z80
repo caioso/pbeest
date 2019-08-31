@@ -3,169 +3,395 @@
 ; Developed by Caio Souza Oliveira
 ; 19 Aug 2019
 
-; load specific room
+; ROOM Attributes
+; inform that a new batch of palettes will be loaded VRAM 
+map_load_palettes equ $01
+; inform that a new batch of tiles will be loaded VRAM 
+map_load_tiles equ $02
+
+; in Map transition animation
+map_load_no_transition equ $00
+map_load_left_to_right_transition equ $04
+map_load_right_to_left_transition equ $08
+map_load_top_to_bottom_transition equ $0C
+map_load_bottom_to_top_transition equ $10
+
+; base tile memory base section address
+map_tile_base_section_8000 equ 0
+map_tile_base_section_9000 equ $20
+
+; Loads Room data (tiles, palletes and logic) at a specific position in the video buffer (video buffer size 32x32). With or without animations.
 ; hl: Room initial address
+; a: animation & Data Loading Bit Map
+;    bit 0: load palettes
+;    bit 1: load tiles
+;    bit [3:5]
+;      0x00: No Animation
+;      0x01: Left-to-Right
+;      0x02: Right-to-Left
+;      0x03: top-to-bottom
+;      0x04: bottom-to-top
+;    bit 6: base tile bank
+; bc: initial tile address (full 16 bits tile address)
+; de: map initial position X(d) and Y(e) [in tiles, not pixels]
 map_load_room:
-    ; load room width
-    ld a, [hl]
-    ; store room width
+    ; save temp variables 
+    ; save map data loading attributes bit map
     push hl
-    ld hl, map_current_width
+    ld hl, ram_general_use_variable_1
     ld [hl], a
+    ld hl, ram_general_use_variable_2
+    ld [hl], c
+    ld hl, ram_general_use_variable_3
+    ld [hl], b
     pop hl
-    inc hl
-    ; load room height
+
+    ; Load room metadata
+    ; load map position X(d), Y(e)
+    push hl
+    ld hl, map_current_x
+    ld [hl], d
+    ld hl, map_current_y
+    ld [hl], e
+
+    ; calculate tile map offset (based on initial address in VRAM)
+    ; This is added to the room's tile LUT to find the correct tile ID for each entry in the room
+    ld hl, ram_general_use_variable_1
     ld a, [hl]
-    ; store room height
-    push hl
-    ld hl, map_current_height
-    ld [hl], a
+    bit 5, a
+    jr z, .base_8000
+        ld hl, $9000
+        jr .continue_offset_tile_id_calculation
+.base_8000:
+        ld hl, $8000
+.continue_offset_tile_id_calculation:
+        ld a, c
+        sub l
+        ld e, a
+        ld a, b
+        sbc h
+        ld d, a
+        
+        ;divide by 16 to get the correct tile offset (DE/BC)
+        ld c, $10
+        ld b, $00
+        call div_DE_BC_DEBCu
+        ; only the first byte of the division results matter (e)
+        ld hl, ram_general_use_variable_4
+        ld [hl], e
+
     pop hl
 
-    ; load palettes
-    ; Skip for now: palette bank
-    inc hl
-    ; load palette initial address (2 bytes) - LSByte first
-    inc hl
-    ld e, [hl]
-    inc hl
-    ld d, [hl]
-    inc hl
-    ; load number of palettes to be loaded
+    ; hl holds the address of the room width byte
+    ld de, map_current_width
     ld a, [hl]
+    ld [de], a
 
-    ; store hl
-    push hl
-    ld h, d
-    ld l, e
-    ld d, $00
-    ld e, a
-    ld bc, 0 ; target palette index (each palette has 4 colors)
-    call bgc_load_background_palette
-
-    ; restore hl
-    pop hl
-
-     ; store current tile offset before loading new tiles. This will be needed when rendering the map tiles
-    push hl
-    ld hl, tiles_counter_byte_1_bank0
-    ld b, [hl]
-    ld hl, tiles_counter_byte_2_bank0
-    ld c, [hl]
-    pop hl
-
-    ; save bc for use later
-    push bc
-
-    ; Load map tiles (starting at the global tile counter)
-    ; load tiles bank
-    inc hl
-    ld b, [hl]
-    ; load tile mlistap address
-    inc hl
-    ld e, [hl]
-    inc hl
-    ld d, [hl]
-    ; load number of bytes
-    inc hl
-    ld c, [hl]
-    push hl
-    ld l, e
-    ld h, d
-    ld a, b
-    ld d, a
-    ld b, $00
-    ld a, d
-
-    call tilecrt_load_tiles
-
-    ; restore hl, bc
-    pop hl
-    pop bc
-
-    ; load room tile map 
-    push hl
-    ld hl, map_current_width
-    ld d, [hl]
-    ld hl, map_current_height
-    ld e, [hl]
-    pop hl
-
-    ; tile map initial address
-    inc hl    
-    ; store hl
-    push hl
-    ld a, 0
-    call bgc_load_background_tiles
-
-    ; restore hl
-    pop hl
-    ; 16 bit division
-    ; DE = DE / BC, BC = remainder
-
-    push hl
-    
-    ; Skip Tile map bytes
-    ld a, [map_current_width]
-    ld e, a
-    ld d, $00
-    ld a, [map_current_height]
-    ld l, a
-    ld h, $00
-    call mul_DE_HL_BCDEu
-
-    pop hl
-    ld a, e
-    add l
-    ld l, a
-    ld a, d
-    adc h 
-    ld h, a
-    push hl
-    
-    ; load background attributes
-    ; No offset to be applied to the map values
-    ld b, $00
-    ld c, $00
-    ld a, [map_current_width]
-    ld d, a
-    ld a, [map_current_height]
-    ld e, a
-    ; VBK 1
-    ld a, 1
-    call bgc_load_background_tiles
-
-    pop hl
-
-    push hl
-    
-    ; Skip Tile map bytes (prepare to load map's logic data)
-    ld a, [map_current_width]
-    ld e, a
-    ld d, $00
-    ld a, [map_current_height]
-    ld l, a
-    ld h, $00
-    call mul_DE_HL_BCDEu
-
-    pop hl
-    ld a, e
-    add l
-    ld l, a
-    ld a, d
-    adc h 
-    ld h, a
-
-    ; load map's logic data
-    ld bc, map_logic
-.copy_logic_bytes:
-    ld a, [hl]
-    ld [bc], a
+    ; hl + 1 holds the address of the room height byte
     inc hl 
-    inc bc
-    dec de
-    ld a, d
-    or e
-    jr nz, .copy_logic_bytes
+    ld de, map_current_height
+    ld a, [hl]
+    ld [de], a
 
+    ; load palette target bank (nothing to do for now)
+    inc hl
+    
+    ; Palette loading routine
+    ; step 1: check whether the palettes are meant to be loaded
+    inc hl
+    push hl
+    ld hl, ram_general_use_variable_1
+    ld a, [hl]
+    pop hl
+    and map_load_palettes
+    jr z, .skip_palette_load
+        ; step 2: load tiles
+        ; load initial palette address
+        ld a, [hl]
+        ld e, a
+        inc hl
+        ld a, [hl]
+        ld d, a
+
+        ; load total palettes
+        inc hl
+        ld a, [hl]
+        
+        ; room palettes (0-6) always start at 0
+        ld bc, $00
+
+        ; move de to hl (required as function argument)
+        push hl
+        ld l, e
+        ld h, d
+
+        ; move a to de
+        ld e, a
+        ld d, $00
+
+        ; load palettes
+        call bgc_load_background_palette
+        pop hl
+
+.skip_palette_load:
+
+    ; load background tiles (not actual LUT but tile-patterns in VRAM)
+    ; load palette target bank (nothing to do for now)
+    inc hl
+
+    ; Tile loading routine
+    ; Check whether tiles should be loaded into VRAM and at which initial offset
+    push hl
+    ld hl, ram_general_use_variable_1
+    ld a, [hl]
+    pop hl
+    and map_load_tiles
+    jr z, .skip_tiles_load
+        ; load background tiles initial address
+        inc hl
+        ld a, [hl]
+        ld e, a
+        inc hl
+        ld a, [hl]
+        ld d, a
+
+        ; load number of tiles
+        inc hl
+        ld a, [hl]
+        ld c, a
+        inc hl
+        ld a, [hl]
+        ld b, a
+
+        ; move de to hl
+        push hl
+        ld l, e
+        ld h, d
+        
+        ; configure rVBK to load tiles (a = 0)
+        ld a, $00
+
+        ; load initial tiles address
+        push hl
+        ld hl, ram_general_use_variable_2
+        ld e, [hl]
+        ld hl, ram_general_use_variable_3
+        ld d, [hl]
+        pop hl
+        ; load tile initial address in 
+        call tilecrt_load_tiles
+
+        pop hl
+
+.skip_tiles_load:
+    ; Restore room animation attributes
+
+    ; step 3: load LUTS and map logic
+    ; calculate number of entries per LUT (width*height)
+    push hl
+    ld hl, map_current_width
+    ld l, [hl]
+    ld h, $00
+    ld de, map_current_height
+    ld a, [de]
+    ld e, a
+    ld d, $00
+    ; result in BCDE
+    call mul_DE_HL_BCDEu
+
+    ; save results (since the max room dimension is 32x32, save only DE)
+    ld hl, ram_general_use_variable_2
+    ld [hl], e
+    ld hl, ram_general_use_variable_3
+    ld [hl], d
+
+    pop hl
+    ; load room's tile LUT
+    inc hl
+    
+    ; Calculate initial tile address (relative to _SCRN1)
+    ; Expression (Y*MapWidth + X) + &_SCRN1
+    push hl
+    ld de, map_current_y
+    ld a, [de]
+    ld l, a
+    ld h, $00
+
+    ;ld de, map_max_width
+    ld a, map_max_width
+    ld e, a
+    ld d, $00
+    ; result in BCDE
+    call mul_DE_HL_BCDEu
+
+    ; Only DE will be needed
+    ; add map X
+    ld hl, map_current_x
+    ld a, [hl]
+    ld l, a
+    ld h, $00
+
+    ; add DE to HL (store in DE)
+    ld a, e
+    add l
+    ld e, a
+    ld a, d
+    adc h
+    ld d, a
+
+    ; add Base address of _SCRN0
+    ; DE will hold the address in the video memory to receive the LUT data
+    ld hl, _SCRN0
+    ld a, e
+    add l
+    ld e, a
+    ld a, d
+    adc h
+    ld d, a
+
+    ; prepare to load tiles LUT
+    ; set rVBK to 0 (tiles bank)
+    ld a, 0
+    ld [rVBK], a
+
+    ; load counters
+    ld hl, map_current_height
+    ld a, [hl]
+    ld c, a
+
+   ; initialize Y boundaries counter
+    ld hl, map_current_y
+    ld a, [hl]
+    ld hl, ram_general_use_variable_6
+    ld [hl], a
+
+    pop hl
+
+; **horizontal** loading
+.outer_loop:
+    ; reload map width coutner
+    push hl
+    ld hl, map_current_width
+    ld a, [hl]
+    ld b, a
+
+    ; initialize X boundaries counter
+    ld hl, map_current_x
+    ld a, [hl]
+    ld hl, ram_general_use_variable_5
+    ld [hl], a
+
+    pop hl
+
+.inner_loop:
+    ld a, [hl]
+
+    ; add offset to tiles
+    push hl
+    ld hl, ram_general_use_variable_4
+    ld l, [hl]
+    add a, l
+    pop hl
+
+    ld [de], a
+    inc hl
+    inc de
+    dec b
+    ld a, b
+    cp $00
+    ; if b is not 0, there are still bytes to be loaded in the current line
+    jr z, .inner_loop_complete
+
+        ; check boundaries
+        push hl
+        ld hl, ram_general_use_variable_5
+        ld a, [hl]
+        inc a
+        cp a, map_max_width
+        jr nz, .save_x_counter
+            ; warp around (X starts at 0 now)
+            ld [hl], $00
+            ; return de to the beginning of the row
+            ld a, e
+            sub $20
+            ld e, a
+            ld a, d
+            sbc $00
+            ld d, a
+            pop hl
+            jr .inner_loop
+.save_x_counter:
+        ld [hl], a
+        pop hl
+    jr .inner_loop
+
+.inner_loop_complete:
+    ; one iteration of the outer loop is completed
+    dec c
+    ld a, c
+    cp $00
+    ; not done yet, back to the beginning of the outer loop
+    jr z, .tile_lut_load_complete
+    ; check boundaries
+    push hl
+    ld hl, ram_general_use_variable_6
+    ld a, [hl]
+    inc a
+    cp a, map_max_height
+    jr nz, .save_y_counter
+        ; warp around (Y starts at 0 now)
+        ld a, $00
+
+.save_y_counter:
+        ld [hl], a
+        pop hl
+
+        ; Push DE to the next row, starting at the required X
+        push hl
+        push bc
+        
+        ; calculate current row
+        ld de, ram_general_use_variable_6
+        ld a, [de]
+        ld l, a
+        ld h, $00
+
+        ;ld de, map_max_width
+        ld a, map_max_width
+        ld e, a
+        ld d, $00
+        ; result in BCDE
+        call mul_DE_HL_BCDEu
+
+        ; Only DE will be needed
+        ; add map X
+        ld hl, map_current_x
+        ld a, [hl]
+        ld l, a
+        ld h, $00
+
+        ; add DE to HL (store in DE)
+        ld a, e
+        add l
+        ld e, a
+        ld a, d
+        adc h
+        ld d, a
+
+        ; add Base address of _SCRN0
+        ; DE will hold the address in the video memory to receive the LUT data
+        ld hl, _SCRN0
+        ld a, e
+        add l
+        ld e, a
+        ld a, d
+        adc h
+        ld d, a
+
+        pop bc
+        pop hl
+       
+        jp .outer_loop
+
+.tile_lut_load_complete:
     ret

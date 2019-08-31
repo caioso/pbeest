@@ -67,6 +67,7 @@ include "map/map_controller.z80"
 
 ; include Rooms (to be moved to separate banks in the future)
 include "map/rooms/sample_room.z80"
+include "map/rooms/sample_room_right.z80"
 
 ; main function
 ; bootstrap ROM
@@ -109,8 +110,16 @@ main:
     ld a, $56
     call chr_initialize_character
 
-    ; load *sample* room
+    ; load map's tiles and palettes
+    ; display no animations, load tiles and palettes (a)
+    ; load *sample* room (&hl)
+    ; first tile initial address (&bc)
+    ; map GRAPHICAL-LUTs position (d:X, e:Y) the logic LUT is always loaded in the same place.a
+    ld a, map_tile_base_section_8000 | map_load_no_transition | map_load_tiles | map_load_palettes
     ld hl, sample_room_begin
+    ld bc, $85A0
+    ld d, 1
+    ld e, 1
     call map_load_room
 
     ; start display register
@@ -138,7 +147,7 @@ main:
     ; joypad test
     ld l, key_a
     call is_key_down
-    jr z, .no_key_detected
+    jr z, .detect_start
         ; check colision target, to show correct message
         ld hl, collision_target
         ld a, [hl]
@@ -152,7 +161,7 @@ main:
             jr .show_text
 .dialog_2:
         cp a, $02
-        jr nz, .nothing_to_show
+        jr nz, .detect_start
             ; First Page
         ld de, dialog_page_1_end - dialog_page_1
         ld hl, dialog_page_1
@@ -163,8 +172,30 @@ main:
 
         ld a, text_box_all_animations ;text_box_start_animation
         call hud_show_text
+        jr .no_key_detected
 
-.nothing_to_show:
+.detect_start:
+        ld l, key_start
+        call is_key_down
+        jr z, .detect_select
+            ld hl, rSCY
+            ld a, [hl]
+            add a, 8
+            ld [rSCY], a
+            jr .no_key_detected
+
+.detect_select:
+        ld l, key_select
+        call is_key_down
+        jr z, .no_key_detected
+            ld hl, rSCX
+            ld a, [hl]
+            add a, 8
+            ld [rSCX], a
+            ; no need to load new palletes or tiles
+            ;ld de, $00
+            ;ld bc, $5A
+            ;call map_load_room
         ; Intermediate Page
         ;ld de, dialog_page_1_end - dialog_page_1
         ;ld hl, dialog_page_1
