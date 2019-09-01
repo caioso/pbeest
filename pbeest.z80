@@ -118,8 +118,8 @@ main:
     ld a, map_tile_base_section_8000 | map_load_no_transition | map_load_tiles | map_load_palettes
     ld hl, sample_room_begin
     ld bc, $85A0
-    ld d, 1
-    ld e, 1
+    ld d, 0
+    ld e, 18
     call map_load_room
 
     ; start display register

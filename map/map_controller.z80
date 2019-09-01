@@ -249,11 +249,6 @@ map_load_room:
     adc h
     ld d, a
 
-    ; prepare to load tiles LUT
-    ; set rVBK to 0 (tiles bank)
-    ld a, 0
-    ld [rVBK], a
-
     ; load counters
     ld hl, map_current_height
     ld a, [hl]
@@ -284,6 +279,11 @@ map_load_room:
     pop hl
 
 .inner_loop:
+    ; Load tiles LUT
+    ; set rVBK to 0 (tiles bank)
+    ld a, 0
+    ld [rVBK], a
+
     ld a, [hl]
 
     ; add offset to tiles
@@ -294,6 +294,35 @@ map_load_room:
     pop hl
 
     ld [de], a
+    
+    ; load attributes LUT
+    ; set rVBK to 1 (atributes bank)
+    ld a, 1
+    ld [rVBK], a
+    push bc
+    push hl
+    ld hl, ram_general_use_variable_2
+    ld c, [hl]
+    ld hl, ram_general_use_variable_3
+    ld b, [hl]
+    pop hl
+
+    ; calculate attribute LUT address based on the current address of DE + the size of the room
+    push hl
+    ld a, c
+    add l
+    ld l, a
+    ld a, b
+    adc h
+    ld h, a
+
+    ; load attribute byte into VRAM
+    ld a, [hl]
+    ld [de], a
+
+    pop hl
+    pop bc
+
     inc hl
     inc de
     dec b
