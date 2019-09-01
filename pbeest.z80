@@ -119,7 +119,7 @@ main:
     ld hl, sample_room_begin
     ld bc, $85A0
     ld d, 0
-    ld e, 18
+    ld e, 0
     call map_load_room
 
     ; start display register
@@ -178,10 +178,13 @@ main:
         ld l, key_start
         call is_key_down
         jr z, .detect_select
-            ld hl, rSCY
-            ld a, [hl]
-            add a, 8
-            ld [rSCY], a
+            call display_wait_vblank
+            ld a, map_tile_base_section_8000 | map_load_left_to_right_transition
+            ld hl, sample_room_right_begin
+            ld bc, $85A0
+            ld d, 0
+            ld e, 18
+            call map_load_room
             jr .no_key_detected
 
 .detect_select:

@@ -132,9 +132,12 @@ map_load_room:
         ; load palettes
         call bgc_load_background_palette
         pop hl
+        jr .palette_loaded_skipped
 
 .skip_palette_load:
-
+    inc hl
+    inc hl
+.palette_loaded_skipped:
     ; load background tiles (not actual LUT but tile-patterns in VRAM)
     ; load palette target bank (nothing to do for now)
     inc hl
@@ -182,8 +185,14 @@ map_load_room:
         call tilecrt_load_tiles
 
         pop hl
+        jr .tile_loaded_skipped
 
 .skip_tiles_load:
+    inc hl
+    inc hl
+    inc hl
+    inc hl
+.tile_loaded_skipped:
     ; Restore room animation attributes
 
     ; step 3: load LUTS and map logic
@@ -279,6 +288,8 @@ map_load_room:
     pop hl
 
 .inner_loop:
+
+
     ; Load tiles LUT
     ; set rVBK to 0 (tiles bank)
     ld a, 0
@@ -291,6 +302,14 @@ map_load_room:
     ld hl, ram_general_use_variable_4
     ld l, [hl]
     add a, l
+    pop hl
+
+    ; Wait until CPU has granted access to VRAM
+    push hl
+    ld   hl, rSTAT
+.wait_for_vram:           
+    bit  $01, [hl]
+    jr   nz, .wait_for_vram 
     pop hl
 
     ld [de], a
@@ -315,6 +334,14 @@ map_load_room:
     ld a, b
     adc h
     ld h, a
+
+    ; Wait until CPU has granted access to VRAM
+    push hl
+    ld   hl, rSTAT
+.wait_for_vram_again:           
+    bit  $01, [hl]
+    jr   nz, .wait_for_vram_again 
+    pop hl
 
     ; load attribute byte into VRAM
     ld a, [hl]
@@ -419,8 +446,44 @@ map_load_room:
 
         pop bc
         pop hl
-       
+
+        ; Scroll map TEST
+        push hl
+        ld hl, ram_general_use_variable_1
+        ld a, [hl]
+        pop hl
+        and $1C
+        jr z, .skip_animation 
+            push hl
+            push bc
+            call map_scroll_bg_with_animation
+            pop bc
+            pop hl
+
+.skip_animation:
         jp .outer_loop
 
 .tile_lut_load_complete:
+
+    ld hl, ram_general_use_variable_1
+    ld a, [hl]
+    and $1C
+    jr z, .complete_map_loading 
+        call map_scroll_bg_with_animation
+
+.complete_map_loading:
+    ret
+
+map_scroll_bg_with_animation:
+    ld c, 8
+.one_more:
+    call display_wait_vblank
+    ld hl, rSCY
+    ld a, [hl]
+    add a, 1
+    ld [rSCY], a
+    dec c
+    ld a, c
+    cp $00
+    jr nz, .one_more
     ret
