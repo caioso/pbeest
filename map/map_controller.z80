@@ -25,7 +25,7 @@ map_tile_base_section_9000 equ $20
 ; a: animation & Data Loading Bit Map
 ;    bit 0: load palettes
 ;    bit 1: load tiles
-;    bit [3:5]
+;    bit [2:5]
 ;      0x00: No Animation
 ;      0x01: Left-to-Right
 ;      0x02: Right-to-Left
@@ -217,19 +217,112 @@ map_load_room:
     pop hl
     ; load room's tile LUT
     inc hl
+
+    ;; v BOTTOM TO TOP CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ; move hl to the end of the last row
+    ld a, l
+    add e
+    ld l, a
+    ld a, h
+    adc d
+    ld h, a
+
+    ld a, [map_current_width]
+    ld e, a
+    ld a, l
+    sub e
+    ld l, a
+    ld a, h
+    sbc $00
+    ld h, a
+    ;; ^ BOTTOM TO TOP CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
+    ;; v TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ; Calculate initial tile address (relative to _SCRN1)
     ; Expression (Y*MapWidth + X) + &_SCRN1
+    ;push hl
+    ;ld de, map_current_y
+    ;ld a, [de]
+    ;ld l, a
+    ;ld h, $00
+
+    ;ld a, map_max_width
+    ;ld e, a
+    ;ld d, $00
+    
+    ; result in BCDE
+    ;call mul_DE_HL_BCDEu
+
+    ; Only DE will be needed
+    ; add map X
+    ;ld hl, map_current_x
+    ;ld a, [hl]
+    ;ld l, a
+    ;ld h, $00
+
+    ; add DE to HL (store in DE)
+    ;ld a, e
+    ;add l
+    ;ld e, a
+    ;ld a, d
+    ;adc h
+    ;ld d, a
+
+    ; add Base address of _SCRN0
+    ; DE will hold the address in the video memory to receive the LUT data
+    ;ld hl, _SCRN0
+    ;ld a, e
+    ;add l
+    ;ld e, a
+    ;ld a, d
+    ;adc h
+    ;ld d, a
+
+    ; load counters
+    ;ld hl, map_current_height
+    ;ld a, [hl]
+    ;ld c, a
+
+   ; initialize Y boundaries counter
+    ;ld hl, map_current_y
+    ;ld a, [hl]
+    ;ld hl, ram_general_use_variable_6
+    ;ld [hl], a
+
+    ;pop hl
+    ;; ^ TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    ; Calculate initial tile address (relative to _SCRN0)
+    ; Expression ((Y + (MapHeight - 1))*MapWidth + X) + &_SCRN0
     push hl
-    ld de, map_current_y
-    ld a, [de]
+    ld a, [map_current_y]
     ld l, a
     ld h, $00
 
-    ;ld de, map_max_width
+    ld a, [map_current_height]
+    ld e, a
+    ld d, $00
+    dec de
+
+    ld a, l
+    add e
+    ld l, a
+    ld a, h
+    adc d
+    ld h, a
+
+    ld a, 31
+    cp l
+    jr nc, .no_correction
+        ld a, l
+        sub a, 32
+        ld l, a 
+
+.no_correction:
     ld a, map_max_width
     ld e, a
     ld d, $00
+    
     ; result in BCDE
     call mul_DE_HL_BCDEu
 
@@ -264,11 +357,18 @@ map_load_room:
     ld c, a
 
    ; initialize Y boundaries counter
+    push bc
     ld hl, map_current_y
     ld a, [hl]
+    ld c, a
+    ld hl, map_current_height
+    ld a, [hl]
+    add a, c
+    dec a
+
     ld hl, ram_general_use_variable_6
     ld [hl], a
-
+    pop bc
     pop hl
 
 ; **horizontal** loading
@@ -288,7 +388,6 @@ map_load_room:
     pop hl
 
 .inner_loop:
-
 
     ; Load tiles LUT
     ; set rVBK to 0 (tiles bank)
@@ -350,8 +449,13 @@ map_load_room:
     pop hl
     pop bc
 
+    ;; v TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ;inc hl
+    ;inc de
+    ;; ^ TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     inc hl
     inc de
+
     dec b
     ld a, b
     cp $00
@@ -382,21 +486,46 @@ map_load_room:
     jr .inner_loop
 
 .inner_loop_complete:
+    ;; v BOTTOM TO TOP CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ; Adjust HL to point to the previous row
+    ld a, [map_current_width]
+    sla a
+    ld e, a
+    ld a, l
+    sub e
+    ld l, a
+    ld a, h
+    sbc $00
+    ld h, a
+    ;; ^ BOTTOM TO TOP CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     ; one iteration of the outer loop is completed
     dec c
     ld a, c
     cp $00
+
     ; not done yet, back to the beginning of the outer loop
     jr z, .tile_lut_load_complete
     ; check boundaries
     push hl
     ld hl, ram_general_use_variable_6
     ld a, [hl]
-    inc a
-    cp a, map_max_height
+
+    ;; v TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ;inc a
+    ;cp a, map_max_height
+    ;; ^ TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    dec a
+    cp a, $FF
     jr nz, .save_y_counter
+        ;; v TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ; warp around (Y starts at 0 now)
-        ld a, $00
+        ; ld a, $00
+        ;; ^ TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       
+        ; warp around (Y starts at the last row now)
+        ld a, map_max_height - 1
 
 .save_y_counter:
         ld [hl], a
@@ -412,7 +541,15 @@ map_load_room:
         ld l, a
         ld h, $00
 
-        ;ld de, map_max_width
+        ld a, 31
+        cp l
+        jr nc, .no_correction_required
+            ld a, l
+            sub a, 32
+            ld l, a 
+        ;; ^ BOTTOM TO TOP CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+.no_correction_required:
         ld a, map_max_width
         ld e, a
         ld d, $00
@@ -447,43 +584,86 @@ map_load_room:
         pop bc
         pop hl
 
-        ; Scroll map TEST
+        ; Scroll map
         push hl
         ld hl, ram_general_use_variable_1
         ld a, [hl]
         pop hl
-        and $1C
-        jr z, .skip_animation 
+        and $1C ; (no animations)
+        jr z, .skip_animation
             push hl
             push bc
-            call map_scroll_bg_with_animation
+
+            ;; v TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            ; scroll downwards
+            ;ld a, $00
+            ;; ^ TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            ; scroll upwards
+            ld a, $01
+            call map_scroll_bg_vertically_with_animation
+            
             pop bc
             pop hl
-
+        
 .skip_animation:
         jp .outer_loop
 
 .tile_lut_load_complete:
-
-    ld hl, ram_general_use_variable_1
-    ld a, [hl]
-    and $1C
-    jr z, .complete_map_loading 
-        call map_scroll_bg_with_animation
+        push hl
+        ld hl, ram_general_use_variable_1
+        ld a, [hl]
+        pop hl
+        and $1C ; (no animations)
+        jr z, .complete_map_loading
+            ;; v TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            ; scroll downwards
+            ;ld a, $00
+            ;; ^ TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            ; scroll upwards
+            ld a, $01
+            call map_scroll_bg_vertically_with_animation
+            jr .skip_position_adjustment
 
 .complete_map_loading:
+ ld hl, ram_general_use_variable_1
+    ld a, [hl]
+    and $1C ; (no animations)
+    jr nz, .skip_position_adjustment
+        call map_scroll_bg_to_target_position_without_animation
+        
+.skip_position_adjustment:
     ret
 
-map_scroll_bg_with_animation:
+; Scroll maps (one tile) vertically, in the direction held by a
+; a: scrolling direction: 0 -> downwards 1 -> upwards
+map_scroll_bg_vertically_with_animation:
     ld c, 8
+    ld b, a
 .one_more:
     call display_wait_vblank
     ld hl, rSCY
+    ld a, b
+    cp $00
+    jr nz, .scroll_up
     ld a, [hl]
     add a, 1
+    jr .scroll_complete
+.scroll_up:
+    ld a, [hl]
+    add a, -1
+.scroll_complete:
     ld [rSCY], a
     dec c
     ld a, c
     cp $00
     jr nz, .one_more
+    ret
+
+; Set background scrolling position to map_current_y * 8
+map_scroll_bg_to_target_position_without_animation:
+    ld a, [map_current_y]
+    sla a
+    sla a
+    sla a
+    ld [rSCY], a
     ret
