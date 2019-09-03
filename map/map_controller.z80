@@ -10,15 +10,25 @@ map_load_palettes equ $01
 map_load_tiles equ $02
 
 ; in Map transition animation
-map_load_no_transition equ $00
-map_load_left_to_right_transition equ $04
-map_load_right_to_left_transition equ $08
-map_load_top_to_bottom_transition equ $0C
-map_load_bottom_to_top_transition equ $10
+map_load_origin equ $00
+map_load_above equ $04
+map_load_below equ $08
+map_load_left equ $0C
+map_load_right equ $10
 
 ; base tile memory base section address
 map_tile_base_section_8000 equ 0
 map_tile_base_section_9000 equ $20
+
+map_initialize_map_controller:
+    ld a, $00
+    ld [map_current_x], a;
+    ld [map_current_y], a;
+    ld a, 20
+    ld [map_current_width], a
+    ld a, 18
+    ld [map_current_height], a
+    ret
 
 ; Loads Room data (tiles, palletes and logic) at a specific position in the video buffer (video buffer size 32x32). With or without animations.
 ; hl: Room initial address
@@ -46,13 +56,10 @@ map_load_room:
     ld [hl], b
     pop hl
 
-    ; Load room metadata
+    ; Load room metadata (save old map position)
     ; load map position X(d), Y(e)
+    ; save original position
     push hl
-    ld hl, map_current_x
-    ld [hl], d
-    ld hl, map_current_y
-    ld [hl], e
 
     ; calculate tile map offset (based on initial address in VRAM)
     ; This is added to the room's tile LUT to find the correct tile ID for each entry in the room
@@ -193,445 +200,405 @@ map_load_room:
     inc hl
     inc hl
 .tile_loaded_skipped:
-    ; Restore room animation attributes
-
-    ; step 3: load LUTS and map logic
-    ; calculate number of entries per LUT (width*height)
-    push hl
-    ld hl, map_current_width
-    ld l, [hl]
-    ld h, $00
-    ld de, map_current_height
-    ld a, [de]
-    ld e, a
-    ld d, $00
-    ; result in BCDE
-    call mul_DE_HL_BCDEu
-
-    ; save results (since the max room dimension is 32x32, save only DE)
-    ld hl, ram_general_use_variable_2
-    ld [hl], e
-    ld hl, ram_general_use_variable_3
-    ld [hl], d
-
-    pop hl
-    ; load room's tile LUT
+    ; is this one really needed? V
     inc hl
-
-    ;; v BOTTOM TO TOP CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ; move hl to the end of the last row
+    ; save tile LUT initial address ram_general_use_variable_5, ram_general_use_variable_6
     ld a, l
-    add e
-    ld l, a
+    ld [ram_general_use_variable_5], a
     ld a, h
-    adc d
-    ld h, a
+    ld [ram_general_use_variable_6], a
 
-    ld a, [map_current_width]
+    ; calculate first tile row
+    push hl
+    call map_calculate_first_tile_row
+    pop hl
+    ; save first row to RAM (ram_general_use_variable_7)
+    ld [ram_general_use_variable_7], a
+    ; [ram_general_use_variable_12] holds the final Y value to be stored in map_current_y
+    ld [ram_general_use_variable_12], a
+    ; only required for upwards movement. Adjust 12 in case of wraparound
+    call map_adjust_final_map_y
+
+    ; calculate first tile address in LUT
+    call map_calculate_first_address_in_LUT
+    ld a, c
+    ld [ram_general_use_variable_10], a
+    ld a, b
+    ld [ram_general_use_variable_11], a
+    ; from this point onwards, HL holds the address of the first tile to be loaded
+
+    ; prepare loop
+    ; ram_general_use_variable_8: holds outer counter (height)
+    ; ram_general_use_variable_9: holds inner counter (width)
+    ; outer counter
+    ld a, $00
+    ld [ram_general_use_variable_8], a
+
+.tile_loading_outer_loop:
+    ld a, $00
+    ld [ram_general_use_variable_9], a
+
+.tile_loading_inner_loop:
+    ; calculate address offset within the LUT
+    push de
+    ld a,[ram_general_use_variable_5]
     ld e, a
+    ld a,[ram_general_use_variable_6]
+    ld d, a
+
+    ; subtract HL from DE (DE holds the initial address of the LUT) in order to get only offsets
     ld a, l
     sub e
-    ld l, a
-    ld a, h
-    sbc $00
-    ld h, a
-    ;; ^ BOTTOM TO TOP CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
-    ;; v TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ; Calculate initial tile address (relative to _SCRN1)
-    ; Expression (Y*MapWidth + X) + &_SCRN1
-    ;push hl
-    ;ld de, map_current_y
-    ;ld a, [de]
-    ;ld l, a
-    ;ld h, $00
-
-    ;ld a, map_max_width
-    ;ld e, a
-    ;ld d, $00
-    
-    ; result in BCDE
-    ;call mul_DE_HL_BCDEu
-
-    ; Only DE will be needed
-    ; add map X
-    ;ld hl, map_current_x
-    ;ld a, [hl]
-    ;ld l, a
-    ;ld h, $00
-
-    ; add DE to HL (store in DE)
-    ;ld a, e
-    ;add l
-    ;ld e, a
-    ;ld a, d
-    ;adc h
-    ;ld d, a
-
-    ; add Base address of _SCRN0
-    ; DE will hold the address in the video memory to receive the LUT data
-    ;ld hl, _SCRN0
-    ;ld a, e
-    ;add l
-    ;ld e, a
-    ;ld a, d
-    ;adc h
-    ;ld d, a
-
-    ; load counters
-    ;ld hl, map_current_height
-    ;ld a, [hl]
-    ;ld c, a
-
-   ; initialize Y boundaries counter
-    ;ld hl, map_current_y
-    ;ld a, [hl]
-    ;ld hl, ram_general_use_variable_6
-    ;ld [hl], a
-
-    ;pop hl
-    ;; ^ TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    ; Calculate initial tile address (relative to _SCRN0)
-    ; Expression ((Y + (MapHeight - 1))*MapWidth + X) + &_SCRN0
-    push hl
-    ld a, [map_current_y]
-    ld l, a
-    ld h, $00
-
-    ld a, [map_current_height]
     ld e, a
-    ld d, $00
-    dec de
-
-    ld a, l
-    add e
-    ld l, a
     ld a, h
-    adc d
-    ld h, a
+    sbc d
+    ld d, a
 
-    ld a, 31
+    ; DE Holds the Offset within the LUT. Use it to find the position in both VRAM banks
+    call map_load_tile_and_attribute_based_on_attribute
+    pop de
+
+    ; increment hl (move to the next element in the same row)
+    inc hl
+
+    ; inner loop boundary check
+    ld a, [ram_general_use_variable_9]
+    inc a
+    ld [ram_general_use_variable_9], a
+    push hl
+    ld l, a
+    ld a, [map_current_width]
     cp l
-    jr nc, .no_correction
+    pop hl
+    jr nz, .tile_loading_inner_loop
+
+.complete_loading_row:
+    ; outer loop boundary check
+    ld a, [ram_general_use_variable_8]
+    inc a
+    ld [ram_general_use_variable_8], a
+    push hl
+    ld l, a
+    ld a, [map_current_height]
+    cp l
+    pop hl
+    jr z, .complete_map_loading
+        ; prepare for the next iteration of the outer loop
+        ; update row for the next iterations of the internal loop
+        push hl
+        ld l, map_load_above
+        call check_animation_direction
+        pop hl
+        jr nz, .is_next_row_is_below
+            ; Show appropriate scroll animation (UP)
+            ld a, 1
+            push hl
+            push bc
+            call map_scroll_bg_vertically_with_animation
+            pop bc
+            pop hl
+            jr .skip_animation
+
+.is_next_row_is_below:
+        ; Show appropriate scroll animation (DOWN)
+        push hl
+        ld l, map_load_origin
+        call check_animation_direction
+        pop hl
+        jr z, .skip_animation
+            ld a, 0
+            push hl
+            push bc
+            call map_scroll_bg_vertically_with_animation
+            pop bc
+            pop hl
+
+.skip_animation:
+        push hl
+        ld l, map_load_above
+        call check_animation_direction
+        pop hl
+        ld a, [ram_general_use_variable_7]
+        jr nz, .increment_row
+            dec a
+            ld [ram_general_use_variable_7], a
+
+             ; Only in the case the map is meant to scroll upwards, HL must be decremetned by 2* map_width to point to the previous row in the LUT
+            push de
+            ; load width and multiply by 2
+            ld a, [map_current_width]
+            ld e, a
+            sla e
+            ; subtract e from hl
+            ld a, l
+            sub e
+            ld l, a
+            ld a, h
+            sbc $00
+            ld h, a
+            pop de
+
+            jr .save_row
+.increment_row:
+            inc a
+            ld [ram_general_use_variable_7], a
+.save_row:   
+        ; correct ram_general_use_variable_7 in case of wrap around
+        call map_wrap_around_detector
+        jp .tile_loading_outer_loop
+
+.complete_map_loading:
+    push hl
+    ld l, map_load_origin
+    call check_animation_direction
+    pop hl
+    jr nz, .scroll_on_last_time
+        call map_scroll_bg_to_target_position_without_animation
+        jr .map_load_complete
+        
+.scroll_on_last_time:
+    push hl
+    ld l, map_load_below
+    call check_animation_direction
+    pop hl
+    jr nz, .scroll_up
+        ld a, 0
+        jr .last_scroll
+.scroll_up:
+        ld a, 1
+.last_scroll:
+        push hl
+        push bc
+        call map_scroll_bg_vertically_with_animation
+        pop bc
+        pop hl
+
+
+.map_load_complete:
+    ; update map Y
+    ld a, [ram_general_use_variable_12]
+    ld [map_current_y], a
+    ret
+
+; LAST THING TO DO: ADJUST THE FINAL MAP POSITION SO THAT THE MAP Y ALWAYS MATCHES THE CURRENT BACKGROUND SCROLL POSITION
+map_adjust_final_map_y:
+    push hl
+    ld l, map_load_above
+    call check_animation_direction
+    jr nz, .return
+        ; ADD THE CODE HERE
+        ld a, [map_current_height]
+        ld h, a
+        ld a, [map_current_y]
+        ld l, a
+.decrement:
+        dec l
         ld a, l
-        sub a, 32
-        ld l, a 
+        cp $FF
+        jr nz, .skip_correction
+            ld l, 31
+.skip_correction:
+        dec h
+        ld a, h
+        cp $00
+        jr nz, .decrement
+        ld a, l
+        ld [ram_general_use_variable_12], a 
+.return:
+    pop hl
+    ret
 
-.no_correction:
-    ld a, map_max_width
-    ld e, a
-    ld d, $00
-    
-    ; result in BCDE
-    call mul_DE_HL_BCDEu
-
-    ; Only DE will be needed
-    ; add map X
-    ld hl, map_current_x
-    ld a, [hl]
+; Used an offset in DE to locate tiles and attribute in the room's LUT's and load into VRAM
+; de: Offset within the LUT
+; hl: current tile LUT address
+map_load_tile_and_attribute_based_on_attribute:
+    ; Calculate VRAM address (base on the first row)
+    push de
+    push bc
+    push hl
+    ; A holds the current row to be rendered
+    ld a, [ram_general_use_variable_7]
+    ld de, 32
     ld l, a
     ld h, $00
-
-    ; add DE to HL (store in DE)
-    ld a, e
-    add l
+    ; multiply A by the row width (in VRAM = 32)
+    call mul_DE_HL_BCDEu
+    pop hl
+    ; result in DE is the fits element in the target row. Add it to ram_general_use_variable_9 (counter in the inner loop)
+    ld a, [ram_general_use_variable_9]
+    add e
     ld e, a
     ld a, d
-    adc h
+    adc $00
     ld d, a
 
-    ; add Base address of _SCRN0
-    ; DE will hold the address in the video memory to receive the LUT data
-    ld hl, _SCRN0
+    ld bc, _SCRN0
     ld a, e
-    add l
+    add c
     ld e, a
     ld a, d
-    adc h
+    adc b
     ld d, a
-
-    ; load counters
-    ld hl, map_current_height
-    ld a, [hl]
-    ld c, a
-
-   ; initialize Y boundaries counter
-    push bc
-    ld hl, map_current_y
-    ld a, [hl]
-    ld c, a
-    ld hl, map_current_height
-    ld a, [hl]
-    add a, c
-    dec a
-
-    ld hl, ram_general_use_variable_6
-    ld [hl], a
-    pop bc
-    pop hl
-
-; **horizontal** loading
-.outer_loop:
-    ; reload map width coutner
-    push hl
-    ld hl, map_current_width
-    ld a, [hl]
-    ld b, a
-
-    ; initialize X boundaries counter
-    ld hl, map_current_x
-    ld a, [hl]
-    ld hl, ram_general_use_variable_5
-    ld [hl], a
-
-    pop hl
-
-.inner_loop:
-
+    ; from this point onwards DE holds an address in VRAM (base _SCRN0)
+    ; prepare to write to VRAM
     ; Load tiles LUT
     ; set rVBK to 0 (tiles bank)
     ld a, 0
     ld [rVBK], a
-
     ld a, [hl]
-
-    ; add offset to tiles
-    push hl
-    ld hl, ram_general_use_variable_4
-    ld l, [hl]
-    add a, l
-    pop hl
-
-    ; Wait until CPU has granted access to VRAM
-    push hl
-    ld   hl, rSTAT
-.wait_for_vram:           
-    bit  $01, [hl]
-    jr   nz, .wait_for_vram 
-    pop hl
-
-    ld [de], a
-    
-    ; load attributes LUT
-    ; set rVBK to 1 (atributes bank)
-    ld a, 1
-    ld [rVBK], a
-    push bc
-    push hl
-    ld hl, ram_general_use_variable_2
-    ld c, [hl]
-    ld hl, ram_general_use_variable_3
-    ld b, [hl]
-    pop hl
-
-    ; calculate attribute LUT address based on the current address of DE + the size of the room
-    push hl
-    ld a, c
-    add l
-    ld l, a
-    ld a, b
-    adc h
-    ld h, a
-
-    ; Wait until CPU has granted access to VRAM
-    push hl
-    ld   hl, rSTAT
-.wait_for_vram_again:           
-    bit  $01, [hl]
-    jr   nz, .wait_for_vram_again 
-    pop hl
-
-    ; load attribute byte into VRAM
-    ld a, [hl]
+    ; add tile offset to hl
+    ld c, a
+    ld a, [ram_general_use_variable_4]
+    add c
+    call bgc_wait_for_VRAM
     ld [de], a
 
-    pop hl
+    ; load palette address
     pop bc
+    pop de
+    ret 
 
-    ;; v TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ;inc hl
-    ;inc de
-    ;; ^ TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    inc hl
-    inc de
-
-    dec b
-    ld a, b
-    cp $00
-    ; if b is not 0, there are still bytes to be loaded in the current line
-    jr z, .inner_loop_complete
-
-        ; check boundaries
-        push hl
-        ld hl, ram_general_use_variable_5
-        ld a, [hl]
-        inc a
-        cp a, map_max_width
-        jr nz, .save_x_counter
-            ; warp around (X starts at 0 now)
-            ld [hl], $00
-            ; return de to the beginning of the row
-            ld a, e
-            sub $20
-            ld e, a
-            ld a, d
-            sbc $00
-            ld d, a
-            pop hl
-            jr .inner_loop
-.save_x_counter:
-        ld [hl], a
-        pop hl
-    jr .inner_loop
-
-.inner_loop_complete:
-    ;; v BOTTOM TO TOP CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ; Adjust HL to point to the previous row
-    ld a, [map_current_width]
-    sla a
-    ld e, a
-    ld a, l
-    sub e
-    ld l, a
-    ld a, h
-    sbc $00
-    ld h, a
-    ;; ^ BOTTOM TO TOP CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    ; one iteration of the outer loop is completed
-    dec c
-    ld a, c
-    cp $00
-
-    ; not done yet, back to the beginning of the outer loop
-    jr z, .tile_lut_load_complete
-    ; check boundaries
+; checks in [ram_general_use_variable_7] whether wrap around happened and corrects it
+; return: the variable (ram_general_use_variable_7) is adjusted automatically
+map_wrap_around_detector:
     push hl
-    ld hl, ram_general_use_variable_6
-    ld a, [hl]
-
-    ;; v TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ;inc a
-    ;cp a, map_max_height
-    ;; ^ TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    dec a
-    cp a, $FF
-    jr nz, .save_y_counter
-        ;; v TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ; warp around (Y starts at 0 now)
-        ; ld a, $00
-        ;; ^ TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       
-        ; warp around (Y starts at the last row now)
-        ld a, map_max_height - 1
-
-.save_y_counter:
-        ld [hl], a
-        pop hl
-
-        ; Push DE to the next row, starting at the required X
+    ld l, map_load_above
+    call check_animation_direction
+    pop hl
+    jr nz, .is_next_row_is_below
         push hl
-        push bc
-        
-        ; calculate current row
-        ld de, ram_general_use_variable_6
-        ld a, [de]
+        ld a, [ram_general_use_variable_7]
         ld l, a
-        ld h, $00
-
-        ld a, 31
+        ld a, $FF
         cp l
-        jr nc, .no_correction_required
-            ld a, l
-            sub a, 32
-            ld l, a 
-        ;; ^ BOTTOM TO TOP CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        pop hl
+        jr nz, .no_wrap_around
+            ld a, 31
+            ld [ram_general_use_variable_7], a
 
-.no_correction_required:
-        ld a, map_max_width
+.is_next_row_is_below:
+    push hl
+    ld a, [ram_general_use_variable_7]
+    ld l, a
+    ld a, 31
+    cp l
+    pop hl
+    jr nc, .no_wrap_around
+        ld a, 0
+        ld [ram_general_use_variable_7], a
+
+.no_wrap_around
+    ret
+
+
+; based on the map vertical position, calculate the first LUT address
+; hl: holds the initial address of the tile LUT
+; return (hl): adjusted address based on the map load direction
+; return (bc): map dimensions (for convenience)
+map_calculate_first_address_in_LUT:
+; check animation direction
+    push hl
+    ld l, map_load_origin
+    call check_animation_direction
+    pop hl
+    cp a, $01
+    jr nz, .check_the_directions
+        ; nothing to do. First tile in LUT is always the first one
+        jr .end_condition
+
+.check_the_directions:
+    push hl
+    ld l, map_load_above
+    call check_animation_direction
+    pop hl
+    jr nz, .is_movement_downwards
+        ; Upwards
+        ; the first tile in the LUT is the first column in the last row
+        ; expression: HL + ((MAP WIDTH) * (MAP HEIGHT - 1))
+        ; calculate map dimensions
+        push de
+        push hl
+        ld a, [map_current_height]
         ld e, a
         ld d, $00
-        ; result in BCDE
-        call mul_DE_HL_BCDEu
+        ; MAP HEIGHT - 1
+        dec de
 
-        ; Only DE will be needed
-        ; add map X
-        ld hl, map_current_x
-        ld a, [hl]
+        ld a, [map_current_width]
         ld l, a
         ld h, $00
 
-        ; add DE to HL (store in DE)
-        ld a, e
-        add l
-        ld e, a
-        ld a, d
-        adc h
-        ld d, a
-
-        ; add Base address of _SCRN0
-        ; DE will hold the address in the video memory to receive the LUT data
-        ld hl, _SCRN0
-        ld a, e
-        add l
-        ld e, a
-        ld a, d
-        adc h
-        ld d, a
-
-        pop bc
+        ; only DE will be used
+        call mul_DE_HL_BCDEu
+        ld c, e
+        ld b, d
         pop hl
 
-        ; Scroll map
-        push hl
-        ld hl, ram_general_use_variable_1
-        ld a, [hl]
-        pop hl
-        and $1C ; (no animations)
-        jr z, .skip_animation
-            push hl
-            push bc
+        ; DE hodls the offset to the first tile in the LUT. To get the real address, add it to the recovered hl
+        ld a, l
+        add e
+        ld l, a
+        ld a, h
+        adc d
+        ld h, a
+        pop de
+        jr .end_condition
 
-            ;; v TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ; scroll downwards
-            ;ld a, $00
-            ;; ^ TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ; scroll upwards
-            ld a, $01
-            call map_scroll_bg_vertically_with_animation
-            
-            pop bc
-            pop hl
-        
-.skip_animation:
-        jp .outer_loop
+    ; Downwards
+.is_movement_downwards:    
+    ; nothing to do. First tile in LUT is always the first one
+.end_condition:
+    ret
 
-.tile_lut_load_complete:
-        push hl
-        ld hl, ram_general_use_variable_1
-        ld a, [hl]
-        pop hl
-        and $1C ; (no animations)
-        jr z, .complete_map_loading
-            ;; v TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ; scroll downwards
-            ;ld a, $00
-            ;; ^ TOP BOTTOM CASE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ; scroll upwards
-            ld a, $01
-            call map_scroll_bg_vertically_with_animation
-            jr .skip_position_adjustment
 
-.complete_map_loading:
- ld hl, ram_general_use_variable_1
-    ld a, [hl]
-    and $1C ; (no animations)
-    jr nz, .skip_position_adjustment
-        call map_scroll_bg_to_target_position_without_animation
-        
-.skip_position_adjustment:
+; Determines first row, based on the direction
+; return (a): first row to be rendered
+map_calculate_first_tile_row:
+
+    ; check animation direction
+    ld l, map_load_origin
+    call check_animation_direction
+    cp a, $01
+    jr nz, .check_the_directions
+        ld a, $00
+        jr .end_condition
+
+.check_the_directions:
+    ld l, map_load_above
+    call check_animation_direction
+    jr nz, .is_movement_downwards
+        ; Upwards
+        ; From bottom to top, the first row will alwaus be the first one right above the current map position
+        ; if it is equal to $FF (-1) wrap around to 31
+        ld a, [map_current_y]
+        dec a
+        cp $FF
+        jr nz, .no_wrap_around_to_31
+            ld a, 31
+.no_wrap_around_to_31:
+        jr .end_condition
+
+    ; Downwards
+.is_movement_downwards:
+    ; From top to bottom, the first row will always be the same as the one requested to be the first of the room
+    ; The first row will always be the row right after the last row of the currently loaded map
+    ; first_row = (MAP Y + MAP HEIGHT) -> if >= 32 then wrap around to 0 + 32 - (MAP Y + MAP HEIGHT)
+    ld a, [map_current_height]
+    ld l, a
+    ld a, [map_current_y]
+    add l
+    ld l, a
+    ld a, 31
+    cp l
+    jr nc, .no_wrap_around_to_0
+        ld a, l
+        ld l, 32
+        sub l
+        jr .end_condition
+.no_wrap_around_to_0:
+            ld a, l
+    
+.end_condition:
     ret
 
 ; Scroll maps (one tile) vertically, in the direction held by a
@@ -666,4 +633,26 @@ map_scroll_bg_to_target_position_without_animation:
     sla a
     sla a
     ld [rSCY], a
+    ret
+
+; checks whether current scroll direction is the one matching in l
+; This function assumes the settings are loaded in ram_general_use_variable_1
+; l: scroll direction
+; return (a): 1 true, 0 false
+check_animation_direction:
+    ld a, [ram_general_use_variable_1]
+    ; get the animation bits (for l and a)
+    srl a
+    srl a
+    
+    srl l
+    srl l
+
+    and $07
+    cp l
+    jr nz, .does_not_match
+    ld a, $01
+    ret
+.does_not_match:
+    ld a, $00
     ret

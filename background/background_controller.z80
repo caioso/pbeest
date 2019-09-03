@@ -60,3 +60,12 @@ clear_lcd:
         ld [rLCDC],a 
         ret 
 
+; Busy wait for VRAM
+bgc_wait_for_VRAM:
+    push hl
+    ld   hl, rSTAT
+.wait_for_vram:           
+    bit  $01, [hl]
+    jr   nz, .wait_for_vram 
+    pop hl
+    ret

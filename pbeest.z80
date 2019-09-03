@@ -110,16 +110,17 @@ main:
     ld a, $56
     call chr_initialize_character
 
+    ; Initialize Map controller
+    call map_initialize_map_controller
+
     ; load map's tiles and palettes
     ; display no animations, load tiles and palettes (a)
     ; load *sample* room (&hl)
     ; first tile initial address (&bc)
     ; map GRAPHICAL-LUTs position (d:X, e:Y) the logic LUT is always loaded in the same place.a
-    ld a, map_tile_base_section_8000 | map_load_no_transition | map_load_tiles | map_load_palettes
+    ld a, map_tile_base_section_8000 | map_load_origin | map_load_tiles | map_load_palettes
     ld hl, sample_room_begin
     ld bc, $85A0
-    ld d, 0
-    ld e, 18
     call map_load_room
 
     ; start display register
@@ -179,11 +180,9 @@ main:
         call is_key_down
         jr z, .detect_select
             call display_wait_vblank
-            ld a, map_tile_base_section_8000 | map_load_bottom_to_top_transition
+            ld a, map_tile_base_section_8000 | map_load_above
             ld hl, sample_room_right_begin
             ld bc, $85A0
-            ld d, 0
-            ld e, 0
             call map_load_room
             jr .no_key_detected
 
@@ -191,10 +190,12 @@ main:
         ld l, key_select
         call is_key_down
         jr z, .no_key_detected
-            ld hl, rSCX
-            ld a, [hl]
-            add a, 8
-            ld [rSCX], a
+            call display_wait_vblank
+            ld a, map_tile_base_section_8000 | map_load_below
+            ld hl, sample_room_begin
+            ld bc, $85A0
+            call map_load_room
+            jr .no_key_detected
             ; no need to load new palletes or tiles
             ;ld de, $00
             ;ld bc, $5A

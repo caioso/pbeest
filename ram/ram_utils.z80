@@ -10,3 +10,10 @@ ram_general_use_variable_3 equ ram_general_use_variable_2 + 1
 ram_general_use_variable_4 equ ram_general_use_variable_3 + 1
 ram_general_use_variable_5 equ ram_general_use_variable_4 + 1
 ram_general_use_variable_6 equ ram_general_use_variable_5 + 1
+ram_general_use_variable_7 equ ram_general_use_variable_6 + 1
+ram_general_use_variable_8 equ ram_general_use_variable_7 + 1
+ram_general_use_variable_9 equ ram_general_use_variable_8 + 1
+ram_general_use_variable_10 equ ram_general_use_variable_9 + 1
+ram_general_use_variable_11 equ ram_general_use_variable_10 + 1
+ram_general_use_variable_12 equ ram_general_use_variable_11 + 1
+ram_general_use_variable_13 equ ram_general_use_variable_12 + 1
