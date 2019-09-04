@@ -100,6 +100,9 @@ map_load_room:
     ld a, [hl]
     ld [de], a
 
+    ; calculate total number of tiles at ram_general_use_variable_11/ram_general_use_variable_12
+    call map_width_times_height
+
     ; load palette target bank (nothing to do for now)
     inc hl
     
@@ -576,6 +579,31 @@ map_load_room:
     ld [map_current_y], a
     ret
 
+; Calculate the total tiles based on the map width x height
+; stores the values at ram_general_use_variable_11/ram_general_use_variable_10
+map_width_times_height:
+    push de
+    push hl
+    ld a, [map_current_width]
+    ld e, a
+    ld d, $00
+
+    ld a, [map_current_height]
+    ld l, a
+    ld h, $00
+
+    ; only DE will be used
+    call mul_DE_HL_BCDEu
+    
+    ; save value into ram_general_use_variable_10/11
+    ld a, e
+    ld [ram_general_use_variable_10], a
+    ld a, d
+    ld [ram_general_use_variable_11], a
+    pop hl
+    pop de
+    ret
+
 ; Adjust final map Y position to match the map scoll position. 
 map_adjust_final_map_y:
     push hl
@@ -685,8 +713,28 @@ map_load_tile_and_attribute_vertical:
     ld [de], a
 
     ; load palette address
+    ; add the number of tiles to hl to get the attribute tile
+    ; Load tiles LUT
+    ; set rVBK to 0 (tiles bank)
+    ld a, 1
+    ld [rVBK], a
+
+    ; add offset to hl
+    push hl
+    ld a, [ram_general_use_variable_10]
+    add a, l
+    ld l, a
+    ld a, [ram_general_use_variable_11]
+    adc a, h
+    ld h, a
+    ld a, [hl]
+    pop hl
+    
+    call bgc_wait_for_VRAM
+    ld [de], a
     pop bc
     pop de
+    
     ret
 
 ; Used an offset in DE to locate tiles and attribute in the room's LUT's and load into VRAM
@@ -745,6 +793,25 @@ map_load_tile_and_attribute_horizontal:
     ld [de], a
 
     ; load palette address
+    ; add the number of tiles to hl to get the attribute tile
+    ; Load tiles LUT
+    ; set rVBK to 0 (tiles bank)
+    ld a, 1
+    ld [rVBK], a
+    
+    ; add offset to hl
+    push hl
+    ld a, [ram_general_use_variable_10]
+    add a, l
+    ld l, a
+    ld a, [ram_general_use_variable_11]
+    adc a, h
+    ld h, a
+    ld a, [hl]
+    pop hl
+    
+    call bgc_wait_for_VRAM
+    ld [de], a
     pop bc
     pop de
     ret 
