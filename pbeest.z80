@@ -68,6 +68,9 @@ include "map/map_controller.z80"
 ; include Rooms (to be moved to separate banks in the future)
 include "map/rooms/sample_room.z80"
 include "map/rooms/sample_room_right.z80"
+include "map/rooms/sample_room_top.z80"
+include "map/rooms/sample_room_left.z80"
+include "map/rooms/sample_room_bottom.z80"
 
 ; main function
 ; bootstrap ROM
@@ -142,13 +145,13 @@ main:
     call joypad
     
     ; Player Controlled Loop Iteration
-    call chr_player_controlled_character_loop
+    ;call chr_player_controlled_character_loop
 
     ; TEMP 
     ; joypad test
     ld l, key_a
     call is_key_down
-    jr z, .detect_start
+    jr z, .detect_up
         ; check colision target, to show correct message
         ld hl, collision_target
         ld a, [hl]
@@ -162,7 +165,7 @@ main:
             jr .show_text
 .dialog_2:
         cp a, $02
-        jr nz, .detect_start
+        jr nz, .detect_up
             ; First Page
         ld de, dialog_page_1_end - dialog_page_1
         ld hl, dialog_page_1
@@ -175,24 +178,46 @@ main:
         call hud_show_text
         jr .no_key_detected
 
-.detect_start:
-        ld l, key_start
+.detect_up:
+        ld l, key_up
         call is_key_down
-        jr z, .detect_select
+        jr z, .detect_down
             call display_wait_vblank
             ld a, map_tile_base_section_8000 | map_load_above
-            ld hl, sample_room_right_begin
+            ld hl, sample_room_top_begin
             ld bc, $85A0
             call map_load_room
             jr .no_key_detected
 
-.detect_select:
-        ld l, key_select
+.detect_down:
+        ld l, key_down
+        call is_key_down
+        jr z, .detect_left
+            call display_wait_vblank
+            ld a, map_tile_base_section_8000 | map_load_below
+            ld hl, sample_room_bottom_begin
+            ld bc, $85A0
+            call map_load_room
+            jr .no_key_detected
+    
+.detect_left:
+        ld l, key_left
+        call is_key_down
+        jr z, .detect_right
+            call display_wait_vblank
+            ld a, map_tile_base_section_8000 | map_load_left
+            ld hl, sample_room_left_begin
+            ld bc, $85A0
+            call map_load_room
+            jr .no_key_detected
+
+.detect_right:
+        ld l, key_right
         call is_key_down
         jr z, .no_key_detected
             call display_wait_vblank
-            ld a, map_tile_base_section_8000 | map_load_below
-            ld hl, sample_room_begin
+            ld a, map_tile_base_section_8000 | map_load_right
+            ld hl, sample_room_right_begin
             ld bc, $85A0
             call map_load_room
             jr .no_key_detected
