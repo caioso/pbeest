@@ -35,9 +35,10 @@ map_current_width equ map_logic + (map_max_width*map_max_height)
 map_current_height equ map_current_width + 1
 map_current_x equ map_current_height + 1
 map_current_y equ map_current_x + 1
+map_current_room_id equ map_current_y + 1
 
 ; Character Controller's Variables
-character_0_x equ map_current_y + 1
+character_0_x equ map_current_room_id + 1
 character_0_y equ character_0_x + 1
 character_0_tile equ character_0_y + 1
 
@@ -49,3 +50,5 @@ character_0 equ character_0_x
 
 ; Collision Target ID
 collision_target equ division_temp + 3
+edget_collision_target_x equ collision_target + 1
+edget_collision_target_y equ edget_collision_target_x + 1

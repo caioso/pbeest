@@ -108,8 +108,8 @@ main:
 
     ; Intialize character 0
     ld hl, character_0
-    ld c, $1A
-    ld b, $1A
+    ld c, $50
+    ld b, $50
     ld a, $56
     call chr_initialize_character
 
@@ -121,6 +121,9 @@ main:
     ; load *sample* room (&hl)
     ; first tile initial address (&bc)
     ; map GRAPHICAL-LUTs position (d:X, e:Y) the logic LUT is always loaded in the same place.a
+    ld a, $00
+    ld [map_current_room_id], a
+
     ld a, map_tile_base_section_8000 | map_load_origin | map_load_tiles | map_load_palettes
     ld hl, sample_room_begin
     ld bc, $85A0
@@ -136,91 +139,171 @@ main:
     ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ16|LCDCF_OBJON|LCDCF_WIN9C00|LCDCF_WINON
     ld [rLCDC], a
 
+    ; Double clock speed
+    ld a, $01
+    ld [rKEY1], a
+    stop
+
+    ; Show Welcome Text
+    ld de, dialog_page_0_end - dialog_page_0
+    ld hl, dialog_page_0
+    call hud_copy_text_buffer
+    ld de, dialog_page_0_end - dialog_page_0
+    ld a, text_box_start_animation
+    call hud_show_text
+
+    ld de, dialog_page_1_end - dialog_page_1
+    ld hl, dialog_page_1
+    call hud_copy_text_buffer
+    ld de, dialog_page_1_end - dialog_page_1
+    ld a, text_box_end_animation
+    call hud_show_text
+
 .main_loop
     nop
-
     call display_wait_vblank
 
     ; read input
     call joypad
     
     ; Player Controlled Loop Iteration
-    ;call chr_player_controlled_character_loop
+    call chr_player_controlled_character_loop
 
+    ; ROOM 1 CHECK
+    ld a, [map_current_room_id]
+    cp $00
+    jr nz, .room_1_loop
+        ; Check edge collisions
+        ; horizontal edges collision check
+        ld a, [edget_collision_target_x]
+        cp $20
+        jr z, .load_room_left
+        cp $15
+        jr z, .load_room_right
+        ld a, [edget_collision_target_y]
+        cp $20
+        jr z, .load_room_top
+        cp $13
+        jr z, .load_room_bottom
+        jr .edge_check_complete
+
+.load_room_left:
+        ld a, $01
+        ld [map_current_room_id], a
+
+        ld a, map_tile_base_section_8000 | map_load_left | map_load_tiles | map_load_palettes
+        ld hl, sample_room_left_begin
+        ld bc, $85A0
+        call map_load_room
+        jr .edge_check_complete
+
+.load_room_right:
+        ld a, $02
+        ld [map_current_room_id], a
+
+        ld a, map_tile_base_section_8000 | map_load_right | map_load_tiles | map_load_palettes
+        ld hl, sample_room_right_begin
+        ld bc, $85A0
+        call map_load_room
+        jr .edge_check_complete
+
+.load_room_top:
+        ld a, $03
+        ld [map_current_room_id], a
+
+        ld a, map_tile_base_section_8000 | map_load_above | map_load_tiles | map_load_palettes
+        ld hl, sample_room_top_begin
+        ld bc, $85A0
+        call map_load_room
+        jr .edge_check_complete
+
+.load_room_bottom:
+        ld a, $04
+        ld [map_current_room_id], a
+
+        ld a, map_tile_base_section_8000 | map_load_below | map_load_tiles | map_load_palettes
+        ld hl, sample_room_bottom_begin
+        ld bc, $85A0
+        call map_load_room
+        jr .edge_check_complete
+
+.edge_check_complete:
+
+.room_1_loop:
     ; TEMP 
     ; joypad test
-    ld l, key_a
-    call is_key_down
-    jr z, .detect_up
-        ; check colision target, to show correct message
-        ld hl, collision_target
-        ld a, [hl]
-        cp a, $01
-        jr nz, .dialog_2
-            ; First Target
-            ld de, dialog_page_0_end - dialog_page_0
-            ld hl, dialog_page_0
-            call hud_copy_text_buffer
-            ld de, dialog_page_0_end - dialog_page_0
-            jr .show_text
-.dialog_2:
-        cp a, $02
-        jr nz, .detect_up
-            ; First Page
-        ld de, dialog_page_1_end - dialog_page_1
-        ld hl, dialog_page_1
-        call hud_copy_text_buffer
-        ld de, dialog_page_1_end - dialog_page_1
+;     ld l, key_a
+;     call is_key_down
+;     jr z, .detect_up
+;         ; check colision target, to show correct message
+;         ld hl, collision_target
+;         ld a, [hl]
+;         cp a, $01
+;         jr nz, .dialog_2
+;             ; First Target
+;             ld de, dialog_page_0_end - dialog_page_0
+;             ld hl, dialog_page_0
+;             call hud_copy_text_buffer
+;             ld de, dialog_page_0_end - dialog_page_0
+;             jr .show_text
+; .dialog_2:
+;         cp a, $02
+;         jr nz, .detect_up
+;             ; First Page
+;         ld de, dialog_page_1_end - dialog_page_1
+;         ld hl, dialog_page_1
+;         call hud_copy_text_buffer
+;         ld de, dialog_page_1_end - dialog_page_1
 
-.show_text:
+; .show_text:
 
-        ld a, text_box_all_animations ;text_box_start_animation
-        call hud_show_text
-        jr .no_key_detected
+;         ld a, text_box_all_animations ;text_box_start_animation
+;         call hud_show_text
+;         jr .no_key_detected
 
-.detect_up:
-        ld l, key_up
-        call is_key_down
-        jr z, .detect_down
-            call display_wait_vblank
-            ld a, map_tile_base_section_8000 | map_load_above
-            ld hl, sample_room_top_begin
-            ld bc, $85A0
-            call map_load_room
-            jr .no_key_detected
+; .detect_up:
+;         ld l, key_up
+;         call is_key_down
+;         jr z, .detect_down
+;             call display_wait_vblank
+;             ld a, map_tile_base_section_8000 | map_load_above
+;             ld hl, sample_room_top_begin
+;             ld bc, $85A0
+;             call map_load_room
+;             jr .no_key_detected
 
-.detect_down:
-        ld l, key_down
-        call is_key_down
-        jr z, .detect_left
-            call display_wait_vblank
-            ld a, map_tile_base_section_8000 | map_load_below
-            ld hl, sample_room_bottom_begin
-            ld bc, $85A0
-            call map_load_room
-            jr .no_key_detected
+; .detect_down:
+;         ld l, key_down
+;         call is_key_down
+;         jr z, .detect_left
+;             call display_wait_vblank
+;             ld a, map_tile_base_section_8000 | map_load_below
+;             ld hl, sample_room_bottom_begin
+;             ld bc, $85A0
+;             call map_load_room
+;             jr .no_key_detected
     
-.detect_left:
-        ld l, key_left
-        call is_key_down
-        jr z, .detect_right
-            call display_wait_vblank
-            ld a, map_tile_base_section_8000 | map_load_left
-            ld hl, sample_room_left_begin
-            ld bc, $85A0
-            call map_load_room
-            jr .no_key_detected
+; .detect_left:
+;         ld l, key_left
+;         call is_key_down
+;         jr z, .detect_right
+;             call display_wait_vblank
+;             ld a, map_tile_base_section_8000 | map_load_left
+;             ld hl, sample_room_left_begin
+;             ld bc, $85A0
+;             call map_load_room
+;             jr .no_key_detected
 
-.detect_right:
-        ld l, key_right
-        call is_key_down
-        jr z, .no_key_detected
-            call display_wait_vblank
-            ld a, map_tile_base_section_8000 | map_load_right
-            ld hl, sample_room_right_begin
-            ld bc, $85A0
-            call map_load_room
-            jr .no_key_detected
+; .detect_right:
+;         ld l, key_right
+;         call is_key_down
+;         jr z, .no_key_detected
+;             call display_wait_vblank
+;             ld a, map_tile_base_section_8000 | map_load_right
+;             ld hl, sample_room_right_begin
+;             ld bc, $85A0
+;             call map_load_room
+;             jr .no_key_detected
             ; no need to load new palletes or tiles
             ;ld de, $00
             ;ld bc, $5A

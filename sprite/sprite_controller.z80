@@ -80,6 +80,30 @@ sptr_set_sprite_x:
     ld [hl], a
     ret
 
+; Automatically moves all sprites to the left
+; a: number of sprites
+sptr_move_all_sprites_to_left:
+    ld c, a
+    ld hl, _OAMRAM
+    ;inc hl
+.move:
+    ; move sprite
+    ld a, [hl]
+    dec a
+    ld [hl], a
+
+    inc hl
+    inc hl
+    inc hl
+    inc hl
+
+    dec c
+    ld a, c
+    cp $00
+    jr nz, .move
+    ret
+
+
 ; converts character number to real (dual) sprite number 
 ; hl: character numner
 ; return (hl): corresponding sprite number (character sprite 1)

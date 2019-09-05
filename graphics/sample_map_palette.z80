@@ -4,4 +4,5 @@ DW  $5417, $37FF, $6980, $6FDE
 DW  $15C4, $22E7, $00BA, $6FDE
 DW  $15C4, $22E7, $034E, $6FDE
 DW  $15C4, $22E7, $4631, $6FDE
+DW  $0000, $0000, $0000, $0000
 sample_map_palette_end:

@@ -97,10 +97,18 @@ chr_move_character_down:
     inc hl
     ; Load Y position
     ld c, [hl]
+
     ; compesate for sprite size (16 pixels + movement direction)
     ld a, c
     add a, 16
     ld c, a
+
+    ; Check for edge collision
+    call chr_check_vertical_edges
+    cp $00
+    jr z, .edge_collision_detected
+
+    ; continue checking
     call chr_position_to_pixel
     push bc
     ; Check whether movement is allowed
@@ -152,6 +160,19 @@ chr_move_character_down:
             pop hl
             ret
 
+.edge_collision_detected:
+    ; the user has collided with an edge
+    call chr_position_to_pixel
+    ld a, d
+    inc a
+    ld [edget_collision_target_x], a
+    ld a, e
+    inc a
+    ld [edget_collision_target_y], a
+    pop hl
+    pop hl
+    ret
+
 .movement_allowed:
     ; if allowed, generate address of character Y
     inc hl
@@ -174,10 +195,18 @@ chr_move_character_up:
     inc hl
     ; Load Y position
     ld c, [hl]
+    
     ; compesate for sprite size (16 pixels + movement direction)
     ld a, c
     sub a, 1
     ld c, a
+
+    ; Check for edge collision
+    call chr_check_vertical_edges
+    cp $00
+    jr z, .edge_collision_detected
+
+    ; continue checking
     call chr_position_to_pixel
     push bc
     ; Check whether movement is allowed
@@ -229,6 +258,19 @@ chr_move_character_up:
             pop hl
             ret
 
+.edge_collision_detected:
+    ; the user has collided with an edge
+    call chr_position_to_pixel
+    ld a, d
+    inc a
+    ld [edget_collision_target_x], a
+    ld a, e
+    inc a
+    ld [edget_collision_target_y], a
+    pop hl
+    pop hl
+    ret
+
 .movement_allowed:
     ; if allowed, generate address of character Y
     inc hl
@@ -251,10 +293,18 @@ chr_move_character_left:
     inc hl
     ; Load Y position
     ld c, [hl]
+
     ; compesate for sprite size (16 pixels + movement direction)
     ld a, b
     sub a, 1
     ld b, a
+
+    ; Check for edge collision
+    call chr_check_horizontal_edges
+    cp $00
+    jr z, .edge_collision_detected
+
+    ; continue detection
     call chr_position_to_pixel
     push bc
     ; Check whether movement is allowed
@@ -311,6 +361,19 @@ chr_move_character_left:
             pop hl
             ret
 
+.edge_collision_detected:
+    ; the player collided with an edge
+    call chr_position_to_pixel
+    ld a, d
+    inc a
+    ld [edget_collision_target_x], a
+    ld a, e
+    inc a
+    ld [edget_collision_target_y], a
+    pop hl
+    pop hl
+    ret 
+
 .movement_allowed:
     ; load current X, move it down and store it back
     ld a, [hl]
@@ -331,10 +394,18 @@ chr_move_character_right:
     inc hl
     ; Load Y position
     ld c, [hl]
+
     ; compesate for sprite size (16 pixels + movement direction)
     ld a, b
     add a, 16
     ld b, a
+    
+    ; Check for edge collision
+    call chr_check_horizontal_edges
+    cp $00
+    jr z, .edge_collision_detected
+
+    ; continue detection
     call chr_position_to_pixel
     push bc
     ; save DE
@@ -393,6 +464,19 @@ chr_move_character_right:
             ; clear stack before returning
             pop hl
             ret
+
+.edge_collision_detected:
+    ; the user has collided with an edge
+    call chr_position_to_pixel
+    ld a, d
+    inc a
+    ld [edget_collision_target_x], a
+    ld a, e
+    inc a
+    ld [edget_collision_target_y], a
+    pop hl
+    pop hl
+    ret
 
 .movement_allowed:
     ; load current X, move it down and store it back
@@ -467,9 +551,11 @@ chr_player_controlled_character_loop:
     call joypad_is_dpad_pressed
     cp a, $01
     jr nz, .continue_movement_processing
-        ; clear colision target
-        ld hl, collision_target
-        ld [hl], $00
+        ; clear colision targets
+        ld a, $00
+        ld [collision_target], a
+        ld [edget_collision_target_x], a
+        ld [edget_collision_target_y], a
 
 .continue_movement_processing:
     ; read key for directiona movement
@@ -510,7 +596,7 @@ chr_player_controlled_character_loop:
     ; render sprite on its new position
     ld hl, character_0
     call chr_render_character
-
+    
     ret
 
 ; Detect Character position on Map (convert pixel into position)
@@ -531,6 +617,36 @@ chr_position_to_pixel:
     srl a
     srl a
     ld e, a
+    ret
+
+; Check Vertical Edges
+; de: b[x], c[y] character position (in pixels)
+; return a: 1 allowed, 0 not allowed
+chr_check_vertical_edges:
+    ld a, c
+    cp $0F
+    jr z, .not_allowed
+    cp $A0
+    jr z, .not_allowed
+        ld a, $01
+        ret
+.not_allowed:
+    ld a, $00
+    ret
+
+; Check Horizontal Edges
+; de: b[x], c[y] character position (in pixels)
+; return a: 1 allowed, 0 not allowed
+chr_check_horizontal_edges:
+    ld a, b
+    cp $7
+    jr z, .not_allowed
+    cp $A8
+    jr z, .not_allowed
+        ld a, $01
+        ret
+.not_allowed:
+    ld a, $00
     ret
 
 ; checks whether movement is alowed
