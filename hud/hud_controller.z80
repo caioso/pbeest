@@ -9,7 +9,7 @@ text_line_2_begin equ _SCRN1 + 32*3 + 1
 text_line_1_size equ 18
 text_line_2_size equ 16
 text_cursor_position equ text_line_2_begin + text_line_2_size + 1
-arrow_blinking_delay equ $0800
+arrow_blinking_delay equ $0C00
 arrow_character equ $55
 blank_character equ $54
 blank_character_code equ $FF

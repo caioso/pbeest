@@ -543,6 +543,13 @@ chr_inc_next_line:
     pop hl
     ret
 
+chr_clear_collision:
+    ld a, $00
+    ld [collision_target], a
+    ld [edget_collision_target_x], a
+    ld [edget_collision_target_y], a
+    ret
+
 ; Character control loop iteration
 ; Reads input and handles movement and interactions
 chr_player_controlled_character_loop:

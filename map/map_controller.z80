@@ -400,6 +400,19 @@ map_load_room:
     ld a, [ram_general_use_variable_12]
     ld [map_current_x], a
 
+    ; Adjust Player Character Position
+    push hl
+    ld l, map_load_right
+    call check_animation_direction
+    pop hl
+    jr nz, .final_left_position
+        ld a, $08
+        jr .adjust_x_position
+.final_left_position:
+        ld a, $98
+.adjust_x_position:
+    ld [character_0_x], a
+
     ; load map logic layer
     call map_load_logic_layer
     ret
@@ -572,7 +585,27 @@ map_load_room:
     ld a, [ram_general_use_variable_12]
     ld [map_current_y], a
 
+    ; Adjust Player Character Position
+    push hl
+    ld l, map_load_origin
+    call check_animation_direction
+    pop hl
+    jr z, .load_logic
+
+    push hl
+    ld l, map_load_below
+    call check_animation_direction
+    pop hl
+    jr nz, .final_up_position
+        ld a, $10
+        jr .adjust_y_position
+.final_up_position:
+        ld a, $90
+.adjust_y_position:
+    ld [character_0_y], a
+
     ; Load map logic
+.load_logic:
     call map_load_logic_layer
     ret
 
@@ -1130,14 +1163,9 @@ map_scroll_bg_vertically_with_animation:
     jr nz, .scroll_up
 
     push hl
-    ld hl, _OAMRAM
-    ld a, [hl]
-    add a, -1
-    ld [hl], a
-    ld hl, _OAMRAM + 4
-    ld a, [hl]
-    add a, -1
-    ld [hl], a
+    push de
+    call map_move_player_character_vertically
+    pop de
     pop hl
 
     ld a, [hl]
@@ -1147,14 +1175,9 @@ map_scroll_bg_vertically_with_animation:
 .scroll_up:
 
     push hl
-    ld hl, _OAMRAM
-    ld a, [hl]
-    add a, 1
-    ld [hl], a
-    ld hl, _OAMRAM + 4
-    ld a, [hl]
-    add a, 1
-    ld [hl], a
+    push de
+    call map_move_player_character_vertically
+    pop de
     pop hl
 
     ld a, [hl]
@@ -1165,6 +1188,96 @@ map_scroll_bg_vertically_with_animation:
     ld a, c
     cp $00
     jr nz, .one_more
+    ret
+
+; Adjust character horizontal position as the screen moves
+map_move_player_character_horizontally:
+    push hl
+    ld l, map_load_left
+    call check_animation_direction
+    pop hl
+    jr nz, .right_values
+        ld e, 1
+        ld d, -1
+        jr .animate
+
+.right_values:
+    ld e, -1
+    ld d, 1
+
+.animate:
+    ld a, [ram_general_use_variable_8]
+    sub a, 14
+    jr c, .single_increment
+    ld a, c
+    cp $08
+    jr z, .double_increment
+.single_increment:
+    ld a, c
+    ld hl, _OAMRAM + 1
+    ld a, [hl]
+    add a, e
+    ld [hl], a
+    ld hl, _OAMRAM + 5
+    ld a, [hl]
+    add a, e
+    ld [hl], a
+    jr .complete
+.double_increment:
+    ld hl, _OAMRAM + 1
+    ld a, [hl]
+    add a, d
+    ld [hl], a
+    ld hl, _OAMRAM + 5
+    ld a, [hl]
+    add a, d
+    ld [hl], a
+.complete:
+    ret
+
+; Adjust character vertical position as the screen moves
+map_move_player_character_vertically:
+    push hl
+    ld l, map_load_above
+    call check_animation_direction
+    pop hl
+    jr nz, .down_values
+        ld e, 1
+        ld d, -1
+        jr .animate
+
+.down_values:
+    ld e, -1
+    ld d, 1
+
+.animate:
+    ld a, [ram_general_use_variable_8]
+    sub a, 12
+    jr c, .single_increment
+    ld a, c
+    cp $08
+    jr z, .double_increment
+.single_increment:
+    ld a, c
+    ld hl, _OAMRAM
+    ld a, [hl]
+    add a, e
+    ld [hl], a
+    ld hl, _OAMRAM + 4
+    ld a, [hl]
+    add a, e
+    ld [hl], a
+    jr .complete
+.double_increment:
+    ld hl, _OAMRAM
+    ld a, [hl]
+    add a, d
+    ld [hl], a
+    ld hl, _OAMRAM + 4
+    ld a, [hl]
+    add a, d
+    ld [hl], a
+.complete:
     ret
 
 ; Scroll maps (one tile) horizontal, in the direction held by a
@@ -1180,14 +1293,9 @@ map_scroll_bg_horizontally_with_animation:
     jr nz, .scroll_right
 
     push hl
-    ld hl, _OAMRAM + 1
-    ld a, [hl]
-    add a, -1
-    ld [hl], a
-    ld hl, _OAMRAM + 5
-    ld a, [hl]
-    add a, -1
-    ld [hl], a
+    push de
+    call map_move_player_character_horizontally
+    pop de
     pop hl
     
     ld a, [hl]
@@ -1195,15 +1303,11 @@ map_scroll_bg_horizontally_with_animation:
     jr .scroll_complete
 
 .scroll_right:
+
     push hl
-    ld hl, _OAMRAM + 1
-    ld a, [hl]
-    add a, 1
-    ld [hl], a
-    ld hl, _OAMRAM + 5
-    ld a, [hl]
-    add a, 1
-    ld [hl], a
+    push de
+    call map_move_player_character_horizontally
+    pop de
     pop hl
 
     ld a, [hl]
