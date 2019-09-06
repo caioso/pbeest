@@ -1130,7 +1130,6 @@ map_scroll_bg_vertically_with_animation:
     jr nz, .scroll_up
 
     push hl
-    call bgc_wait_for_VRAM
     ld hl, _OAMRAM
     ld a, [hl]
     add a, -1
@@ -1148,7 +1147,6 @@ map_scroll_bg_vertically_with_animation:
 .scroll_up:
 
     push hl
-    call bgc_wait_for_VRAM
     ld hl, _OAMRAM
     ld a, [hl]
     add a, 1
@@ -1182,7 +1180,6 @@ map_scroll_bg_horizontally_with_animation:
     jr nz, .scroll_right
 
     push hl
-    call bgc_wait_for_VRAM
     ld hl, _OAMRAM + 1
     ld a, [hl]
     add a, -1
@@ -1199,7 +1196,6 @@ map_scroll_bg_horizontally_with_animation:
 
 .scroll_right:
     push hl
-    call bgc_wait_for_VRAM
     ld hl, _OAMRAM + 1
     ld a, [hl]
     add a, 1

@@ -1,0 +1,436 @@
+ROM Bank #0 (HOME):
+  SECTION: $0040-$0040 ($0001 bytes) ["interrupt_vector"]
+  SECTION: $0100-$2F0D ($2E0E bytes) ["start"]
+           $2E2A = main
+           $018B = div_DE_BC_DEBCu.noadd
+           $0167 = div_DE_BC_DEBCu.nxtbit
+           $019A = mul_DE_HL_BCDEu.mul2
+           $01A0 = mul_DE_HL_BCDEu.mul3
+           $01A6 = mul_DE_HL_BCDEu.mul4
+           $01AC = mul_DE_HL_BCDEu.mul5
+           $01B2 = mul_DE_HL_BCDEu.mul6
+           $01B8 = mul_DE_HL_BCDEu.mul7
+           $01BE = mul_DE_HL_BCDEu.mul8
+           $01C4 = mul_DE_HL_BCDEu.mul9
+           $01CF = mul_DE_HL_BCDEu.mul20
+           $01D5 = mul_DE_HL_BCDEu.mul21
+           $01DB = mul_DE_HL_BCDEu.mul22
+           $01E1 = mul_DE_HL_BCDEu.mul23
+           $01E7 = mul_DE_HL_BCDEu.mul24
+           $01ED = mul_DE_HL_BCDEu.mul25
+           $01F3 = mul_DE_HL_BCDEu.mul26
+           $01F9 = mul_DE_HL_BCDEu.mul27
+           $0208 = MULTAB
+           $0423 = time_controlled_two_step_delay.inner_loop
+           $0422 = time_controlled_two_step_delay.outer_loop
+           $0466 = is_key_down.not_detected
+           $0473 = joypad_is_dpad_pressed.not_pressed
+           $047F = tilecrt_load_tiles.check_second_byte
+           $0495 = tilecrt_load_tiles.skip_auto_placement
+           $0496 = tilecrt_load_tiles.copy_tile
+           $04B9 = display_wait_vblank.wait_vblank
+           $04DE = clear_lcd
+           $04D4 = bgc_load_background_palette.load_palette_bytes
+           $04E2 = clear_lcd.wait_vblank
+           $04F3 = bgc_wait_for_VRAM.wait_for_vram
+           $0501 = wnd_set_window_position
+           $0ACE = sprt_load_sprite_palette.load_palette_bytes
+           $0AE1 = sptr_move_all_sprites_to_left.move
+           $0AFA = sptr_get_sprite_number_by_character_id.sprite_1
+           $0B02 = sptr_get_sprite_number_by_character_id.default_sprite
+           $0510 = hud_tiles
+           $0A70 = hud_tiles_end
+           $0476 = tilecrt_load_tiles
+           $0B0A = text_box_map
+           $0BA0 = hud_initialize_hud.continue_copy
+           $0B6E = text_box_map_end
+           $0B8A = hud_initialize_hud.copy_text_box_map
+           $0BD0 = hud_initialize_hud.continue_attribute_copy
+           $0BBA = hud_initialize_hud.copy_text_box_map_attribute
+           $0DF4 = hud_clear_text
+           $0BFB = hud_show_text.skip_start_animation
+           $0C07 = hud_show_text.continue_initialization
+           $0C2E = hud_show_text.run_text_box_state_1
+           $0C4B = hud_show_text.run_text_box_state_2
+           $0D42 = hud_show_text.run_text_box_state_3
+           $0D92 = hud_show_text.run_text_box_state_4
+           $0DC0 = hud_show_text.run_text_box_state_5
+           $0DE1 = hud_show_text.run_text_box_state_6
+           $041F = time_controlled_two_step_delay
+           $0C32 = hud_show_text.move_window
+           $0C0F = hud_show_text.check_current_state
+           $0432 = joypad
+           $045D = is_key_down
+           $0C75 = hud_show_text.clear_key_down_flag
+           $0C7A = hud_show_text.continue_text_rendering
+           $0C88 = hud_show_text.long_delay
+           $0C8B = hud_show_text.call_adjusted_delay
+           $04B9 = display_wait_vblank
+           $0E24 = hud_check_word_break
+           $0D13 = hud_show_text.break_line
+           $0CDC = hud_show_text.skip_entire_blank_first_char_checking
+           $0CD9 = hud_show_text.break_first_space_checking_loop
+           $0CC9 = hud_show_text.skip_char_until_it_is_not_first_line
+           $0CEB = hud_show_text.skip_char
+           $0CE8 = hud_show_text.restore_bc_and_go_to_arrow_blinking
+           $0D37 = hud_show_text.go_to_arrow_blinking
+           $0D05 = hud_show_text.line_2_check
+           $0D08 = hud_show_text.check_if_line_is_full
+           $0D32 = hud_show_text.continue_in_the_same_line
+           $0D13 = hud_show_text.normal_line_check
+           $0D2B = hud_show_text.should_continue_in_next_page
+           $0C63 = hud_show_text.load_text_bytes
+           $0D5F = hud_show_text.arrow_delay
+           $0D5A = hud_show_text.show_arrow
+           $0D62 = hud_show_text.read_joypad
+           $0D75 = hud_show_text.previous_state_key_pressed
+           $0D90 = hud_show_text.end_key_check
+           $0D88 = hud_show_text.key_press_detected
+           $0D81 = hud_show_text.clear_previous_key
+           $0DA9 = hud_show_text.hide_window_or_leave
+           $0DB8 = hud_show_text.leave_without_hiding
+           $0DC4 = hud_show_text.move_window_down
+           $0DE3 = hud_show_text.leave_text_box_loop
+           $0DE8 = hud_copy_text_buffer.text_copy
+           $0E0C = hud_clear_text.clear_line_2
+           $0E0F = hud_clear_text.inner_loop
+           $0E1B = hud_clear_text.finish_inner_loop
+           $0DFD = hud_clear_text.outer_loop
+           $0E32 = hud_check_word_break.intialize_loop
+           $0E3F = hud_check_word_break.check_second_value
+           $0E45 = hud_check_word_break.check_meet
+           $0E36 = hud_check_word_break.continue_processing
+           $0E53 = hud_check_word_break.limit_18
+           $0E5A = hud_check_word_break.exceeded
+           $0E5D = hud_check_word_break.not_exceeded
+           $0A70 = hero_begin
+           $0AB0 = hero_end
+           $0AB0 = hero_palette_begin
+           $0AB8 = hero_palette_end
+           $0AC4 = sprt_load_sprite_palette
+           $0AEF = sptr_get_sprite_number_by_character_id
+           $0AB8 = sptr_initialize_sprite
+           $11C0 = chr_check_vertical_edges
+           $0FFD = chr_move_character_down.edge_collision_detected
+           $11AB = chr_position_to_pixel
+           $11DE = chr_check_movement
+           $0FDE = chr_move_character_down.movement_allowed_might_be_allowed
+           $1124 = chr_get_collision_id
+           $0FEB = chr_move_character_down.check_wheter_not_absoltue
+           $100D = chr_move_character_down.movement_allowed
+           $1056 = chr_move_character_up.edge_collision_detected
+           $1037 = chr_move_character_up.movement_allowed_might_be_allowed
+           $1044 = chr_move_character_up.check_wheter_not_absoltue
+           $1066 = chr_move_character_up.movement_allowed
+           $11CF = chr_check_horizontal_edges
+           $10B3 = chr_move_character_left.edge_collision_detected
+           $1090 = chr_move_character_left.movement_allowed_might_be_allowed
+           $114D = chr_inc_next_line
+           $109F = chr_move_character_left.check_wheter_not_absoltue
+           $10C3 = chr_move_character_left.movement_allowed
+           $110F = chr_move_character_right.edge_collision_detected
+           $10EC = chr_move_character_right.movement_allowed_might_be_allowed
+           $10FB = chr_move_character_right.check_wheter_not_absoltue
+           $111F = chr_move_character_right.movement_allowed
+           $0ADA = sptr_set_sprite_x
+           $0AD8 = sptr_set_sprite_y
+           $0469 = joypad_is_dpad_pressed
+           $116C = chr_player_controlled_character_loop.continue_movement_processing
+           $117B = chr_player_controlled_character_loop.check_key_up
+           $0FBA = chr_move_character_down
+           $1188 = chr_player_controlled_character_loop.check_key_left
+           $1013 = chr_move_character_up
+           $1197 = chr_player_controlled_character_loop.check_key_right
+           $106C = chr_move_character_left
+           $11A4 = chr_player_controlled_character_loop.end_character_movement
+           $10C8 = chr_move_character_right
+           $112C = chr_render_character
+           $11CC = chr_check_vertical_edges.not_allowed
+           $11DB = chr_check_horizontal_edges.not_allowed
+           $018E = mul_DE_HL_BCDEu
+           $1208 = chr_check_movement.may_pass
+           $123B = map_load_room.base_8000
+           $123E = map_load_room.continue_offset_tile_id_calculation
+           $0150 = div_DE_BC_DEBCu
+           $14AD = map_width_times_height
+           $1280 = map_load_room.skip_palette_load
+           $04CA = bgc_load_background_palette
+           $1282 = map_load_room.palette_loaded_skipped
+           $12AE = map_load_room.skip_tiles_load
+           $12B2 = map_load_room.tile_loaded_skipped
+           $1755 = check_animation_direction
+           $13B3 = map_load_room.vertical_scrolling
+           $166C = map_calculate_first_column
+           $14ED = map_adjust_final_map_x
+           $160D = map_calculate_first_address_in_LUT_horizontal
+           $1564 = map_load_tile_and_attribute_horizontal
+           $12FC = map_load_room.tile_loading_inner_loop_horizontal
+           $1393 = map_load_room.complete_map_loading_horizontal
+           $134C = map_load_room.is_next_column_is_right
+           $170A = map_scroll_bg_horizontally_with_animation
+           $1355 = map_load_room.horizontal_animation_complete
+           $1378 = map_load_room.increment_column
+           $138D = map_load_room.save_column
+           $15E2 = map_wrap_around_detector_horizontal
+           $12F7 = map_load_room.tile_loading_outer_loop_horizontal
+           $13A0 = map_load_room.scroll_up_h
+           $13A2 = map_load_room.last_scroll_h
+           $1481 = map_load_logic_layer
+           $1695 = map_calculate_first_tile_row
+           $14C9 = map_adjust_final_map_y
+           $1637 = map_calculate_first_address_in_LUT_vertical
+           $1511 = map_load_tile_and_attribute_vertical
+           $13CE = map_load_room.tile_loading_inner_loop_vertical
+           $1453 = map_load_room.complete_map_loading_vertical
+           $1416 = map_load_room.is_next_row_is_below
+           $16CB = map_scroll_bg_vertically_with_animation
+           $1428 = map_load_room.skip_animation
+           $1449 = map_load_room.increment_row
+           $144D = map_load_room.save_row
+           $15B7 = map_wrap_around_detector
+           $13C9 = map_load_room.tile_loading_outer_loop_vertical
+           $1461 = map_load_room.scroll_on_last_time
+           $1749 = map_scroll_bg_to_target_position_without_animation
+           $1477 = map_load_room.map_load_complete
+           $146E = map_load_room.scroll_up
+           $1470 = map_load_room.last_scroll
+           $14A3 = map_load_logic_layer.loop
+           $14EB = map_adjust_final_map_y.return
+           $14E1 = map_adjust_final_map_y.skip_correction
+           $14D9 = map_adjust_final_map_y.decrement
+           $150F = map_adjust_final_map_x.return
+           $1505 = map_adjust_final_map_x.skip_correction
+           $14FD = map_adjust_final_map_x.decrement
+           $152F = map_load_tile_and_attribute_vertical.no_correction
+           $04EF = bgc_wait_for_VRAM
+           $1575 = map_load_tile_and_attribute_horizontal.no_correction
+           $15D1 = map_wrap_around_detector.is_next_row_is_below
+           $15E1 = map_wrap_around_detector.no_wrap_around
+           $15FC = map_wrap_around_detector_horizontal.is_next_column_is_right
+           $160C = map_wrap_around_detector_horizontal.no_wrap_around
+           $1636 = map_calculate_first_address_in_LUT_horizontal.is_movement_to_the_right
+           $1636 = map_calculate_first_address_in_LUT_horizontal.end_condition
+           $1644 = map_calculate_first_address_in_LUT_vertical.check_the_directions
+           $166B = map_calculate_first_address_in_LUT_vertical.end_condition
+           $166B = map_calculate_first_address_in_LUT_vertical.is_movement_downwards
+           $167F = map_calculate_first_column.is_movement_right
+           $167D = map_calculate_first_column.no_wrap_around_to_31
+           $1694 = map_calculate_first_column.end_condition
+           $1693 = map_calculate_first_column.no_wrap_around_to_0
+           $16A2 = map_calculate_first_tile_row.check_the_directions
+           $16CA = map_calculate_first_tile_row.end_condition
+           $16B5 = map_calculate_first_tile_row.is_movement_downwards
+           $16B3 = map_calculate_first_tile_row.no_wrap_around_to_31
+           $16C9 = map_calculate_first_tile_row.no_wrap_around_to_0
+           $16EE = map_scroll_bg_vertically_with_animation.scroll_up
+           $1701 = map_scroll_bg_vertically_with_animation.scroll_complete
+           $16CE = map_scroll_bg_vertically_with_animation.one_more
+           $172D = map_scroll_bg_horizontally_with_animation.scroll_right
+           $1740 = map_scroll_bg_horizontally_with_animation.scroll_complete
+           $170D = map_scroll_bg_horizontally_with_animation.one_more
+           $1768 = check_animation_direction.does_not_match
+           $176B = sample_map_palette_begin
+           $179B = sample_map_palette_end
+           $179B = sample_map_tiles_begin
+           $18DB = sample_map_tiles_end
+           $04AF = initialize_tile_counter
+           $04C0 = bgc_initialize_background
+           $04F9 = wnd_initialize_window
+           $0B6E = hud_initialize_hud
+           $0508 = hud_palette_begin
+           $0510 = hud_palette_end
+           $0F6B = chr_load_character_tiles_and_palettes
+           $0F86 = chr_initialize_character
+           $120C = map_initialize_map_controller
+           $18DB = sample_room_begin
+           $121F = map_load_room
+           $0E7A = dialog_page_0_end
+           $0E60 = dialog_page_0
+           $0DE4 = hud_copy_text_buffer
+           $0BD5 = hud_show_text
+           $0E9F = dialog_page_1_end
+           $0E7A = dialog_page_1
+           $115A = chr_player_controlled_character_loop
+           $2F0B = main.room_1_loop
+           $2EC3 = main.load_room_left
+           $2ED5 = main.load_room_right
+           $2EE7 = main.load_room_top
+           $2EF9 = main.load_room_bottom
+           $2F0B = main.edge_check_complete
+           $25A4 = sample_room_left_begin
+           $1D1E = sample_room_right_begin
+           $2161 = sample_room_top_begin
+           $29E7 = sample_room_bottom_begin
+           $2E9A = main.main_loop
+           $0A20 = hud_tilesTLE81
+           $0A10 = hud_tilesTLE80
+           $0A40 = hud_tilesTLE83
+           $0A30 = hud_tilesTLE82
+           $0A60 = hud_tilesTLE85
+           $0A50 = hud_tilesTLE84
+           $0630 = hud_tilesTLE18
+           $0640 = hud_tilesTLE19
+           $05B0 = hud_tilesTLE10
+           $05C0 = hud_tilesTLE11
+           $05D0 = hud_tilesTLE12
+           $05E0 = hud_tilesTLE13
+           $05F0 = hud_tilesTLE14
+           $0600 = hud_tilesTLE15
+           $0610 = hud_tilesTLE16
+           $0620 = hud_tilesTLE17
+           $0770 = hud_tilesTLE38
+           $0780 = hud_tilesTLE39
+           $0710 = hud_tilesTLE32
+           $0720 = hud_tilesTLE33
+           $06F0 = hud_tilesTLE30
+           $0700 = hud_tilesTLE31
+           $0750 = hud_tilesTLE36
+           $0760 = hud_tilesTLE37
+           $0730 = hud_tilesTLE34
+           $0740 = hud_tilesTLE35
+           $08B0 = hud_tilesTLE58
+           $08C0 = hud_tilesTLE59
+           $0870 = hud_tilesTLE54
+           $0880 = hud_tilesTLE55
+           $0890 = hud_tilesTLE56
+           $08A0 = hud_tilesTLE57
+           $0830 = hud_tilesTLE50
+           $0840 = hud_tilesTLE51
+           $0850 = hud_tilesTLE52
+           $0860 = hud_tilesTLE53
+           $06E0 = hud_tilesTLE29
+           $06D0 = hud_tilesTLE28
+           $0680 = hud_tilesTLE23
+           $0670 = hud_tilesTLE22
+           $0660 = hud_tilesTLE21
+           $0650 = hud_tilesTLE20
+           $06C0 = hud_tilesTLE27
+           $06B0 = hud_tilesTLE26
+           $06A0 = hud_tilesTLE25
+           $0690 = hud_tilesTLE24
+           $09F0 = hud_tilesTLE78
+           $0A00 = hud_tilesTLE79
+           $09D0 = hud_tilesTLE76
+           $09E0 = hud_tilesTLE77
+           $09B0 = hud_tilesTLE74
+           $09C0 = hud_tilesTLE75
+           $0990 = hud_tilesTLE72
+           $09A0 = hud_tilesTLE73
+           $0970 = hud_tilesTLE70
+           $0980 = hud_tilesTLE71
+           $0820 = hud_tilesTLE49
+           $0810 = hud_tilesTLE48
+           $07E0 = hud_tilesTLE45
+           $07D0 = hud_tilesTLE44
+           $0800 = hud_tilesTLE47
+           $07F0 = hud_tilesTLE46
+           $07A0 = hud_tilesTLE41
+           $0790 = hud_tilesTLE40
+           $07C0 = hud_tilesTLE43
+           $07B0 = hud_tilesTLE42
+           $0960 = hud_tilesTLE69
+           $0950 = hud_tilesTLE68
+           $0940 = hud_tilesTLE67
+           $0930 = hud_tilesTLE66
+           $0920 = hud_tilesTLE65
+           $0910 = hud_tilesTLE64
+           $0900 = hud_tilesTLE63
+           $08F0 = hud_tilesTLE62
+           $08E0 = hud_tilesTLE61
+           $08D0 = hud_tilesTLE60
+           $05A0 = hud_tilesTLE9
+           $0590 = hud_tilesTLE8
+           $0520 = hud_tilesTLE1
+           $0510 = hud_tilesTLE0
+           $0540 = hud_tilesTLE3
+           $0530 = hud_tilesTLE2
+           $0560 = hud_tilesTLE5
+           $0550 = hud_tilesTLE4
+           $0580 = hud_tilesTLE7
+           $0570 = hud_tilesTLE6
+    SLACK: $11F1 bytes
+
+WRAM Bank #0:
+  EMPTY
+
+WRAM Bank #1:
+  EMPTY
+
+WRAM Bank #2:
+  EMPTY
+
+WRAM Bank #3:
+  EMPTY
+
+WRAM Bank #4:
+  EMPTY
+
+WRAM Bank #5:
+  EMPTY
+
+WRAM Bank #6:
+  EMPTY
+
+WRAM Bank #7:
+  EMPTY
+
+VRAM Bank #0:
+  EMPTY
+
+VRAM Bank #1:
+  EMPTY
+
+OAM:
+  EMPTY
+
+HRAM:
+  EMPTY
+
+SRAM Bank #0:
+  EMPTY
+
+SRAM Bank #1:
+  EMPTY
+
+SRAM Bank #2:
+  EMPTY
+
+SRAM Bank #3:
+  EMPTY
+
+SRAM Bank #4:
+  EMPTY
+
+SRAM Bank #5:
+  EMPTY
+
+SRAM Bank #6:
+  EMPTY
+
+SRAM Bank #7:
+  EMPTY
+
+SRAM Bank #8:
+  EMPTY
+
+SRAM Bank #9:
+  EMPTY
+
+SRAM Bank #10:
+  EMPTY
+
+SRAM Bank #11:
+  EMPTY
+
+SRAM Bank #12:
+  EMPTY
+
+SRAM Bank #13:
+  EMPTY
+
+SRAM Bank #14:
+  EMPTY
+
+SRAM Bank #15:
+  EMPTY
+
