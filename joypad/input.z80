@@ -53,6 +53,7 @@ joypad:
     ; apply complement
     cpl
     ld [current_key], a
+    ld [current_key_down], a
 
     ; restore bc
     pop bc

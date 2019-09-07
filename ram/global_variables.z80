@@ -52,3 +52,8 @@ character_0 equ character_0_x
 collision_target equ division_temp + 3
 edget_collision_target_x equ collision_target + 1
 edget_collision_target_y equ edget_collision_target_x + 1
+
+; key Controlle variables
+current_key_down equ edget_collision_target_y + 1
+current_key_up equ current_key_down + 1
+

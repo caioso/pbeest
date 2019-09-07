@@ -1153,7 +1153,7 @@ map_calculate_first_tile_row:
 ; Scroll maps (one tile) vertically, in the direction held by a
 ; a: scrolling direction: 0 -> downwards 1 -> upwards
 map_scroll_bg_vertically_with_animation:
-    ld c, 8
+    ld c, 4
     ld b, a
 .one_more:
     call display_wait_vblank
@@ -1169,7 +1169,7 @@ map_scroll_bg_vertically_with_animation:
     pop hl
 
     ld a, [hl]
-    add a, 1
+    add a, 2
     jr .scroll_complete
 
 .scroll_up:
@@ -1181,7 +1181,7 @@ map_scroll_bg_vertically_with_animation:
     pop hl
 
     ld a, [hl]
-    add a, -1
+    add a, -2
 .scroll_complete:
     ld [rSCY], a
     dec c
@@ -1197,20 +1197,20 @@ map_move_player_character_horizontally:
     call check_animation_direction
     pop hl
     jr nz, .right_values
-        ld e, 1
-        ld d, -1
+        ld e, 2
+        ld d, -2
         jr .animate
 
 .right_values:
-    ld e, -1
-    ld d, 1
+    ld e, -2
+    ld d, 2
 
 .animate:
     ld a, [ram_general_use_variable_8]
-    sub a, 14
+    sub a, 17
     jr c, .single_increment
     ld a, c
-    cp $08
+    cp $04
     jr z, .double_increment
 .single_increment:
     ld a, c
@@ -1242,20 +1242,20 @@ map_move_player_character_vertically:
     call check_animation_direction
     pop hl
     jr nz, .down_values
-        ld e, 1
-        ld d, -1
+        ld e, 2
+        ld d, -2
         jr .animate
 
 .down_values:
-    ld e, -1
-    ld d, 1
+    ld e, -2
+    ld d, 2
 
 .animate:
     ld a, [ram_general_use_variable_8]
-    sub a, 12
+    sub a, 15
     jr c, .single_increment
     ld a, c
-    cp $08
+    cp $04
     jr z, .double_increment
 .single_increment:
     ld a, c
@@ -1283,7 +1283,7 @@ map_move_player_character_vertically:
 ; Scroll maps (one tile) horizontal, in the direction held by a
 ; a: scrolling direction: 0 -> right 1 -> left
 map_scroll_bg_horizontally_with_animation:
-    ld c, 8
+    ld c, 4
     ld b, a
 .one_more:
     call display_wait_vblank
@@ -1299,7 +1299,7 @@ map_scroll_bg_horizontally_with_animation:
     pop hl
     
     ld a, [hl]
-    add a, 1
+    add a, 2
     jr .scroll_complete
 
 .scroll_right:
@@ -1311,7 +1311,7 @@ map_scroll_bg_horizontally_with_animation:
     pop hl
 
     ld a, [hl]
-    add a, -1
+    add a, -2
 
 .scroll_complete:
     ld [rSCX], a
