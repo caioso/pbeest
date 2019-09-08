@@ -567,7 +567,7 @@ chr_player_controlled_character_loop:
 .continue_movement_processing:
     ; read key for directiona movement
     ld l, key_down
-    call is_key_down
+    call is_key_down_or_held
     jr z, .check_key_up
         ; Move Character Down
         ld hl, character_0
@@ -576,7 +576,7 @@ chr_player_controlled_character_loop:
 
 .check_key_up:
     ld l, key_up
-    call is_key_down
+    call is_key_down_or_held
     jr z, .check_key_left
         ; Move Character Up
         ld hl, character_0
@@ -584,7 +584,7 @@ chr_player_controlled_character_loop:
     
 .check_key_left:
     ld l, key_left
-    call is_key_down
+    call is_key_down_or_held
     jr z, .check_key_right
         ; Move Character Up
         ld hl, character_0
@@ -593,7 +593,7 @@ chr_player_controlled_character_loop:
 
 .check_key_right:
     ld l, key_right
-    call is_key_down
+    call is_key_down_or_held
     jr z, .end_character_movement
         ; Move Character Up
         ld hl, character_0

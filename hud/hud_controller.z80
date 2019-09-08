@@ -248,7 +248,7 @@ hud_show_text:
 
     ; check whether if key is down
     ld l, key_a
-    call  is_key_down
+    call  is_key_held
     jr z, .clear_key_down_flag
         ld a, $01
         ld [text_box_key_state], a
@@ -473,7 +473,7 @@ hud_show_text:
 .previous_state_key_pressed:
     call joypad
     ld l, key_a
-    call is_key_down
+    call is_key_up
     jr nz, .end_key_check
     jr .clear_previous_key
 

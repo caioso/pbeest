@@ -159,6 +159,9 @@ main:
     ld a, text_box_end_animation
     call hud_show_text
 
+    ; initialize joypad
+    call joypad_initialize
+
 .main_loop
     nop
     call display_wait_vblank
