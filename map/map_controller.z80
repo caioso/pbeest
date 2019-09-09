@@ -54,6 +54,10 @@ map_load_room:
     ld [hl], c
     ld hl, ram_general_use_variable_3
     ld [hl], b
+    ld hl, ram_general_use_variable_15
+    ld [hl], d
+    ld hl, ram_general_use_variable_16
+    ld [hl], e
     pop hl
 
     ; Load room metadata (save old map position)
@@ -308,7 +312,9 @@ map_load_room:
     ld [ram_general_use_variable_8], a
     push hl
     ld l, a
-    ld a, [map_current_width]
+
+    ; Map width is guaranteed to be 20 tiles
+    ld a, 20
     cp l
     pop hl
     jr z, .complete_map_loading_horizontal
@@ -474,7 +480,10 @@ map_load_room:
     ld [ram_general_use_variable_9], a
     push hl
     ld l, a
-    ld a, [map_current_width]
+
+    ; Map width is guaranteed to be 20 tiles
+    ld a, 20
+
     cp l
     pop hl
     jr nz, .tile_loading_inner_loop_vertical
@@ -486,7 +495,9 @@ map_load_room:
     ld [ram_general_use_variable_8], a
     push hl
     ld l, a
-    ld a, [map_current_height]
+
+    ; Map heighy is guaranteed to be 18 tiles
+    ld a, 18
     cp l
     pop hl
     jr z, .complete_map_loading_vertical
@@ -533,7 +544,8 @@ map_load_room:
              ; Only in the case the map is meant to scroll upwards, HL must be decremetned by 2* map_width to point to the previous row in the LUT
             push de
             ; load width and multiply by 2
-            ld a, [map_current_width]
+            ; Map width is guaranteed to be 20 tiles
+            ld a, 20
             ld e, a
             sla e
             ; subtract e from hl
@@ -611,6 +623,7 @@ map_load_room:
 
 ; Load Map Logic Layer
 map_load_logic_layer:
+    ; Load LUT initial address
     ld a, [ram_general_use_variable_5]
     ld l, a
     ld a, [ram_general_use_variable_6]
@@ -638,17 +651,79 @@ map_load_logic_layer:
     adc d
     ld h, a
 
-    ; load map into mal logic buffer
+    ; From this point onwards, HL has the first address of the logic layer
+    ; DE holds the amount of logic tiles to load
+
+    ; Load initial address based on initial X and initial Y position
+    push hl
+    push de
+
+    ; Expression HL + ((initial_y * map_width) + initial_x)
+    ld a, [ram_general_use_variable_16]
+    ld e, a
+    ld d, $00
+
+    ld a, [map_current_width]
+    ld l, a
+    ld h, $00
+
+    ; only DE will be used
+    call mul_DE_HL_BCDEu
+    
+    ; copy de to bc
+    ld c, e
+    ld b, d
+
+    ; Add width
+    ld a, [ram_general_use_variable_15]
+    add c
+    ld c, a
+    ld a, b
+    adc $00
+    ld b, a
+
+    pop de
+    pop hl
+
+    ld a, c
+    add l
+    ld l, a
+    ld a, b
+    adc h
+    ld h, a
+
     ld bc, map_logic
-.loop:
+    ld d, 18
+.outer_loop:
+    ld e, 20
+.inner_loop:
     ld a, [hl]
     ld [bc], a
     inc hl
     inc bc
-    dec de
+    dec e
     ld a, e
-    or d
-    jr nz, .loop
+    cp $00
+    jr nz, .inner_loop
+        ; move to the next line in the logic map
+        ; subtract screen width and add map width
+        ld a, l
+        sub 20
+        ld l, a
+        ld a, h
+        sbc $00
+        ld h, a
+
+        ; add LUT width
+        ld a, [map_current_width]
+        add l
+        ld l, a
+        ld a, h
+        adc $00
+        ld h, a
+
+        dec d
+        jr nz, .outer_loop
     ret
 
 ; Calculate the total tiles based on the map width x height
@@ -661,6 +736,31 @@ map_width_times_height:
     ld d, $00
 
     ld a, [map_current_height]
+    ld l, a
+    ld h, $00
+
+    ; only DE will be used
+    call mul_DE_HL_BCDEu
+    
+    ; save value into ram_general_use_variable_10/11
+    ld a, e
+    ld [ram_general_use_variable_10], a
+    ld a, d
+    ld [ram_general_use_variable_11], a
+    pop hl
+    pop de
+    ret
+
+; Calculate the total tiles based on the map SCREE_width x SCREEN_height
+; Screen width is hardcoded to 20 and screen height is hardcoded to 18
+map_screen_width_times_screen_height:
+    push de
+    push hl
+    ld a, 20
+    ld e, a
+    ld d, $00
+
+    ld a, 18
     ld l, a
     ld h, $00
 

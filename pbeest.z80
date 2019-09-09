@@ -127,6 +127,7 @@ main:
     ld a, map_tile_base_section_8000 | map_load_origin | map_load_tiles | map_load_palettes
     ld hl, sample_room_begin
     ld bc, $85A0
+    ld de, $0000
     call map_load_room
 
     ; start display register
@@ -197,6 +198,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_left | map_load_tiles | map_load_palettes
         ld hl, sample_room_left_begin
         ld bc, $85A0
+        ld de, $0000
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete
@@ -208,6 +210,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_right | map_load_tiles | map_load_palettes
         ld hl, sample_room_right_begin
         ld bc, $85A0
+        ld de, $0000
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete
@@ -219,6 +222,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_above | map_load_tiles | map_load_palettes
         ld hl, sample_room_top_begin
         ld bc, $85A0
+        ld de, $0002
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete
@@ -230,6 +234,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_below | map_load_tiles | map_load_palettes
         ld hl, sample_room_bottom_begin
         ld bc, $85A0
+        ld de, $0000
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete
@@ -270,6 +275,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_left 
         ld hl, sample_room_begin
         ld bc, $85A0
+        ld de, $0000
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete
@@ -310,6 +316,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_right
         ld hl, sample_room_begin
         ld bc, $85A0
+        ld de, $0000
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete
@@ -350,6 +357,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_below
         ld hl, sample_room_begin
         ld bc, $85A0
+        ld de, $0000
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete
@@ -390,6 +398,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_above
         ld hl, sample_room_begin
         ld bc, $85A0
+        ld de, $0000
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete

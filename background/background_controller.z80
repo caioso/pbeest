@@ -43,6 +43,38 @@ bgc_load_background_palette:
     jr nz, .load_palette_bytes
     ret
 
+; loads background palettes
+; hl: holds address to first byte palette
+; de: number of bytes to be loaded
+; bc: holds palette index
+; Uses variable ram_general_use_variable_5 and 6
+bgc_load_palettes_for_fade:
+    ; load palettes first
+    call bgc_load_background_palette;
+    
+    ld hl, map_logic
+    ld de, rBCPD
+    ld c, 64 ; (two bytes per color, 4 colors per palette, 8 palettes)
+    ld b, $00
+.continue_loading:
+    
+    call bgc_wait_for_VRAM
+    ld a, [de]
+    ld [hl], a
+
+    push hl
+    ld l, e
+    ld h, d
+    ld [hl], $FF
+    pop hl
+
+    inc hl
+    dec bc
+    ld a, c
+    cp $00
+    jr nz, .continue_loading
+    ret
+    
 ; clear_lcd function
 ; args: no arguments
 ; return: no return
@@ -69,3 +101,40 @@ bgc_wait_for_VRAM:
     jr   nz, .wait_for_vram 
     pop hl
     ret
+
+bgc_fade_palettes_in:
+.reinitialize:
+    ;call bgc_wait_for_VRAM
+
+    ld hl, map_logic
+    ld de, rBCPD
+    ld c, 64 ; (two bytes per color, 4 colors per palette, 8 palettes)
+    
+    ; b informs whether is there still a palatte to update
+    ld b, $00
+
+.continue_fading_in:
+    push bc
+    ld a, [de]
+    ld b, a
+    ld a, [hl]
+    cp b
+    pop bc
+    jr z, .skip_update
+        ld a, [de]
+        dec a
+        ld [de], a
+        ld b, $01
+.skip_update:
+    inc hl
+    inc de
+    ld a, c
+    dec a
+    ld c, a
+    ld a, c
+    cp $00
+    jr nz, .continue_fading_in
+    ld a, b
+    cp $00
+    jr nz, .reinitialize
+    ret 
