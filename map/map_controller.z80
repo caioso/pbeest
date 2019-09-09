@@ -105,7 +105,8 @@ map_load_room:
     ld [de], a
 
     ; calculate total number of tiles at ram_general_use_variable_11/ram_general_use_variable_12
-    call map_width_times_height
+    ;call map_width_times_height
+    call map_screen_width_times_screen_height
 
     ; load palette target bank (nothing to do for now)
     inc hl
@@ -287,7 +288,7 @@ map_load_room:
     pop de
 
     ; add current width to HL
-    ld a, [map_current_width]
+    ld a, 20
     add l
     ld l, a
     ld a, h
@@ -300,7 +301,8 @@ map_load_room:
     ld [ram_general_use_variable_9], a
     push hl
     ld l, a
-    ld a, [map_current_height]
+    ; height is guaranteed to be 18 tiles
+    ld a, 18
     cp l
     pop hl
     jr nz, .tile_loading_inner_loop_horizontal
@@ -663,7 +665,7 @@ map_load_logic_layer:
     ld e, a
     ld d, $00
 
-    ld a, [map_current_width]
+    ld a, 20;[map_current_width]
     ld l, a
     ld h, $00
 
@@ -715,7 +717,7 @@ map_load_logic_layer:
         ld h, a
 
         ; add LUT width
-        ld a, [map_current_width]
+        ld a, 20 ;[map_current_width]
         add l
         ld l, a
         ld a, h
@@ -783,7 +785,7 @@ map_adjust_final_map_y:
     call check_animation_direction
     jr nz, .return
         ; ADD THE CODE HERE
-        ld a, [map_current_height]
+        ld a, 18;[map_current_height]
         ld h, a
         ld a, [map_current_y]
         ld l, a
@@ -811,7 +813,7 @@ map_adjust_final_map_x:
     call check_animation_direction
     jr nz, .return
         ; ADD THE CODE HERE
-        ld a, [map_current_width]
+        ld a, 20; [map_current_width]
         ld h, a
         ld a, [map_current_x]
         ld l, a
@@ -1068,13 +1070,13 @@ map_calculate_first_address_in_LUT_horizontal:
         ; calculate map dimensions
         push de
         push hl
-        ld a, [map_current_width]
+        ld a, 20 ;[map_current_width]
         ld e, a
         ld d, $00
         ; MAP WIDTH - 1
         dec de
 
-        ld a, [map_current_height]
+        ld a, 18 ;[map_current_height]
         ld l, a
         ld h, $00
 
@@ -1107,7 +1109,7 @@ map_calculate_first_address_in_LUT_horizontal:
 ; hl: holds the initial address of the tile LUT
 ; return (hl): adjusted address based on the map load direction
 map_calculate_first_address_in_LUT_vertical:
-; check animation direction
+    ; check animation direction
     push hl
     ld l, map_load_origin
     call check_animation_direction
@@ -1129,13 +1131,13 @@ map_calculate_first_address_in_LUT_vertical:
         ; calculate map dimensions
         push de
         push hl
-        ld a, [map_current_height]
+        ld a, 18;[map_current_height]
         ld e, a
         ld d, $00
         ; MAP HEIGHT - 1
         dec de
 
-        ld a, [map_current_width]
+        ld a, 20;[map_current_width]
         ld l, a
         ld h, $00
 
@@ -1232,7 +1234,7 @@ map_calculate_first_tile_row:
     ; From top to bottom, the first row will always be the same as the one requested to be the first of the room
     ; The first row will always be the row right after the last row of the currently loaded map
     ; first_row = (MAP Y + MAP HEIGHT) -> if >= 32 then wrap around to 0 + 32 - (MAP Y + MAP HEIGHT)
-    ld a, [map_current_height]
+    ld a, 18;[map_current_height]
     ld l, a
     ld a, [map_current_y]
     add l
