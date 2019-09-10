@@ -533,8 +533,7 @@ chr_render_character:
 ; de: current base address
 chr_inc_next_line:
     push hl
-    ld hl, map_current_width
-    ld a, [hl]
+    ld a, map_screen_width
     add a, e
     ld e, a
     ld a, d
@@ -660,8 +659,7 @@ chr_check_horizontal_edges:
 ; de: d[x], e[y] character position (in tiles)
 ; return a: 1 allowed, 0 not allowed
 chr_check_movement:
-    ld hl, map_current_width
-    ld a, [hl]
+    ld a, map_screen_width
     ld l, a
     ld h, $00
 

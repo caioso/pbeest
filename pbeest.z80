@@ -146,19 +146,19 @@ main:
     stop
 
     ; Show Welcome Text
-    ld de, dialog_page_0_end - dialog_page_0
-    ld hl, dialog_page_0
-    call hud_copy_text_buffer
-    ld de, dialog_page_0_end - dialog_page_0
-    ld a, text_box_start_animation
-    call hud_show_text
+    ;ld de, dialog_page_0_end - dialog_page_0
+    ;ld hl, dialog_page_0
+    ;call hud_copy_text_buffer
+    ;ld de, dialog_page_0_end - dialog_page_0
+    ;ld a, text_box_start_animation
+    ;call hud_show_text
 
-    ld de, dialog_page_1_end - dialog_page_1
-    ld hl, dialog_page_1
-    call hud_copy_text_buffer
-    ld de, dialog_page_1_end - dialog_page_1
-    ld a, text_box_end_animation
-    call hud_show_text
+    ;ld de, dialog_page_1_end - dialog_page_1
+    ;ld hl, dialog_page_1
+    ;call hud_copy_text_buffer
+    ;ld de, dialog_page_1_end - dialog_page_1
+    ;ld a, text_box_end_animation
+    ;call hud_show_text
 
     ; initialize joypad
     call joypad_initialize
@@ -198,7 +198,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_left | map_load_tiles | map_load_palettes
         ld hl, sample_room_left_begin
         ld bc, $85A0
-        ld de, $0000
+        ld de, $0200
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete
