@@ -1568,3 +1568,52 @@ check_animation_direction:
 .does_not_match:
     ld a, $00
     ret
+
+; Scroll Map Horizontally
+; a: scroll direction (1, left; 0 right)
+map_scroll_map_horizontally_if_needed:
+    cp $00
+    jr nz, .scroll_right
+        ld a, [rSCX]
+        inc a
+        ld [rSCX], a
+
+        ld a, [character_0_offset_x]
+        sub a, 1
+        ld [character_0_offset_x], a
+        ret
+
+.scroll_right:
+    ld a, [rSCX]
+    dec a
+    ld [rSCX], a
+
+    ld a, [character_0_offset_x]
+    add a, 1
+    ld [character_0_offset_x], a
+    ret
+
+
+; Scroll Map Vertically
+; a: scroll direction (1, up ; 0 down)
+map_scroll_map_vertically_if_needed:
+    cp $00
+    jr nz, .scroll_right
+        ld a, [rSCY]
+        inc a
+        ld [rSCY], a
+
+        ld a, [character_0_offset_y]
+        sub a, 1
+        ld [character_0_offset_y], a
+        ret
+
+.scroll_right:
+    ld a, [rSCY]
+    dec a
+    ld [rSCY], a
+
+    ld a, [character_0_offset_y]
+    add a, 1
+    ld [character_0_offset_y], a
+    ret

@@ -36,6 +36,10 @@ chr_initialize_character:
     inc hl
     ld [hl], b
     inc hl
+    ld [hl], 0
+    inc hl
+    ld [hl], 0
+    inc hl
     ld [hl], a
     pop hl
     ld e, l
@@ -56,6 +60,11 @@ chr_initialize_character:
     ld a, [de]
     ld l, a
     inc de
+
+    ; Skip scroll offset variables
+    inc de ; offset x
+    inc de ; offset y
+
     ; Sprite
     ld a, [de]
     ld d, a
@@ -75,6 +84,11 @@ chr_initialize_character:
     ld a, [de]
     ld l, a
     inc de
+        
+    ; Skip scroll offset variables
+    inc de ; offset x
+    inc de ; offset y
+
     ; Sprite (+ 2), assumed always to be in sequence
     ld a, [de]
     add $02  
@@ -181,6 +195,11 @@ chr_move_character_down:
     inc a
     ld [hl], a
     pop hl
+
+    ; scroll map if needed
+    ld a, $00
+    call map_scroll_map_vertically_if_needed
+
     ret
 
 ; Move Character Down
@@ -279,6 +298,11 @@ chr_move_character_up:
     dec a
     ld [hl], a
     pop hl
+
+    ; Scroll map if requied
+    ld a, $01
+    call map_scroll_map_vertically_if_needed
+
     ret
 
 ; Move Character Left
@@ -380,6 +404,11 @@ chr_move_character_left:
     dec a
     ld [hl], a
     pop hl
+
+    ; Scroll map if needed
+    ld a, $01
+    call map_scroll_map_horizontally_if_needed
+
     ret
 
 ; Move Character Right
@@ -484,6 +513,11 @@ chr_move_character_right:
     inc a
     ld [hl], a
     pop hl
+
+    ; Scroll map if required
+    ld a, $00
+    call map_scroll_map_horizontally_if_needed
+    
     ret
 
 ; Extract ID of colliding object
@@ -510,9 +544,19 @@ chr_render_character:
     ; target sprite left and right (16x8 times 2) X coordinate
     ; hl holds address of the first sprite of the target character
     ld a, [de]
+    push bc
+    ld c, a
+    ld a, [character_0_offset_x]
+    add a, c
+    pop bc
     inc de
     call sptr_set_sprite_x
     ld a, [de]
+    push bc
+    ld c, a
+    ld a, [character_0_offset_y]
+    add a, c
+    pop bc
     dec de
     dec hl
     call sptr_set_sprite_y
@@ -520,11 +564,21 @@ chr_render_character:
     ; load address of second sprite from bc to hl
     ld a, [de]
     add a, $08
+    push bc
+    ld c, a
+    ld a, [character_0_offset_x]
+    add a, c
+    pop bc
     ld l, c
     ld h, b
     call sptr_set_sprite_x
     inc de
     ld a, [de]
+    push bc
+    ld c, a
+    ld a, [character_0_offset_y]
+    add a, c
+    pop bc
     dec hl
     call sptr_set_sprite_y
     ret
