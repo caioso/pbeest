@@ -56,7 +56,17 @@ map_load_room:
     ld [hl], b
     ld hl, ram_general_use_variable_15
     ld [hl], d
+    ld hl, map_current_x_offset
+    sla d
+    sla d
+    sla d
+    ld [hl], d
     ld hl, ram_general_use_variable_16
+    ld [hl], e
+    ld hl, map_current_y_offset
+    sla e
+    sla e
+    sla e
     ld [hl], e
     pop hl
 
@@ -1569,28 +1579,82 @@ check_animation_direction:
     ld a, $00
     ret
 
+; Converts value from pixels to tiles
+; a: target value
+; return (a): picel value converted to tiles
+map_convert_pixels_to_tiles;
+    srl a
+    srl a
+    srl a
+    ret
+
 ; Scroll Map Horizontally
 ; a: scroll direction (1, left; 0 right)
 map_scroll_map_horizontally_if_needed:
     cp $00
     jr nz, .scroll_right
-        ld a, [rSCX]
-        inc a
-        ld [rSCX], a
 
-        ld a, [character_0_offset_x]
-        sub a, 1
-        ld [character_0_offset_x], a
-        ret
+        push hl
+        ld a, [character_0_x]
+        ld l, a
+        ld a, $48
+        cp l
+        pop hl
+        jr nc, .finish
+
+        ; Check offset position (do not scroll if Offset + Screen Height == map Height)
+        push hl
+        ld a, [map_current_x_offset]
+        add map_screen_width*8
+        ld l, a
+        ld a, [map_current_width]
+        sla a
+        sla a
+        sla a
+        cp l
+        pop hl
+        jr z, .finish
+            ld a, [rSCX]
+            inc a
+            ld [rSCX], a
+
+            ld a, [map_current_x_offset]
+            inc a
+            ld [map_current_x_offset], a
+                
+.skip_left_increment:
+            ld a, [character_0_offset_x]
+            sub a, 1
+            ld [character_0_offset_x], a
+            ret
 
 .scroll_right:
-    ld a, [rSCX]
-    dec a
-    ld [rSCX], a
+    push hl
+    ld a, [character_0_x]
+    ld l, a
+    ld a, $58
+    cp l
+    pop hl
+    jr c, .finish
 
-    ld a, [character_0_offset_x]
-    add a, 1
-    ld [character_0_offset_x], a
+    ; Check offset position (do not scroll if 0)
+    ld a, [map_current_x_offset]
+    cp $00
+    jr z, .finish
+        ld a, [rSCX]
+        dec a
+        ld [rSCX], a
+
+        ld a, [map_current_x_offset]
+        dec a
+        ld [map_current_x_offset], a
+
+.skip_right_increment:
+            ld a, [character_0_offset_x]
+            add a, 1
+            ld [character_0_offset_x], a
+
+.finish
     ret
 
 
@@ -1598,22 +1662,64 @@ map_scroll_map_horizontally_if_needed:
 ; a: scroll direction (1, up ; 0 down)
 map_scroll_map_vertically_if_needed:
     cp $00
-    jr nz, .scroll_right
+    jr nz, .scroll_down
+    push hl
+    ld a, [character_0_y]
+    ld l, a
+    ld a, $50
+    cp l
+    pop hl
+    jr nc, .finish
+
+    ; Check offset position (do not scroll if Offset + Screen Height == map Height)
+    push hl
+    ld a, [map_current_y_offset]
+    add map_screen_height*8
+    ld l, a
+    ld a, [map_current_height]
+    sla a
+    sla a
+    sla a
+    cp l
+    pop hl
+    jr z, .finish
+            ld a, [rSCY]
+            inc a
+            ld [rSCY], a
+
+            ld a, [map_current_y_offset]
+            inc a
+            ld [map_current_y_offset], a
+.skip_up_increment:
+            ld a, [character_0_offset_y]
+            sub a, 1
+            ld [character_0_offset_y], a
+            ret
+
+.scroll_down:
+    push hl
+    ld a, [character_0_y]
+    ld l, a
+    ld a, $60
+    cp l
+    pop hl
+    jr c, .finish
+
+    ; Check offset position (do not scroll if 0)
+    ld a, [map_current_y_offset]
+    cp $00
+    jr z, .finish
         ld a, [rSCY]
-        inc a
+        dec a
         ld [rSCY], a
 
+        ld a, [map_current_y_offset]
+        dec a
+        ld [map_current_y_offset], a
+.skip_down_increment:
         ld a, [character_0_offset_y]
-        sub a, 1
+        add a, 1
         ld [character_0_offset_y], a
-        ret
 
-.scroll_right:
-    ld a, [rSCY]
-    dec a
-    ld [rSCY], a
-
-    ld a, [character_0_offset_y]
-    add a, 1
-    ld [character_0_offset_y], a
+.finish:
     ret
