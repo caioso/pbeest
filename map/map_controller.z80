@@ -1588,16 +1588,17 @@ map_convert_pixels_to_tiles;
     srl a
     ret
 
-; Scroll Map Horizontally
+; Scroll Map Horizontally. The player position used is the raw value in OAMRAM
 ; a: scroll direction (1, left; 0 right)
 map_scroll_map_horizontally_if_needed:
     cp $00
     jr nz, .scroll_right
 
         push hl
-        ld a, [character_0_x]
+        ld a, [_OAMRAM + 1]
+        inc a
         ld l, a
-        ld a, $48
+        ld a, $50
         cp l
         pop hl
         jr nc, .finish
@@ -1630,12 +1631,14 @@ map_scroll_map_horizontally_if_needed:
 
 .scroll_right:
     push hl
-    ld a, [character_0_x]
+    ld a, [_OAMRAM + 1]
+    inc a
     ld l, a
-    ld a, $58
+    ld a, $51
     cp l
     pop hl
     jr c, .finish
+
 
     ; Check offset position (do not scroll if 0)
     ld a, [map_current_x_offset]
@@ -1663,10 +1666,12 @@ map_scroll_map_horizontally_if_needed:
 map_scroll_map_vertically_if_needed:
     cp $00
     jr nz, .scroll_down
+
     push hl
-    ld a, [character_0_y]
+    ld a, [_OAMRAM]
+    inc a
     ld l, a
-    ld a, $50
+    ld a, $58
     cp l
     pop hl
     jr nc, .finish
@@ -1698,9 +1703,10 @@ map_scroll_map_vertically_if_needed:
 
 .scroll_down:
     push hl
-    ld a, [character_0_y]
+    ld a, [_OAMRAM]
+    inc a
     ld l, a
-    ld a, $60
+    ld a, $59
     cp l
     pop hl
     jr c, .finish

@@ -123,7 +123,7 @@ chr_move_character_down:
     jr z, .edge_collision_detected
 
     ; continue checking
-    call chr_position_to_pixel
+    call chr_pixel_position_to_tile
     push bc
     ; Check whether movement is allowed
     call chr_check_movement
@@ -176,7 +176,7 @@ chr_move_character_down:
 
 .edge_collision_detected:
     ; the user has collided with an edge
-    call chr_position_to_pixel
+    call chr_pixel_position_to_tile
     ld a, d
     inc a
     ld [edget_collision_target_x], a
@@ -226,7 +226,7 @@ chr_move_character_up:
     jr z, .edge_collision_detected
 
     ; continue checking
-    call chr_position_to_pixel
+    call chr_pixel_position_to_tile
     push bc
     ; Check whether movement is allowed
     call chr_check_movement
@@ -279,7 +279,7 @@ chr_move_character_up:
 
 .edge_collision_detected:
     ; the user has collided with an edge
-    call chr_position_to_pixel
+    call chr_pixel_position_to_tile
     ld a, d
     inc a
     ld [edget_collision_target_x], a
@@ -329,7 +329,7 @@ chr_move_character_left:
     jr z, .edge_collision_detected
 
     ; continue detection
-    call chr_position_to_pixel
+    call chr_pixel_position_to_tile
     push bc
     ; Check whether movement is allowed
     call chr_check_movement
@@ -387,7 +387,7 @@ chr_move_character_left:
 
 .edge_collision_detected:
     ; the player collided with an edge
-    call chr_position_to_pixel
+    call chr_pixel_position_to_tile
     ld a, d
     inc a
     ld [edget_collision_target_x], a
@@ -435,7 +435,7 @@ chr_move_character_right:
     jr z, .edge_collision_detected
 
     ; continue detection
-    call chr_position_to_pixel
+    call chr_pixel_position_to_tile
     push bc
     ; save DE
     ; Check whether movement is allowed
@@ -496,7 +496,7 @@ chr_move_character_right:
 
 .edge_collision_detected:
     ; the user has collided with an edge
-    call chr_position_to_pixel
+    call chr_pixel_position_to_tile
     ld a, d
     inc a
     ld [edget_collision_target_x], a
@@ -662,7 +662,7 @@ chr_player_controlled_character_loop:
 ; Detect Character position on Map (convert pixel into position)
 ; bc: character position in pixels (b: x, c: y)
 ; return d: X position; e: Y position;
-chr_position_to_pixel:
+chr_pixel_position_to_tile:
     ld a, b
     sub a, $08
     srl a
