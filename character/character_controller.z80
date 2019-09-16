@@ -99,205 +99,143 @@ chr_initialize_character:
 
     ret
 
+; Normalize Screen Coordinates
+; b: character X (top-left)
+; c: character Y (top-left)
+; return (bc): normalized coordinates
+chr_normalize_coordinates:
+    ld a, b
+    sub a, $08
+    ld b, a
+    ld a, c
+    sub a, $10
+    ld c, a
+    ret
+
+; Convert real player character position into bounding box origin
+; b: character X (top-left)
+; c: character Y (top-left)
+; return (bc): converted coordinates.
+chr_calculate_bounding_box_origin:
+    ld a, b
+    add a, $03
+    ld b, a
+    ld a, c
+    add a, $07
+    ld c, a
+    ret
+
+; Convert map position in pixels into map tiles
+; a: position in pixels
+; return: position in tiles
+chr_pixel_to_tile:
+    srl a
+    srl a
+    srl a
+    ret
+
 ; Move Character Down
 ; hl: character variable address
 chr_move_character_down:
-    push hl
-    push hl
-    
-    ; Convert pixel position to map position
-    ; Load X position
-    ld b, [hl]
-    inc hl
-    ; Load Y position
-    ld c, [hl]
+    ; save character var address
+    ld a, l
+    ld [ram_general_use_variable_1], a
+    ld a, h
+    ld [ram_general_use_variable_2], a
 
-    ; compesate for sprite size (16 pixels + movement direction)
+    ; Point HL to the character Y position in the character struct.
+    ; BC holds the position (b:X; c:Y) of the player character *IN PIXELS*
+    ld a, [hl]
+    ld b, a
+    inc hl
+    ld a, [hl]
+    ld c, a
+    
+    ; Normalize coordinates
+    call chr_normalize_coordinates
+
+    ; Calculate Bounding box
+    ; From this point onwards, the value held by bc is the coordinate of the top-left corner of the bounding box.
+    ; Conventions -> BBx = Px + 3
+    ;                BBy = Py + 7
+    call chr_calculate_bounding_box_origin
+
+    ; check collision
+    push bc
+    push hl
+
+    ; add movement direction (Y + 9)
     ld a, c
-    add a, 16
+    add $09
     ld c, a
 
-    ; Check for edge collision
-    call chr_check_vertical_edges
-    cp $00
-    jr z, .edge_collision_detected
-
-    ; continue checking
-    call chr_pixel_position_to_tile
-    push bc
-    ; Check whether movement is allowed
-    call chr_check_movement
-    ; After the function call, bc holds the relative tile address (in the map_logic)
-    ; copy it yo de to save calculation time.
-    ld e, c
-    ld d, b
-    pop bc
-    pop hl
-    cp a, $00
-    jr z, .movement_allowed_might_be_allowed
-        ; load colliding ID
-        call chr_get_collision_id
-
-        ; clear stack before returning
-        pop hl
-        ret
-
-.movement_allowed_might_be_allowed:
-    ; check second sprite (increment the address in de by 1, to see whether the next tile in the map_logic is allowed)
-    inc de
-    ; Check whether movement is allowed
-    ld a, [de]
-    and a, $80
-    cp a, $00
-    jr z, .check_wheter_not_absoltue
-        ; load colliding ID
-        call chr_get_collision_id
-
-        ; clear stack before returning
-        pop hl
-        ret
-
-.check_wheter_not_absoltue:
+    ; Convert bounding_box coordinate into screen tile coordinates
+    ; PXL(X) -> TILE(X)
     ld a, b
-    and a, $07
-    jr z, .movement_allowed
-        ; check whether the next tile (to the right) does not generate a colision
-        inc de
-        ld a, [de]
-        and a, $80
-        cp a, $00
-        jr z, .movement_allowed
-            ; load colliding ID
-            call chr_get_collision_id
+    call chr_pixel_to_tile
+    ld b, a
+    ; PXL(Y) -> TILE(Y)
+    ld a, c
+    call chr_pixel_to_tile
+    ld c, a
 
-            ; clear stack before returning
-            pop hl
-            ret
-
-.edge_collision_detected:
-    ; the user has collided with an edge
-    call chr_pixel_position_to_tile
-    ld a, d
-    inc a
-    ld [edget_collision_target_x], a
-    ld a, e
-    inc a
-    ld [edget_collision_target_y], a
+    ; Check Whether the tiles below the bounding box are crossable.
+    ld d, b
+    ld e, c
+    push de
+    call chr_check_movement_down
+    pop de
     pop hl
-    pop hl
-    ret
+    pop bc
 
-.movement_allowed:
-    ; if allowed, generate address of character Y
-    inc hl
+    ; if a is 1, movement is already not allowed. Skip
+    cp $00
+    jr nz, .auto_move
+
     ; load current Y, move it down and store it back
     ld a, [hl]
     inc a
     ld [hl], a
-    pop hl
 
-    ; scroll map if needed
+    ; Scroll map if requied
     ld a, $00
     call map_scroll_map_vertically_if_needed
-
     ret
+
+.auto_move:
+    push bc
+    ld c, a
+    ; Reload original character position
+    ld a, [ram_general_use_variable_1]
+    ld l, a
+    ld a, [ram_general_use_variable_2]
+    ld h, a
+    ld a, c
+    pop bc
+
+    cp $03 ; 03 means both tiles triggered the colission
+    ret z
+
+    cp $01 ; 01 means the first tile only triggered the collision 
+    jr nz, .move_right
+        call chr_move_character_right
+        ret
+        
+; to assist movement, the chacarcter may be moved automatically to the right
+.move_right:
+    call chr_move_character_left
+    ret 
 
 ; Move Character Down
 ; hl: character variable address
 chr_move_character_up:
-    push hl
-    push hl
-    
-    ; Convert pixel position to map position
-    ; Load X position
-    ld b, [hl]
+    ; Point HL to the character Y position in the character struct.
     inc hl
-    ; Load Y position
-    ld c, [hl]
     
-    ; compesate for sprite size (16 pixels + movement direction)
-    ld a, c
-    sub a, 1
-    ld c, a
-
-    ; Check for edge collision
-    call chr_check_vertical_edges
-    cp $00
-    jr z, .edge_collision_detected
-
-    ; continue checking
-    call chr_pixel_position_to_tile
-    push bc
-    ; Check whether movement is allowed
-    call chr_check_movement
-    ; After the function call, bc holds the relative tile address (in the map_logic)
-    ; copy it to de to save calculation time.
-    ld e, c
-    ld d, b
-    pop bc
-    pop hl
-    cp a, $00
-    jr z, .movement_allowed_might_be_allowed
-        ; load colliding ID
-        call chr_get_collision_id
-
-        ; clear stack before returning
-        pop hl
-        ret
-
-.movement_allowed_might_be_allowed:
-    ; check second sprite (increment the address in de by 1, to see whether the next tile in the map_logic is allowed)
-    inc de
-    ; Check whether movement is allowed
-    ld a, [de]
-    and a, $80
-    cp a, $00
-    jr z, .check_wheter_not_absoltue
-        ; load colliding ID
-        call chr_get_collision_id
-
-        ; clear stack before returning
-        pop hl
-        ret
-
-.check_wheter_not_absoltue:
-    ld a, b
-    and a, $07
-    jr z, .movement_allowed
-        ; check whether the next tile (to the right) does not generate a colision
-        inc de
-        ld a, [de]
-        and a, $80
-        cp a, $00
-        jr z, .movement_allowed
-            ; load colliding ID
-            call chr_get_collision_id
-
-            ; clear stack before returning
-            pop hl
-            ret
-
-.edge_collision_detected:
-    ; the user has collided with an edge
-    call chr_pixel_position_to_tile
-    ld a, d
-    inc a
-    ld [edget_collision_target_x], a
-    ld a, e
-    inc a
-    ld [edget_collision_target_y], a
-    pop hl
-    pop hl
-    ret
-
-.movement_allowed:
-    ; if allowed, generate address of character Y
-    inc hl
     ; load current Y, move it down and store it back
     ld a, [hl]
     dec a
     ld [hl], a
-    pop hl
 
     ; Scroll map if requied
     ld a, $01
@@ -308,103 +246,10 @@ chr_move_character_up:
 ; Move Character Left
 ; hl: character variable address
 chr_move_character_left:
-    push hl
-    push hl
-    
-    ; Convert pixel position to map position
-    ; Load X position
-    ld b, [hl]
-    inc hl
-    ; Load Y position
-    ld c, [hl]
-
-    ; compesate for sprite size (16 pixels + movement direction)
-    ld a, b
-    sub a, 1
-    ld b, a
-
-    ; Check for edge collision
-    call chr_check_horizontal_edges
-    cp $00
-    jr z, .edge_collision_detected
-
-    ; continue detection
-    call chr_pixel_position_to_tile
-    push bc
-    ; Check whether movement is allowed
-    call chr_check_movement
-    ; After the function call, bc holds the relative tile address (in the map_logic)
-    ; copy it to de to save calculation time.
-    ld e, c
-    ld d, b
-    pop bc
-    pop hl
-    cp a, $00
-    jr z, .movement_allowed_might_be_allowed
-        ; load colliding ID
-        call chr_get_collision_id
-
-        ; clear stack before returning
-        pop hl
-        ret
-
-.movement_allowed_might_be_allowed:
-    ; check second sprite 
-    ; add map widh to de (for further calculation)
-    ; de will be updated
-    call chr_inc_next_line
-
-    ; Check whether movement is allowed
-    ld a, [de]
-    and a, $80
-    cp a, $00
-    jr z, .check_wheter_not_absoltue
-        ; load colliding ID
-        call chr_get_collision_id
-
-        ; clear stack before returning
-        pop hl
-        ret
-
-.check_wheter_not_absoltue:
-    ld a, c
-    and a, $07
-    jr z, .movement_allowed
-        ; check second sprite 
-        ; add map widh to de (for further calculation)
-        ; de will be updated
-        call chr_inc_next_line
-        ld a, [de]
-        and a, $80
-        cp a, $00
-        jr z, .movement_allowed
-            ; load colliding ID
-            call chr_get_collision_id
-
-            ; clear stack before returning
-            pop hl
-            ret
-
-.edge_collision_detected:
-    ; the player collided with an edge
-    call chr_pixel_position_to_tile
-    ld a, d
-    inc a
-    ld [edget_collision_target_x], a
-    ld a, e
-    inc a
-    ld [edget_collision_target_y], a
-    pop hl
-    pop hl
-    ret 
-
-.movement_allowed:
     ; load current X, move it down and store it back
     ld a, [hl]
     dec a
     ld [hl], a
-    pop hl
-
     ; Scroll map if needed
     ld a, $01
     call map_scroll_map_horizontally_if_needed
@@ -414,105 +259,10 @@ chr_move_character_left:
 ; Move Character Right
 ; hl: character variable address
 chr_move_character_right:
-    push hl
-    push hl
-    
-    ; Convert pixel position to map position
-    ; Load X position
-    ld b, [hl]
-    inc hl
-    ; Load Y position
-    ld c, [hl]
-
-    ; compesate for sprite size (16 pixels + movement direction)
-    ld a, b
-    add a, 16
-    ld b, a
-    
-    ; Check for edge collision
-    call chr_check_horizontal_edges
-    cp $00
-    jr z, .edge_collision_detected
-
-    ; continue detection
-    call chr_pixel_position_to_tile
-    push bc
-    ; save DE
-    ; Check whether movement is allowed
-    call chr_check_movement
-    ; After the function call, bc holds the relative tile address (in the map_logic)
-    ; copy it to de to save calculation time.
-    ld e, c
-    ld d, b
-    pop bc
-    pop hl
-    cp a, $00
-    jr z, .movement_allowed_might_be_allowed
-        ; load colliding ID
-        call chr_get_collision_id
-
-        ; clear stack before returning
-        pop hl
-        ret
-
-.movement_allowed_might_be_allowed:
-    ; check second sprite 
-    ; add map widh to de (for further calculation)
-    ; de will be updated
-    call chr_inc_next_line
-
-    ; Check whether movement is allowed
-    ld a, [de]
-    and a, $80
-    cp a, $00
-    jr z, .check_wheter_not_absoltue
-        ; load colliding ID
-        call chr_get_collision_id
-
-        ; clear stack before returning
-        pop hl
-        ret
-
-.check_wheter_not_absoltue:
-    ld a, c
-    and a, $07
-    jr z, .movement_allowed
-        ; check second sprite 
-        ; add map widh to de (for further calculation)
-        ; de will be updated
-        call chr_inc_next_line
-
-        ; Check whether movement is allowed
-        ld a, [de]
-        and a, $80
-        cp a, $00
-        jr z, .movement_allowed
-            ; load colliding ID
-            call chr_get_collision_id
-            
-            ; clear stack before returning
-            pop hl
-            ret
-
-.edge_collision_detected:
-    ; the user has collided with an edge
-    call chr_pixel_position_to_tile
-    ld a, d
-    inc a
-    ld [edget_collision_target_x], a
-    ld a, e
-    inc a
-    ld [edget_collision_target_y], a
-    pop hl
-    pop hl
-    ret
-
-.movement_allowed:
     ; load current X, move it down and store it back
     ld a, [hl]
     inc a
     ld [hl], a
-    pop hl
 
     ; Scroll map if required
     ld a, $00
@@ -659,26 +409,6 @@ chr_player_controlled_character_loop:
     
     ret
 
-; Detect Character position on Map (convert pixel into position)
-; bc: character position in pixels (b: x, c: y)
-; return d: X position; e: Y position;
-chr_pixel_position_to_tile:
-    ld a, b
-    sub a, $08
-    srl a
-    srl a
-    srl a
-    ld d, a
-
-    ld a, c
-    ; compensate for extra 16 pixels
-    sub a, $10
-    srl a
-    srl a
-    srl a
-    ld e, a
-    ret
-
 ; Check Vertical Edges
 ; de: b[x], c[y] character position (in pixels)
 ; return a: 1 allowed, 0 not allowed
@@ -711,8 +441,8 @@ chr_check_horizontal_edges:
 
 ; checks whether movement is alowed
 ; de: d[x], e[y] character position (in tiles)
-; return a: 1 allowed, 0 not allowed
-chr_check_movement:
+; return a: 1/2/3 allowed (1 tile to the right caused collision, 2, tile to the left caused collision, 3 both caused the collision), 0 not allowed
+chr_check_movement_down:
     ld a, map_screen_width
     ld l, a
     ld h, $00
@@ -741,14 +471,32 @@ chr_check_movement:
 
     ; Check MSBit of the target map entry
     push bc
+    ; load d with 00 (no collisiton target)
+    ; work your way down to check bits 0 and 1 representing collisions in tile left/right respectivelly.
+    ld d, $00
     ld a, [bc]
     and a, $80
-    jr z, .may_pass
+    jr z, .check_second_tile
         ; the target tile is not crossable
-        ld a, $01
+        ld a, d
+        or $01
+        ld d, a
+
+.check_second_tile:
+    ; check tile to the right
+    inc bc
+    ld a, [bc]
+    and a, $80
+    jr z, .finalize
+        ; the target tile is not crossable
+        ld a, d
+        or $02
+        ld d, a
         pop bc
+        ld a, d
         ret
-.may_pass:
-    ld a, $00
-    pop bc
-    ret
+
+.finalize:
+        pop bc
+        ld a, d
+        ret

@@ -108,8 +108,8 @@ main:
 
     ; Intialize character 0
     ld hl, character_0
-    ld c, $50
-    ld b, $50
+    ld c, $80
+    ld b, $80
     ld a, $56
     call chr_initialize_character
 
@@ -125,7 +125,7 @@ main:
     ld [map_current_room_id], a
 
     ld a, map_tile_base_section_8000 | map_load_origin | map_load_tiles | map_load_palettes
-    ld hl, sample_room_begin
+    ld hl, sample_room_top_begin
     ld bc, $85A0
     ld de, $0000
     call map_load_room
