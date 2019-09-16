@@ -307,7 +307,7 @@ chr_move_character_up:
     call chr_pixel_to_tile
     ld c, a
 
-    ; Check Whether the tiles below the bounding box are crossable.
+    ; Check Whether the tiles above the bounding box are crossable.
     ld d, b
     ld e, c
     push de
@@ -381,14 +381,116 @@ chr_move_character_up:
 ; Move Character Left
 ; hl: character variable address
 chr_move_character_left:
-    ; load current X, move it down and store it back
-    ld a, [hl]
-    dec a
-    ld [hl], a
-    ; Scroll map if needed
-    ld a, $01
-    call map_scroll_map_horizontally_if_needed
+    ; save character var address
+    ld a, l
+    ld [ram_general_use_variable_1], a
+    ld a, h
+    ld [ram_general_use_variable_2], a
 
+    ; Point HL to the character Y position in the character struct.
+    ; BC holds the position (b:X; c:Y) of the player character *IN PIXELS*
+    ld a, [hl]
+    ld b, a
+    inc hl
+    ld a, [hl]
+    ld c, a
+    
+    ; Normalize coordinates
+    call chr_normalize_coordinates
+
+    ; Calculate Bounding box
+    ; From this point onwards, the value held by bc is the coordinate of the top-left corner of the bounding box.
+    ; Conventions -> BBx = Px + 3
+    ;                BBy = Py + 7
+    call chr_calculate_bounding_box_origin
+
+    ; save position for later calculation
+    ld a, b
+    ld [ram_general_use_variable_4], a
+    ld a, c
+    ld [ram_general_use_variable_5], a
+
+    ; check collision
+    push bc
+    push hl
+
+    ; add movement direction (Y - 1)
+    ld a, b
+    sub $01
+    ld b, a
+
+    ; Convert bounding_box coordinate into screen tile coordinates
+    ; PXL(X) -> TILE(X)
+    ld a, b
+    call chr_pixel_to_tile
+    ld b, a
+    ; PXL(Y) -> TILE(Y)
+    ld a, c
+    call chr_pixel_to_tile
+    ld c, a
+
+    ; Check Whether the tiles below the bounding box are crossable.
+    ld d, b
+    ld e, c
+    push de
+    call chr_check_horizontal_movement
+    pop de
+    pop hl
+    pop bc
+
+    ; if a is 1, movement is already not allowed. Skip
+    cp $00
+    jr nz, .auto_move
+
+        ; load current X, move it down and store it back
+        dec hl
+        ld a, [hl]
+        dec a
+        ld [hl], a
+
+        ; Scroll map if requied
+        ld a, $01
+        call map_scroll_map_horizontally_if_needed
+        ret
+
+.auto_move
+    
+    push bc
+    ld c, a
+    ; Reload original character position
+    ld a, [ram_general_use_variable_1]
+    ld l, a
+    ld a, [ram_general_use_variable_2]
+    ld h, a
+    ld a, c
+    pop bc
+
+    cp $03 ; 03 means both tiles triggered the colission
+    ret z
+
+    cp $01 ; 01 means the first tile only triggered the collision 
+   
+    jr nz, .move_up
+        ld a, [ram_general_use_variable_5]
+        and $07
+        ; if the bounding box is at least 3 pixels touching the target collision, it wil trigger auto movemnt
+        sub $04
+        ret c
+
+        call chr_move_character_down
+        ret
+        
+; to assist movement, the chacarcter may be moved automatically up
+.move_up:
+        ld a, [ram_general_use_variable_5]
+        and $07
+        ; if the bounding box is at least 3 pixels touching the target collision, it wil trigger auto movemnt
+        sub $04
+        ret nc
+        jr .move_up_confirmed
+
+.move_up_confirmed:
+    call chr_move_character_up
     ret
 
 ; Move Character Right
@@ -579,12 +681,9 @@ chr_check_horizontal_edges:
 
 ; checks whether movement is alowed (vertical direction)
 ; de: d[x], e[y] character position (in tiles)
-; return a: 1/2/3 allowed (1 tile to the right caused collision, 2, tile to the left caused collision, 3 both caused the collision, 4 teh third tile below the player triggered the collision), 0 not allowed
+; return a: 1/2/3 allowed (1 tile to the right caused collision, 2, tile to the left caused collision, 
+; 3 both caused the collision, 4 teh third tile below the player triggered the collision), 0 allowed
 chr_check_vertical_movement:
-    ; save coordinates
-    ld a, d
-    ld [ram_general_use_variable_3], a
-
     ld a, map_screen_width
     ld l, a
     ld h, $00
@@ -662,6 +761,79 @@ chr_check_vertical_movement:
             ; prepare return
             ld a, d
             ret
+
+.finalize:
+        pop bc
+        ld a, d
+        ret
+
+; checks whether movement is alowed (horizontal direction)
+; de: d[x], e[y] character position (in tiles)
+; return a: 1/2/3 allowed (1 tile to the right caused collision, 2, tile to the left caused collision, 3 both caused the collision), 0 allowed
+chr_check_horizontal_movement:
+    ld a, map_screen_width
+    ld l, a
+    ld h, $00
+
+    push de
+    ld d, $00
+    call mul_DE_HL_BCDEu
+    ld c, e
+    ld b, d
+    pop de
+    ld a, d
+    add a, c
+    ld c, a
+    ld a, b
+    adc $00
+    ld b, a
+
+    ; calculate address in logic map
+    ld de, map_logic
+    ld a, c
+    add e
+    ld c, a
+    ld a, b
+    adc d
+    ld b, a
+
+    ; Check MSBit of the target map entry
+    push bc
+    ; load d with 00 (no collisiton target)
+    ; work your way down to check bits 0 and 1 representing collisions in tile left/right respectivelly.
+    ld d, $00
+    ld a, [bc]
+    and a, $80
+    jr z, .check_second_tile
+        ; the target tile is not crossable
+        ld a, d
+        or $01
+        ld d, a
+        call chr_get_collision_id
+
+.check_second_tile:
+    ; check tile to the below (subtract screen width from the current logic LUT address)
+    ld a, map_screen_width
+    add a, c
+    ld c, a
+    ld a, b
+    adc $00
+    ld b, a
+
+    ; check the case where the bounding box spans 3 pixels!!!!!!
+    ld a, [bc]
+    and a, $80
+    jr z, .finalize
+        ; the target tile is not crossable
+        ld a, d
+        or $02
+        ld d, a
+        call chr_get_collision_id
+        pop bc
+
+        ; prepare return
+        ld a, d
+        ret
 
 .finalize:
         pop bc
