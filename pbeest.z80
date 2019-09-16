@@ -121,7 +121,7 @@ main:
     ; load *sample* room (&hl)
     ; first tile initial address (&bc)
     ; map GRAPHICAL-LUTs position (d:X, e:Y) the logic LUT is always loaded in the same place.a
-    ld a, $00
+    ld a, $03
     ld [map_current_room_id], a
 
     ld a, map_tile_base_section_8000 | map_load_origin | map_load_tiles | map_load_palettes

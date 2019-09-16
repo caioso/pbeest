@@ -160,6 +160,12 @@ chr_move_character_down:
     ;                BBy = Py + 7
     call chr_calculate_bounding_box_origin
 
+    ; save position for later calculation
+    ld a, b
+    ld [ram_general_use_variable_4], a
+    ld a, c
+    ld [ram_general_use_variable_5], a
+
     ; check collision
     push bc
     push hl
@@ -203,6 +209,7 @@ chr_move_character_down:
     ret
 
 .auto_move:
+
     push bc
     ld c, a
     ; Reload original character position
@@ -217,16 +224,39 @@ chr_move_character_down:
     ret z
 
     cp $01 ; 01 means the first tile only triggered the collision 
-    jr nz, .move_right
+   
+    jr nz, .move_left
+        ld a, [ram_general_use_variable_4]
+        and $07
+        ; if the bounding box is at least 3 pixels touching the target collision, it wil trigger auto movemnt
+        sub $04
+        ret c
+
         call chr_move_character_right
         ret
         
-; to assist movement, the chacarcter may be moved automatically to the right
-.move_right:
+; to assist movement, the chacarcter may be moved automatically to the left
+.move_left:
+    cp $04
+        jr z, .three_tile_case_offset_compensation
+        ld a, [ram_general_use_variable_4]
+        and $07
+        ; if the bounding box is at least 3 pixels touching the target collision, it wil trigger auto movemnt
+        sub $03
+        ret nc
+        jr .move_left_confirmed
+
+.three_tile_case_offset_compensation:
+    ld a, [ram_general_use_variable_4]
+    and $07
+    cp $07
+    ret nz
+
+.move_left_confirmed:
     call chr_move_character_left
     ret 
 
-; Move Character Down
+; Move Character Up
 ; hl: character variable address
 chr_move_character_up:
     ; Point HL to the character Y position in the character struct.
@@ -271,14 +301,16 @@ chr_move_character_right:
     ret
 
 ; Extract ID of colliding object
-; de: colliding tile
+; bc: colliding tile
 ; modified: a, hl
 chr_get_collision_id:
-    ld a, [de]
+    push hl
+    ld a, [bc]
     ld hl, collision_target
     ; clear the MSBit and provide the 7 bits map ID
     and a, $7F
     ld [hl], a
+    pop hl
     ret
 
 ; Render sprite(s) on screen, based on their index
@@ -346,6 +378,7 @@ chr_inc_next_line:
     pop hl
     ret
 
+; clear collision targets
 chr_clear_collision:
     ld a, $00
     ld [collision_target], a
@@ -441,8 +474,12 @@ chr_check_horizontal_edges:
 
 ; checks whether movement is alowed
 ; de: d[x], e[y] character position (in tiles)
-; return a: 1/2/3 allowed (1 tile to the right caused collision, 2, tile to the left caused collision, 3 both caused the collision), 0 not allowed
+; return a: 1/2/3 allowed (1 tile to the right caused collision, 2, tile to the left caused collision, 3 both caused the collision, 4 teh third tile below the player triggered the collision), 0 not allowed
 chr_check_movement_down:
+    ; save coordinates
+    ld a, d
+    ld [ram_general_use_variable_3], a
+
     ld a, map_screen_width
     ld l, a
     ld h, $00
@@ -481,20 +518,45 @@ chr_check_movement_down:
         ld a, d
         or $01
         ld d, a
+        call chr_get_collision_id
 
 .check_second_tile:
     ; check tile to the right
     inc bc
+    ; check the case where the bounding box spans 3 pixels!!!!!!
     ld a, [bc]
     and a, $80
-    jr z, .finalize
+    jr z, .check_third_tile
         ; the target tile is not crossable
         ld a, d
         or $02
         ld d, a
+        call chr_get_collision_id
         pop bc
+
+        ; prepare return
         ld a, d
         ret
+
+.check_third_tile:
+    ld a, [ram_general_use_variable_4]
+    and $07
+    cp $07
+    jr nz, .finalize
+        inc bc
+        ld a, [bc]
+        and a, $80
+        jr z, .finalize
+            ; the target tile is not crossable
+            ld a, d
+            or $04
+            ld d, a
+            call chr_get_collision_id
+            pop bc
+
+            ; prepare return
+            ld a, d
+            ret
 
 .finalize:
         pop bc
