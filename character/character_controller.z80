@@ -175,6 +175,17 @@ chr_move_character_down:
     add $09
     ld c, a
 
+    ; check vertical collision
+    call chr_check_vertical_edges
+    cp $00
+    jr nz, .continue_collision_check
+        ld a, c
+        ld [edget_collision_target_y], a
+        pop hl
+        pop bc
+        ret
+
+.continue_collision_check:
     ; Convert bounding_box coordinate into screen tile coordinates
     ; PXL(X) -> TILE(X)
     ld a, b
@@ -297,6 +308,17 @@ chr_move_character_up:
     sub $01
     ld c, a
 
+    ; check vertical collision
+    call chr_check_vertical_edges
+    cp $00
+    jr nz, .continue_collision_check
+        ld a, c
+        ld [edget_collision_target_y], a
+        pop hl
+        pop bc
+        ret
+
+.continue_collision_check:
     ; Convert bounding_box coordinate into screen tile coordinates
     ; PXL(X) -> TILE(X)
     ld a, b
@@ -418,6 +440,18 @@ chr_move_character_left:
     ld a, b
     sub $01
     ld b, a
+
+    ; check horizontal collision
+    call chr_check_horizontal_edges
+    cp $00
+    jr nz, .continue_collision_check
+        ld a, c
+        ld [edget_collision_target_x], a
+        pop hl
+        pop bc
+        ret
+
+.continue_collision_check:
 
     ; Convert bounding_box coordinate into screen tile coordinates
     ; PXL(X) -> TILE(X)
@@ -690,6 +724,7 @@ chr_inc_next_line:
 chr_clear_collision:
     ld a, $00
     ld [collision_target], a
+    ld a, $FF
     ld [edget_collision_target_x], a
     ld [edget_collision_target_y], a
     ret
@@ -705,6 +740,7 @@ chr_player_controlled_character_loop:
         ; clear colision targets
         ld a, $00
         ld [collision_target], a
+        ld a, $FF
         ld [edget_collision_target_x], a
         ld [edget_collision_target_y], a
 
@@ -755,9 +791,9 @@ chr_player_controlled_character_loop:
 ; return a: 1 allowed, 0 not allowed
 chr_check_vertical_edges:
     ld a, c
-    cp $0F
+    cp $90
     jr z, .not_allowed
-    cp $A0
+    cp $00
     jr z, .not_allowed
         ld a, $01
         ret
@@ -770,14 +806,14 @@ chr_check_vertical_edges:
 ; return a: 1 allowed, 0 not allowed
 chr_check_horizontal_edges:
     ld a, b
-    cp $7
+    cp $FE
     jr z, .not_allowed
-    cp $A8
+    cp $96
     jr z, .not_allowed
         ld a, $01
         ret
 .not_allowed:
-    ld a, $00
+    ld a, $01
     ret
 
 ; checks whether movement is alowed (vertical direction)

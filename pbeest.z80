@@ -108,8 +108,8 @@ main:
 
     ; Intialize character 0
     ld hl, character_0
-    ld c, $80
-    ld b, $80
+    ld c, $50
+    ld b, $50
     ld a, $56
     call chr_initialize_character
 
@@ -121,14 +121,17 @@ main:
     ; load *sample* room (&hl)
     ; first tile initial address (&bc)
     ; map GRAPHICAL-LUTs position (d:X, e:Y) the logic LUT is always loaded in the same place.a
-    ld a, $03
+    ld a, $00
     ld [map_current_room_id], a
 
     ld a, map_tile_base_section_8000 | map_load_origin | map_load_tiles | map_load_palettes
-    ld hl, sample_room_top_begin
+    ld hl, sample_room_begin
     ld bc, $85A0
     ld de, $0000
     call map_load_room
+
+    ; clear collision values (required before initializing)
+    call chr_clear_collision
 
     ; start display register
     ; set lcd on
@@ -180,14 +183,14 @@ main:
         ; Check edge collisions
         ; horizontal edges collision check
         ld a, [edget_collision_target_x]
-        cp $20
+        cp $FE
         jr z, .load_room_left
         cp $15
         jr z, .load_room_right
         ld a, [edget_collision_target_y]
-        cp $20
+        cp $00
         jr z, .load_room_top
-        cp $13
+        cp $90
         jr z, .load_room_bottom
         jp .edge_check_complete
 
@@ -346,7 +349,7 @@ main:
         ; Check edge collisions
         ; horizontal edges collision check
         ld a, [edget_collision_target_y]
-        cp $13
+        cp $90
         jr z, .load_room_below_back_to_center
             jp .edge_check_complete
 
@@ -387,7 +390,7 @@ main:
         ; horizontal edges collision check
 .edge_detection_up:
         ld a, [edget_collision_target_y]
-        cp $20
+        cp $00
         jr z, .load_room_above_back_to_center
             jp .edge_check_complete
 
