@@ -3,6 +3,13 @@
 ; Developed by Caio Souza Oliveira
 ; 17 Aug 2019
 
+; constant
+chr_top_edge_limit equ $FF
+chr_bottom_edge_limit equ $90
+chr_left_edge_limit equ $FF
+chr_right_edge_limit equ $A0
+
+
 ; load character tiles
 chr_load_character_tiles_and_palettes:
     ; load sprite tiles
@@ -445,7 +452,7 @@ chr_move_character_left:
     call chr_check_horizontal_edges
     cp $00
     jr nz, .continue_collision_check
-        ld a, c
+        ld a, b
         ld [edget_collision_target_x], a
         pop hl
         pop bc
@@ -567,6 +574,18 @@ chr_move_character_right:
     ld a, b
     add $0A
     ld b, a
+
+    ; check horizontal collision
+    call chr_check_horizontal_edges
+    cp $00
+    jr nz, .continue_collision_check
+        ld a, b
+        ld [edget_collision_target_x], a
+        pop hl
+        pop bc
+        ret
+
+.continue_collision_check:
 
     ; Convert bounding_box coordinate into screen tile coordinates
     ; PXL(X) -> TILE(X)
@@ -724,7 +743,7 @@ chr_inc_next_line:
 chr_clear_collision:
     ld a, $00
     ld [collision_target], a
-    ld a, $FF
+    ld a, $FE
     ld [edget_collision_target_x], a
     ld [edget_collision_target_y], a
     ret
@@ -740,7 +759,7 @@ chr_player_controlled_character_loop:
         ; clear colision targets
         ld a, $00
         ld [collision_target], a
-        ld a, $FF
+        ld a, $FE
         ld [edget_collision_target_x], a
         ld [edget_collision_target_y], a
 
@@ -791,9 +810,9 @@ chr_player_controlled_character_loop:
 ; return a: 1 allowed, 0 not allowed
 chr_check_vertical_edges:
     ld a, c
-    cp $90
+    cp chr_bottom_edge_limit
     jr z, .not_allowed
-    cp $00
+    cp chr_top_edge_limit
     jr z, .not_allowed
         ld a, $01
         ret
@@ -806,14 +825,14 @@ chr_check_vertical_edges:
 ; return a: 1 allowed, 0 not allowed
 chr_check_horizontal_edges:
     ld a, b
-    cp $FE
+    cp chr_left_edge_limit
     jr z, .not_allowed
-    cp $96
+    cp chr_right_edge_limit
     jr z, .not_allowed
         ld a, $01
         ret
 .not_allowed:
-    ld a, $01
+    ld a, $00
     ret
 
 ; checks whether movement is alowed (vertical direction)

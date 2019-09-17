@@ -183,14 +183,14 @@ main:
         ; Check edge collisions
         ; horizontal edges collision check
         ld a, [edget_collision_target_x]
-        cp $FE
+        cp chr_left_edge_limit
         jr z, .load_room_left
-        cp $15
+        cp chr_right_edge_limit
         jr z, .load_room_right
         ld a, [edget_collision_target_y]
-        cp $00
+        cp chr_top_edge_limit
         jr z, .load_room_top
-        cp $90
+        cp chr_bottom_edge_limit
         jr z, .load_room_bottom
         jp .edge_check_complete
 

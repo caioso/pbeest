@@ -1425,12 +1425,12 @@ map_move_player_character_horizontally:
     pop hl
     jr nz, .right_values
         ld e, 2
-        ld d, -2
+        ld d, -1
         jr .animate
 
 .right_values:
     ld e, -2
-    ld d, 2
+    ld d, 1
 
 .animate:
     ld a, [ram_general_use_variable_8]
@@ -1470,7 +1470,7 @@ map_move_player_character_vertically:
     pop hl
     jr nz, .down_values
         ld e, 2
-        ld d, -2
+        ld d, -0
         jr .animate
 
 .down_values:
