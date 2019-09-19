@@ -38,9 +38,11 @@ map_current_y equ map_current_x + 1
 map_current_x_offset equ map_current_y + 1
 map_current_y_offset equ map_current_x_offset + 1
 map_current_room_id equ map_current_y_offset + 1
+map_current_LUT_address_byte_1 equ map_current_room_id + 1
+map_current_LUT_address_byte_2 equ map_current_LUT_address_byte_1 + 1
 
 ; Character Controller's Variables
-character_0_x equ map_current_room_id + 1
+character_0_x equ map_current_LUT_address_byte_2 + 1
 character_0_y equ character_0_x + 1
 character_0_offset_x equ character_0_y + 1
 character_0_offset_y equ character_0_offset_x + 1

@@ -222,8 +222,10 @@ map_load_room:
 
     ; save tile LUT initial address ram_general_use_variable_5, ram_general_use_variable_6
     ld a, l
+    ld [map_current_LUT_address_byte_1], a
     ld [ram_general_use_variable_5], a
     ld a, h
+    ld [map_current_LUT_address_byte_2], a
     ld [ram_general_use_variable_6], a
 
     ; Check the scrolling direction
@@ -960,6 +962,7 @@ map_load_tile_and_attribute_vertical:
     ret
 
 ; Used an offset in DE to locate tiles and attribute in the room's LUT's and load into VRAM
+; ram_general_use_variable_9: holds current row to be rendered
 ; de: Offset within the LUT
 ; hl: current tile LUT address
 map_load_tile_and_attribute_horizontal:
@@ -1729,3 +1732,75 @@ map_scroll_map_vertically_if_needed:
 
 .finish:
     ret
+
+; Convert map position in pixels into map tiles
+; a: position in pixels
+; return: position in tiles
+map_pixel_to_tile:
+    srl a
+    srl a
+    srl a
+    ret
+
+map_load_next_horizontal_row:
+    ; check whether scrolling must happen
+    push hl
+    ld a, [_OAMRAM]
+    inc a
+    ld l, a
+    ld a, $50
+    cp l
+    pop hl
+    ret nc
+
+    ; check whether the map needs to scroll
+    ld a, [map_current_height]
+    cp map_screen_height
+    ret z
+
+    ; check whether Y position is the beginning of a new tile.
+    ld a, [character_0_y]
+    and $07
+    cp $00
+    ret nz
+
+    ; calculate target row to load
+    ld a, [map_current_y_offset]
+    call map_pixel_to_tile
+    add a, map_screen_height
+
+    ; load vertical row
+    call map_render_next_row_below 
+    ret
+
+; a: holds the initial address of the next row to be loaded (needs to multiply by screen_width)
+map_render_next_row_below:
+    push hl
+    push bc
+    
+    ; load row numner into de
+    ld e, a
+    ld d, $00
+
+    ; load map width into hl
+    ld a, [map_current_width]
+    ld l, a
+    ld h, $00
+
+    ; only DE will be used
+    call mul_DE_HL_BCDEu
+
+    pop bc
+    pop hl
+
+    ; de holds the offset to the first tile in the next row
+
+    ld a, [map_current_LUT_address_byte_1]
+    ld l, a
+    ld a, [map_current_LUT_address_byte_2]
+    ld h, a
+
+    ; implement a function that can render the next row.
+
+    ret
+        

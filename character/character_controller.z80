@@ -221,8 +221,13 @@ chr_move_character_down:
     inc a
     ld [hl], a
 
+    ; Check whether extra section of the map must be loaded
+    call map_load_next_horizontal_row
+
     ; Scroll map if requied
     ld a, $00
+
+    ; scroll map if needed
     call map_scroll_map_vertically_if_needed
     ret
 
