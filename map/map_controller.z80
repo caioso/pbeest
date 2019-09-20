@@ -315,8 +315,11 @@ map_load_room:
     ld [ram_general_use_variable_9], a
     push hl
     ld l, a
+    
     ; height is guaranteed to be 18 tiles
-    ld a, map_screen_height
+    ; *NEW* Load the entire room at once
+    ;ld a, map_screen_height
+    ld a, [map_current_height]
     cp l
     pop hl
     jr nz, .tile_loading_inner_loop_horizontal
@@ -330,7 +333,9 @@ map_load_room:
     ld l, a
 
     ; Map width is guaranteed to be 20 tiles
-    ld a, map_screen_width
+    ; *NEW* load the entire room at once
+    ;ld a, map_screen_width
+    ld a, [map_current_width]
     cp l
     pop hl
     jr z, .complete_map_loading_horizontal
@@ -342,19 +347,31 @@ map_load_room:
         pop hl
         jr nz, .is_next_column_is_right
             ; Show appropriate scroll animation (left)
-            ld a, 1
             push hl
             push bc
-            call map_scroll_bg_horizontally_with_animation
+            ; check whether the amount of screen columns have been scrolled
+            ld a, [ram_general_use_variable_8]
+            sub map_screen_width
+            jr nc, .skip_camera_movement_left
+                ld a, 1
+                call map_scroll_bg_horizontally_with_animation
+
+.skip_camera_movement_left:
             pop bc
             pop hl
             jr .horizontal_animation_complete
 
 .is_next_column_is_right:
-            ld a, 0
             push hl
             push bc
-            call map_scroll_bg_horizontally_with_animation
+
+            ld a, [ram_general_use_variable_8]
+            sub map_screen_width
+            jr nc, .skip_camera_movement_right
+                ld a, 0
+                call map_scroll_bg_horizontally_with_animation
+
+.skip_camera_movement_right:
             pop bc
             pop hl
 
@@ -1800,7 +1817,7 @@ map_render_next_row_below:
     ld a, [map_current_LUT_address_byte_2]
     ld h, a
 
-    ; implement a function that can render the next row.
+    ; implement a function that can render the next LOGIC row. 
 
     ret
         
