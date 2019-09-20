@@ -222,13 +222,8 @@ chr_move_character_down:
     inc a
     ld [hl], a
 
-    ; Check whether extra section of the map must be loaded
-    call map_load_next_horizontal_row
-
     ; Scroll map if requied
     ld a, $00
-
-    ; scroll map if needed
     call map_scroll_map_vertically_if_needed
     ret
 
@@ -808,10 +803,25 @@ chr_player_controlled_character_loop:
         call chr_move_character_right
 
 .end_character_movement:
-    ; render sprite on its new position
-    ld hl, character_0
-    call chr_render_character
-    
+    ; check whether the player position needs to be updated
+    push de
+    ld a, [current_key_down]
+    ld d, a
+    ld a, [current_key_up]
+    ld e, a
+    ld a, [current_key]
+    or e
+    or d
+    pop de
+    cp $00
+    jr z, .skip_rendering
+
+        ; render sprite on its new position
+        ld hl, character_0
+        call chr_render_character
+        call map_refresh_logic_layer;
+
+.skip_rendering
     ret
 
 ; Check Vertical Edges

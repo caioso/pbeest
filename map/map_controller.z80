@@ -1612,12 +1612,17 @@ map_convert_pixels_to_tiles;
 
 ; Scroll Map Horizontally. The player position used is the raw value in OAMRAM
 ; a: scroll direction (1, left; 0 right)
-map_scroll_map_horizontally_if_needed:
+map_scroll_map_horizontally_if_needed:    
     cp $00
     jr nz, .scroll_right
 
         push hl
+.wait
+        call bgc_wait_for_VRAM
         ld a, [_OAMRAM + 1]
+        ; sometimes the result will be $FF (try again until it is correct)
+        cp $FF 
+        jr z, .wait
         inc a
         ld l, a
         ld a, $50
@@ -1653,7 +1658,12 @@ map_scroll_map_horizontally_if_needed:
 
 .scroll_right:
     push hl
+.wait_2
+    call bgc_wait_for_VRAM
     ld a, [_OAMRAM + 1]
+    ; sometimes the result will be $FF (try again until it is correct)
+    cp $FF 
+    jr z, .wait_2
     inc a
     ld l, a
     ld a, $51
@@ -1690,7 +1700,11 @@ map_scroll_map_vertically_if_needed:
     jr nz, .scroll_down
 
     push hl
+.wait
+    call bgc_wait_for_VRAM
     ld a, [_OAMRAM]
+    cp $FF
+    jr z, .wait
     inc a
     ld l, a
     ld a, $58
@@ -1725,7 +1739,11 @@ map_scroll_map_vertically_if_needed:
 
 .scroll_down:
     push hl
+.wait_2
+    call bgc_wait_for_VRAM
     ld a, [_OAMRAM]
+    cp $FF
+    jr z, .wait_2
     inc a
     ld l, a
     ld a, $59
@@ -1761,49 +1779,16 @@ map_pixel_to_tile:
     srl a
     ret
 
-map_load_next_horizontal_row:
-    ; check whether scrolling must happen
-    push hl
-    ld a, [_OAMRAM]
-    inc a
-    ld l, a
-    ld a, $50
-    cp l
-    pop hl
-    ret nc
-
-    ; check whether the map needs to scroll
-    ld a, [map_current_height]
-    cp map_screen_height
-    ret z
-
-    ; check whether Y position is the beginning of a new tile.
-    ld a, [character_0_y]
-    and $07
-    cp $00
-    ret nz
-
-    push bc
+; Reloads logic map, based on the current map's offset.
+map_refresh_logic_layer:
     ; calculate target row to load
     ld a, [map_current_y_offset]
     call map_pixel_to_tile
     ld b, a
-
-    ; prepare variables
-    ld a, [map_current_y]
-    call map_pixel_to_tile
-    add b
-    ld b, a
-
+    
     ; calculate target row to load
     ld a, [map_current_x_offset]
     call map_pixel_to_tile
-    ld c, a
-
-    ; prepare variables
-    ld a, [map_current_x]
-    call map_pixel_to_tile
-    add c
     ld c, a
 
     ; Use with map_load_map_logic
@@ -1823,6 +1808,4 @@ map_load_next_horizontal_row:
 
     ; load new logic layer
     call map_load_logic_layer
-
-    pop bc
     ret
