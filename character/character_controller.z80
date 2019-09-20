@@ -183,6 +183,7 @@ chr_move_character_down:
     ld c, a
 
     ; check vertical collision
+    ld a, $09
     call chr_check_vertical_edges
     cp $00
     jr nz, .continue_collision_check
@@ -321,6 +322,7 @@ chr_move_character_up:
     ld c, a
 
     ; check vertical collision
+    ld a, -$01
     call chr_check_vertical_edges
     cp $00
     jr nz, .continue_collision_check
@@ -454,6 +456,7 @@ chr_move_character_left:
     ld b, a
 
     ; check horizontal collision
+    ld a, -$01
     call chr_check_horizontal_edges
     cp $00
     jr nz, .continue_collision_check
@@ -581,6 +584,7 @@ chr_move_character_right:
     ld b, a
 
     ; check horizontal collision
+    ld a, $0A
     call chr_check_horizontal_edges
     cp $00
     jr nz, .continue_collision_check
@@ -811,9 +815,22 @@ chr_player_controlled_character_loop:
     ret
 
 ; Check Vertical Edges
-; de: b[x], c[y] character position (in pixels)
+; a: movement direction increment
 ; return a: 1 allowed, 0 not allowed
 chr_check_vertical_edges:
+    push hl
+    ld l, a
+    ld a, [_OAMRAM]
+    ld c, a
+    ld a, [_OAMRAM + 1]
+    ld b, a
+    call chr_normalize_coordinates
+    call chr_calculate_bounding_box_origin
+    ld a, c
+    add l
+    ld c, a
+    pop hl
+
     ld a, c
     cp chr_bottom_edge_limit
     jr z, .not_allowed
@@ -829,6 +846,19 @@ chr_check_vertical_edges:
 ; de: b[x], c[y] character position (in pixels)
 ; return a: 1 allowed, 0 not allowed
 chr_check_horizontal_edges:
+    push hl
+    ld l, a
+    ld a, [_OAMRAM]
+    ld c, a
+    ld a, [_OAMRAM + 1]
+    ld b, a
+    call chr_normalize_coordinates
+    call chr_calculate_bounding_box_origin
+    ld a, b
+    add l
+    ld b, a
+    pop hl
+    
     ld a, b
     cp chr_left_edge_limit
     jr z, .not_allowed

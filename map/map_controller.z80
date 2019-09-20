@@ -691,6 +691,8 @@ map_load_room:
     ret
 
 ; Load Map Logic Layer
+; arguments: ram_general_use_variable_5/6: LUT initial address
+;            ram_general_use_variable15/16: intiial X/Y
 map_load_logic_layer:
     ; Load LUT initial address
     ld a, [ram_general_use_variable_5]
@@ -1781,43 +1783,46 @@ map_load_next_horizontal_row:
     cp $00
     ret nz
 
+    push bc
     ; calculate target row to load
     ld a, [map_current_y_offset]
     call map_pixel_to_tile
-    add a, map_screen_height
+    ld b, a
 
-    ; load vertical row
-    call map_render_next_row_below 
-    ret
+    ; prepare variables
+    ld a, [map_current_y]
+    call map_pixel_to_tile
+    add b
+    ld b, a
 
-; a: holds the initial address of the next row to be loaded (needs to multiply by screen_width)
-map_render_next_row_below:
-    push hl
-    push bc
-    
-    ; load row numner into de
-    ld e, a
-    ld d, $00
+    ; calculate target row to load
+    ld a, [map_current_x_offset]
+    call map_pixel_to_tile
+    ld c, a
 
-    ; load map width into hl
-    ld a, [map_current_width]
-    ld l, a
-    ld h, $00
+    ; prepare variables
+    ld a, [map_current_x]
+    call map_pixel_to_tile
+    add c
+    ld c, a
 
-    ; only DE will be used
-    call mul_DE_HL_BCDEu
+    ; Use with map_load_map_logic
+    ; arguments: ram_general_use_variable_5/6: LUT initial address
+    ;            ram_general_use_variable15/16: intiial X/Y
+
+    ; load intiial LUT address
+    ld a, [map_current_LUT_address_byte_1]
+    ld [ram_general_use_variable_5], a
+    ld a, [map_current_LUT_address_byte_2]
+    ld [ram_general_use_variable_6], a
+
+    ld a, c
+    ld [ram_general_use_variable_15], a
+    ld a, b
+    ld [ram_general_use_variable_16], a
+
+    ; load new logic layer
+    call map_load_logic_layer
 
     pop bc
-    pop hl
-
-    ; de holds the offset to the first tile in the next row
-
-    ld a, [map_current_LUT_address_byte_1]
-    ld l, a
-    ld a, [map_current_LUT_address_byte_2]
-    ld h, a
-
-    ; implement a function that can render the next LOGIC row. 
-
     ret
-        
