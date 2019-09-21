@@ -462,7 +462,6 @@ chr_move_character_left:
         ret
 
 .continue_collision_check:
-
     ; Convert bounding_box coordinate into screen tile coordinates
     ; PXL(X) -> TILE(X)
     ld a, b
@@ -819,7 +818,6 @@ chr_player_controlled_character_loop:
         ; render sprite on its new position
         ld hl, character_0
         call chr_render_character
-        call map_refresh_logic_layer;
 
 .skip_rendering
     ret
@@ -828,6 +826,8 @@ chr_player_controlled_character_loop:
 ; a: movement direction increment
 ; return a: 1 allowed, 0 not allowed
 chr_check_vertical_edges:
+    push bc
+    push de
     push hl
     ld l, a
     ld a, [_OAMRAM]
@@ -847,15 +847,21 @@ chr_check_vertical_edges:
     cp chr_top_edge_limit
     jr z, .not_allowed
         ld a, $01
+        pop de
+        pop bc
         ret
 .not_allowed:
     ld a, $00
+    pop de
+    pop bc
     ret
 
 ; Check Horizontal Edges
 ; de: b[x], c[y] character position (in pixels)
 ; return a: 1 allowed, 0 not allowed
 chr_check_horizontal_edges:
+    push bc
+    push de
     push hl
     ld l, a
     ld a, [_OAMRAM]
@@ -875,9 +881,13 @@ chr_check_horizontal_edges:
     cp chr_right_edge_limit
     jr z, .not_allowed
         ld a, $01
+        pop de
+        pop bc
         ret
 .not_allowed:
     ld a, $00
+    pop de
+    pop bc
     ret
 
 ; checks whether movement is alowed (vertical direction)
@@ -885,7 +895,7 @@ chr_check_horizontal_edges:
 ; return a: 1/2/3 allowed (1 tile to the right caused collision, 2, tile to the left caused collision, 
 ; 3 both caused the collision, 4 teh third tile below the player triggered the collision), 0 allowed
 chr_check_vertical_movement:
-    ld a, map_screen_width
+    ld a, map_max_width
     ld l, a
     ld h, $00
 
@@ -972,7 +982,7 @@ chr_check_vertical_movement:
 ; de: d[x], e[y] character position (in tiles)
 ; return a: 1/2/3 allowed (1 tile to the right caused collision, 2, tile to the left caused collision, 3 both caused the collision), 0 allowed
 chr_check_horizontal_movement:
-    ld a, map_screen_width
+    ld a, map_max_width
     ld l, a
     ld h, $00
 
@@ -1014,7 +1024,7 @@ chr_check_horizontal_movement:
 
 .check_second_tile:
     ; check tile to the below (subtract screen width from the current logic LUT address)
-    ld a, map_screen_width
+    ld a, map_max_width
     add a, c
     ld c, a
     ld a, b

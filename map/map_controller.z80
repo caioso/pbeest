@@ -692,7 +692,7 @@ map_load_room:
 
 ; Load Map Logic Layer
 ; arguments: ram_general_use_variable_5/6: LUT initial address
-;            ram_general_use_variable15/16: intiial X/Y
+;            ram_general_use_variable_15/16: intiial X/Y
 map_load_logic_layer:
     ; Load LUT initial address
     ld a, [ram_general_use_variable_5]
@@ -721,52 +721,52 @@ map_load_logic_layer:
     ld a, h
     adc d
     ld h, a
-
-    ; From this point onwards, HL has the first address of the logic layer
-    ; DE holds the amount of logic tiles to load
-
-    ; Load initial address based on initial X and initial Y position
+    
+    ; add to bc the first address based on initial X/Y
     push hl
     push de
 
-    ; Expression HL + ((initial_y * map_width) + initial_x)
-    ld a, [ram_general_use_variable_16]
+    ; expressios: map_max_width*map_initial_Y + map_initial_X
+    ld a, map_max_width
     ld e, a
     ld d, $00
 
-    ld a, [map_current_width]
+    ld a, [ram_general_use_variable_16]
     ld l, a
     ld h, $00
 
     ; only DE will be used
     call mul_DE_HL_BCDEu
-    
-    ; copy de to bc
+
+    ld a, [ram_general_use_variable_15]
+    add e
+    ld e, a
+    ld a, d
+    adc $00
+    ld d, a
+
+    ; from this point onwards, de holds the initial address in the LOGIC LUT matrix
+    ; move de to bc
     ld c, e
     ld b, d
 
-    ; Add width
-    ld a, [ram_general_use_variable_15]
-    add c
+    ; add initial address of map_logic to bc
+    ld de, map_logic
+    ld a, c
+    add e
     ld c, a
     ld a, b
-    adc $00
+    adc d
     ld b, a
 
     pop de
     pop hl
 
-    ld a, c
-    add l
-    ld l, a
-    ld a, b
-    adc h
-    ld h, a
-
-    ld bc, map_logic
-    ld d, map_screen_height
+    ld a, [map_current_height]
+    ld d, a
 .outer_loop:
-    ld e, map_screen_width
+    ld a, [map_current_width]
+    ld e, a
 .inner_loop:
     ld a, [hl]
     ld [bc], a
@@ -778,20 +778,24 @@ map_load_logic_layer:
     jr nz, .inner_loop
         ; move to the next line in the logic map
         ; subtract screen width and add map width
-        ld a, l
-        sub map_screen_width
-        ld l, a
-        ld a, h
-        sbc $00
-        ld h, a
-
-        ; add LUT width
+        push de
         ld a, [map_current_width]
-        add l
-        ld l, a
-        ld a, h
+        ld e, a
+        ld a, c
+        sub e
+        ld c, a
+        ld a, b
+        sbc $00
+        ld b, a
+        pop de
+
+        ; add logic map width
+        ld a, map_max_width
+        add c
+        ld c, a
+        ld a, b
         adc $00
-        ld h, a
+        ld b, a
 
         dec d
         jr nz, .outer_loop
@@ -821,6 +825,32 @@ map_width_times_height:
     pop hl
     pop de
     ret
+
+; Calculate dimensions of max-sized map
+; stores the values at ram_general_use_variable_11/ram_general_use_variable_10
+map_max_width_times_height:
+    push de
+    push hl
+    ld a, map_max_width
+    ld e, a
+    ld d, $00
+
+    ld a, map_max_height
+    ld l, a
+    ld h, $00
+
+    ; only DE will be used
+    call mul_DE_HL_BCDEu
+    
+    ; save value into ram_general_use_variable_10/11
+    ld a, e
+    ld [ram_general_use_variable_10], a
+    ld a, d
+    ld [ram_general_use_variable_11], a
+    pop hl
+    pop de
+    ret
+
 
 ; Calculate the total tiles based on the map SCREE_width x SCREEN_height
 ; Screen width is hardcoded to 20 and screen height is hardcoded to 18
@@ -1777,35 +1807,4 @@ map_pixel_to_tile:
     srl a
     srl a
     srl a
-    ret
-
-; Reloads logic map, based on the current map's offset.
-map_refresh_logic_layer:
-    ; calculate target row to load
-    ld a, [map_current_y_offset]
-    call map_pixel_to_tile
-    ld b, a
-    
-    ; calculate target row to load
-    ld a, [map_current_x_offset]
-    call map_pixel_to_tile
-    ld c, a
-
-    ; Use with map_load_map_logic
-    ; arguments: ram_general_use_variable_5/6: LUT initial address
-    ;            ram_general_use_variable15/16: intiial X/Y
-
-    ; load intiial LUT address
-    ld a, [map_current_LUT_address_byte_1]
-    ld [ram_general_use_variable_5], a
-    ld a, [map_current_LUT_address_byte_2]
-    ld [ram_general_use_variable_6], a
-
-    ld a, c
-    ld [ram_general_use_variable_15], a
-    ld a, b
-    ld [ram_general_use_variable_16], a
-
-    ; load new logic layer
-    call map_load_logic_layer
     ret
