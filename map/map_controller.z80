@@ -445,19 +445,17 @@ map_load_room:
     call check_animation_direction
     pop hl
     jr nz, .final_left_position
+        ; adjust offsets
+        call map_adjust_character_offset
+
         ld a, $08
         
         jr .adjust_x_position
         ; For now ONLY left scroling screens will have offset (from screens coming from right, they will always have offset 0 (starting at 0))
 .final_left_position:
-        ; set character offset to match the screen's initial position.
-        ld a, [map_current_x_offset]
         
-        ;negative offset (2's complement ~a + 1)
-        cpl 
-        inc a
-
-        ld [character_0_offset_x], a
+        ; adjust offsets
+        call map_adjust_character_offset
 
         ; set initial position
         ld a, $98
@@ -531,7 +529,9 @@ map_load_room:
     ld l, a
 
     ; Map width is guaranteed to be 20 tiles
-    ld a, map_screen_width
+    ; *NEW* Load the entire room at once
+    ;ld a, map_screen_width
+    ld a, [map_current_width]
 
     cp l
     pop hl
@@ -546,7 +546,10 @@ map_load_room:
     ld l, a
 
     ; Map height is guaranteed to be 18 tiles
-    ld a, map_screen_height
+    ; *NEW* Load the entire room at once
+    ;ld a, map_screen_height
+    ld a, [map_current_height]
+
     cp l
     pop hl
     jr z, .complete_map_loading_vertical
@@ -691,10 +694,18 @@ map_load_room:
     call check_animation_direction
     pop hl
     jr nz, .final_up_position
+        ; adjust offsets
+        call map_adjust_character_offset
+
         ld a, $10
         jr .adjust_y_position
+
 .final_up_position:
+        ; adjust offsets
+        call map_adjust_character_offset
+
         ld a, $90
+
 .adjust_y_position:
     ld [character_0_y], a
 
@@ -788,6 +799,29 @@ map_load_logic_layer:
 
         dec d
         jr nz, .outer_loop
+    ret
+
+; Set Character 0's initial screen offset, based on the current map offset.
+; no arguments
+; no returns
+map_adjust_character_offset:
+    ; set character offset to match the screen's initial X position.
+    ld a, [map_current_x_offset]
+    
+    ;negative offset (2's complement ~a + 1)
+    cpl 
+    inc a
+
+    ld [character_0_offset_x], a
+
+    ; set character offset to match the screen's initial Y position.
+    ld a, [map_current_y_offset]
+    
+    ;negative offset (2's complement ~a + 1)
+    cpl 
+    inc a
+
+    ld [character_0_offset_y], a
     ret
 
 ; Calculate the total tiles based on the map width x height
