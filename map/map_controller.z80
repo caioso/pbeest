@@ -446,9 +446,22 @@ map_load_room:
     pop hl
     jr nz, .final_left_position
         ld a, $08
+        
         jr .adjust_x_position
+        ; For now ONLY left scroling screens will have offset (from screens coming from right, they will always have offset 0 (starting at 0))
 .final_left_position:
+        ; set character offset to match the screen's initial position.
+        ld a, [map_current_x_offset]
+        
+        ;negative offset (2's complement ~a + 1)
+        cpl 
+        inc a
+
+        ld [character_0_offset_x], a
+
+        ; set initial position
         ld a, $98
+
 .adjust_x_position:
     ld [character_0_x], a
 
@@ -692,7 +705,7 @@ map_load_room:
 
 ; Load Map Logic Layer
 ; arguments: ram_general_use_variable_5/6: LUT initial address
-;            ram_general_use_variable_15/16: intiial X/Y
+;            ram_general_use_variable_15/16: Initial X/Y
 map_load_logic_layer:
     ; Load LUT initial address
     ld a, [ram_general_use_variable_5]
@@ -725,30 +738,6 @@ map_load_logic_layer:
     ; add to bc the first address based on initial X/Y
     push hl
     push de
-
-    ; expressios: map_max_width*map_initial_Y + map_initial_X
-    ld a, map_max_width
-    ld e, a
-    ld d, $00
-
-    ld a, [ram_general_use_variable_16]
-    ld l, a
-    ld h, $00
-
-    ; only DE will be used
-    call mul_DE_HL_BCDEu
-
-    ld a, [ram_general_use_variable_15]
-    add e
-    ld e, a
-    ld a, d
-    adc $00
-    ld d, a
-
-    ; from this point onwards, de holds the initial address in the LOGIC LUT matrix
-    ; move de to bc
-    ld c, e
-    ld b, d
 
     ; add initial address of map_logic to bc
     ld de, map_logic
