@@ -201,7 +201,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_left | map_load_tiles | map_load_palettes
         ld hl, sample_room_left_begin
         ld bc, $85A0
-        ld de, $0200
+        ld de, $0201
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete
@@ -213,7 +213,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_right | map_load_tiles | map_load_palettes
         ld hl, sample_room_right_begin
         ld bc, $85A0
-        ld de, $0000
+        ld de, $0001
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete
@@ -237,7 +237,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_below | map_load_tiles | map_load_palettes
         ld hl, sample_room_bottom_begin
         ld bc, $85A0
-        ld de, $0000
+        ld de, $0100
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete

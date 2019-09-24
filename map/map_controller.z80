@@ -247,13 +247,13 @@ map_load_room:
     ; Horizontal scrolling
     ; calculate first tile column 
     push hl
-    call map_calculate_first_column
+    call map_calculate_first_tile_column
     pop hl
     ; save first column to RAM (ram_general_use_variable_7)
     ld [ram_general_use_variable_7], a
     ; [ram_general_use_variable_12] holds the final X value to be stored in map_current_x
     ld [ram_general_use_variable_12], a
-    ; only required for upwards movement. Adjust 12 in case of wraparound
+    ; only required for maps loaded to the left. Adjust 12 in case of wraparound
     call map_adjust_final_map_x
 
     ; calculate first tile address in LUT
@@ -277,8 +277,13 @@ map_load_room:
     call map_width_times_height
 
 .tile_loading_outer_loop_horizontal:
-    ld a, $00
+    ; TODO: THE INTITIAL y VALUE SHOULD BE CALCULATED BASED ON THE SCREEN OFFSET, NOT ALWAYS 0.
+    ; THIS IS ALSO VALID FOR VERTICAL SCREENS (IN THIS CASE THE x POSITION WILL BE CONSIDERED).
+    ; ram_general_use_variable_9 holds the actual tile in VRAM, ram_general_use_variable_17
+    ld a, 32
     ld [ram_general_use_variable_9], a
+    ld a, $00
+    ld [ram_general_use_variable_17], a
 
 .tile_loading_inner_loop_horizontal:
 
@@ -309,14 +314,18 @@ map_load_room:
     adc $00
     ld h, a
 
-    ; inner loop boundary check
+    ; inner loop boundary check    
     ld a, [ram_general_use_variable_9]
     inc a
     ld [ram_general_use_variable_9], a
+
+    ld a, [ram_general_use_variable_17]
+    inc a
+    ld [ram_general_use_variable_17], a
+    
     push hl
     ld l, a
     
-    ; height is guaranteed to be 18 tiles
     ; *NEW* Load the entire room at once
     ;ld a, map_screen_height
     ld a, [map_current_height]
@@ -495,8 +504,13 @@ map_load_room:
     call map_width_times_height
 
 .tile_loading_outer_loop_vertical:
-    ld a, $00
+    ; TODO: THE INTITIAL y VALUE SHOULD BE CALCULATED BASED ON THE SCREEN OFFSET, NOT ALWAYS 0.
+    ; THIS IS ALSO VALID FOR VERTICAL SCREENS (IN THIS CASE THE x POSITION WILL BE CONSIDERED).
+    ; ram_general_use_variable_9 holds the actual tile in VRAM, ram_general_use_variable_17
+    ld a, 32
     ld [ram_general_use_variable_9], a
+    ld a, $00
+    ld [ram_general_use_variable_17], a
 
 .tile_loading_inner_loop_vertical:
     ; calculate address offset within the LUT
@@ -525,12 +539,15 @@ map_load_room:
     ld a, [ram_general_use_variable_9]
     inc a
     ld [ram_general_use_variable_9], a
+
+    ld a, [ram_general_use_variable_17]
+    inc a
+    ld [ram_general_use_variable_17], a
     push hl
     ld l, a
 
-    ; Map width is guaranteed to be 20 tiles
     ; *NEW* Load the entire room at once
-    ;ld a, map_screen_width
+    ; ld a, map_screen_width
     ld a, [map_current_width]
 
     cp l
@@ -552,7 +569,7 @@ map_load_room:
 
     cp l
     pop hl
-    jr z, .complete_map_loading_vertical
+    jp z, .complete_map_loading_vertical
         ; prepare for the next iteration of the outer loop
         ; update row for the next iterations of the internal loop
         push hl
@@ -560,14 +577,18 @@ map_load_room:
         call check_animation_direction
         pop hl
         jr nz, .is_next_row_is_below
-            ; Show appropriate scroll animation (UP)
-            ld a, 1
-            push hl
-            push bc
-            call map_scroll_bg_vertically_with_animation
-            pop bc
-            pop hl
-            jr .skip_animation
+            ; check whether the maximum number of tiles have already been scrolled
+            ld a, [ram_general_use_variable_8]
+            sub map_screen_height
+            jr nc, .skip_vertical_animation
+                ; Show appropriate scroll animation (UP)
+                push hl
+                push bc
+                ld a, 1
+                call map_scroll_bg_vertically_with_animation
+                pop bc
+                pop hl
+                jr .skip_vertical_animation
 
 .is_next_row_is_below:
         ; Show appropriate scroll animation (DOWN)
@@ -575,15 +596,19 @@ map_load_room:
         ld l, map_load_origin
         call check_animation_direction
         pop hl
-        jr z, .skip_animation
-            ld a, 0
-            push hl
-            push bc
-            call map_scroll_bg_vertically_with_animation
-            pop bc
-            pop hl
+        jr z, .skip_vertical_animation
+            ; check whether the maximum number of tiles have already been scrolled
+            ld a, [ram_general_use_variable_8]
+            sub map_screen_height
+            jr nc, .skip_vertical_animation
+                push hl
+                push bc
+                ld a, 0
+                call map_scroll_bg_vertically_with_animation
+                pop bc
+                pop hl
 
-.skip_animation:
+.skip_vertical_animation:
         push hl
         ld l, map_load_above
         call check_animation_direction
@@ -593,7 +618,7 @@ map_load_room:
             dec a
             ld [ram_general_use_variable_7], a
 
-             ; Subtract the room width and the screen width to get to the next row above teh current one
+            ; Subtract the room width and the screen width to get to the next row above the current one
             push de
             ld a, [map_current_width]
             ld e, a
@@ -606,7 +631,7 @@ map_load_room:
             sbc $00
             ld h, a
 
-            ld a, map_screen_width
+            ld a, [map_current_width]
             ld e, a
             
             ; subtract e from hl
@@ -635,7 +660,7 @@ map_load_room:
             adc $00
             ld h, a
 
-            ld a, map_screen_width
+            ld a, [map_current_width]
             ld e, a
             
             ; subtract e from hl
@@ -1045,6 +1070,9 @@ map_load_tile_and_attribute_horizontal:
     ; expression (Row *32 + column)
     ; A holds the current row to be rendered
     ld a, [ram_general_use_variable_9]
+    ; EXPERIMENT!!!! Instead of decrementing a, subtract the current MAP offset (initial Y position)
+    dec a
+    ; EXPERIMENT!!!!
     ld e, a
     ; Add inital map Y and compensate for wrap around
     ld a, [map_current_y]
@@ -1156,6 +1184,9 @@ map_wrap_around_detector_horizontal:
         push hl
         ld a, [ram_general_use_variable_7]
         ld l, a
+        ; This fucntion considers that negative additions to the column initial rendering will be made in steps of 1.
+        ; This is not correct, since based on the map intital offset up to -16 can be addded to an initial position of 0
+        ; fix it.
         ld a, $FF
         cp l
         pop hl
@@ -1183,42 +1214,42 @@ map_wrap_around_detector_horizontal:
 map_calculate_first_address_in_LUT_horizontal:
     ; In all cases, the offset must be applied to HL    
     ; Load initial address based on initial X and initial Y position
-    push hl
-    push de
+    ;push hl
+    ;push de
 
     ; Expression HL + ((initial_y * map_width) + initial_x)
-    ld a, [ram_general_use_variable_16]
-    ld e, a
-    ld d, $00
+    ;ld a, [ram_general_use_variable_16]
+    ;ld e, a
+    ;ld d, $00
 
-    ld a, [map_current_width]
-    ld l, a
-    ld h, $00
+    ;ld a, [map_current_width]
+    ;ld l, a
+    ;ld h, $00
 
     ; only DE will be used
-    call mul_DE_HL_BCDEu
+    ;call mul_DE_HL_BCDEu
     
     ; copy de to bc
-    ld c, e
-    ld b, d
+    ;ld c, e
+    ;ld b, d
 
     ; Add width
-    ld a, [ram_general_use_variable_15]
-    add c
-    ld c, a
-    ld a, b
-    adc $00
-    ld b, a
+    ;ld a, [ram_general_use_variable_15]
+    ;add c
+    ;ld c, a
+    ;ld a, b
+    ;adc $00
+    ;ld b, a
 
-    pop de
-    pop hl
+    ;pop de
+    ;pop hl
 
-    ld a, c
-    add l
-    ld l, a
-    ld a, b
-    adc h
-    ld h, a
+    ;ld a, c
+    ;add l
+    ;ld l, a
+    ;ld a, b
+    ;adc h
+    ;ld h, a
     
     ; check animation direction
     push hl
@@ -1232,13 +1263,13 @@ map_calculate_first_address_in_LUT_horizontal:
         ; calculate map dimensions
         push de
         push hl
-        ld a, map_screen_width
+        ld a, [map_current_width]
         ld e, a
         ld d, $00
         ; MAP WIDTH - 1
         dec de
 
-        ld a, map_screen_height
+        ld a, [map_current_height]
         ld l, a
         ld h, $00
 
@@ -1331,7 +1362,7 @@ map_calculate_first_address_in_LUT_vertical:
         ; calculate map dimensions
         push de
         push hl
-        ld a, map_screen_height
+        ld a, [map_current_height]
         ld e, a
         ld d, $00
         ; MAP HEIGHT - 1
@@ -1365,7 +1396,7 @@ map_calculate_first_address_in_LUT_vertical:
 
 ; Determines first column, based on the direction
 ; return (a): first columnt to be rendered
-map_calculate_first_column:
+map_calculate_first_tile_column:
 
     ; Check animation direction
     ld l, map_load_left
