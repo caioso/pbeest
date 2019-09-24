@@ -280,8 +280,20 @@ map_load_room:
     ; TODO: THE INTITIAL y VALUE SHOULD BE CALCULATED BASED ON THE SCREEN OFFSET, NOT ALWAYS 0.
     ; THIS IS ALSO VALID FOR VERTICAL SCREENS (IN THIS CASE THE x POSITION WILL BE CONSIDERED).
     ; ram_general_use_variable_9 holds the actual tile in VRAM, ram_general_use_variable_17
+    push hl
+    ld a, [map_current_y_offset]
+    srl a
+    srl a
+    srl a
+    ld l, a
+    ld a, [map_current_y]
+    sub l
+    ; Compensate the result in a, to wrap around!
+
     ld a, 32
     ld [ram_general_use_variable_9], a
+    pop hl
+
     ld a, $00
     ld [ram_general_use_variable_17], a
 
@@ -509,6 +521,7 @@ map_load_room:
     ; ram_general_use_variable_9 holds the actual tile in VRAM, ram_general_use_variable_17
     ld a, 32
     ld [ram_general_use_variable_9], a
+
     ld a, $00
     ld [ram_general_use_variable_17], a
 
@@ -546,8 +559,9 @@ map_load_room:
     push hl
     ld l, a
 
+    ; Map width is guaranteed to be 20 tiles
     ; *NEW* Load the entire room at once
-    ; ld a, map_screen_width
+    ;ld a, map_screen_width
     ld a, [map_current_width]
 
     cp l
