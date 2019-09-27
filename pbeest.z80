@@ -201,7 +201,7 @@ main:
         ld a, map_tile_base_section_8000 | map_load_left | map_load_tiles | map_load_palettes
         ld hl, sample_room_left_begin
         ld bc, $85A0
-        ld de, $0201
+        ld de, $020E
         call map_load_room
         call chr_clear_collision
         jp .edge_check_complete

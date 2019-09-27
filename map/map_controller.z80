@@ -288,9 +288,17 @@ map_load_room:
     ld l, a
     ld a, [map_current_y]
     sub l
-    ; Compensate the result in a, to wrap around!
 
+    ; 2's complement
+    inc a
+    cpl
+    inc a
+    ld l, a
+
+    ; Compensate the result in the case of wrap around (subtract the result's 2's complement from the 32).
     ld a, 32
+    sub l
+
     ld [ram_general_use_variable_9], a
     pop hl
 
@@ -470,7 +478,8 @@ map_load_room:
         call map_adjust_character_offset
 
         ld a, $08
-        
+        ld [character_0_x], a
+
         jr .adjust_x_position
         ; For now ONLY left scroling screens will have offset (from screens coming from right, they will always have offset 0 (starting at 0))
 .final_left_position:
@@ -478,11 +487,27 @@ map_load_room:
         ; adjust offsets
         call map_adjust_character_offset
 
-        ; set initial position
+        ; only required for left-loaded screens
         ld a, $98
+        ld [character_0_x], a
 
 .adjust_x_position:
+
+    push hl
+    ; Adjust X position based on the map offsets
+    ld a, [map_current_x_offset]
+    ld l, a
+    ld a, [character_0_x]
+    add l
     ld [character_0_x], a
+    
+    ; Adjust Y position based on the map offsets
+    ld a, [map_current_y_offset]
+    ld l, a
+    ld a, [character_0_y]
+    add l
+    ld [character_0_y], a
+    pop hl
 
     ; load map logic layer
     call map_load_logic_layer
