@@ -543,7 +543,7 @@ map_load_room:
 .tile_loading_outer_loop_vertical:
     ; TODO: THE INTITIAL y VALUE SHOULD BE CALCULATED BASED ON THE SCREEN OFFSET, NOT ALWAYS 0.
     ; THIS IS ALSO VALID FOR VERTICAL SCREENS (IN THIS CASE THE x POSITION WILL BE CONSIDERED).
-    ; ram_general_use_variable_9 holds the actual tile in VRAM, ram_general_use_variable_17
+    ; ram_general_use_variable_9 holds the actual tile in VRAM, ram_general_use_variable_17 is the loop counter
     ld a, 32
     ld [ram_general_use_variable_9], a
 
@@ -1109,9 +1109,8 @@ map_load_tile_and_attribute_horizontal:
     ; expression (Row *32 + column)
     ; A holds the current row to be rendered
     ld a, [ram_general_use_variable_9]
-    ; EXPERIMENT!!!! Instead of decrementing a, subtract the current MAP offset (initial Y position)
+    ; The code was developed based on a single decrement of a (originally I planned to have the map offset subtracted from a)
     dec a
-    ; EXPERIMENT!!!!
     ld e, a
     ; Add inital map Y and compensate for wrap around
     ld a, [map_current_y]
@@ -1251,45 +1250,6 @@ map_wrap_around_detector_horizontal:
 ; hl: holds the initial address of the tile LUT
 ; return (hl): adjusted address based on the map load direction
 map_calculate_first_address_in_LUT_horizontal:
-    ; In all cases, the offset must be applied to HL    
-    ; Load initial address based on initial X and initial Y position
-    ;push hl
-    ;push de
-
-    ; Expression HL + ((initial_y * map_width) + initial_x)
-    ;ld a, [ram_general_use_variable_16]
-    ;ld e, a
-    ;ld d, $00
-
-    ;ld a, [map_current_width]
-    ;ld l, a
-    ;ld h, $00
-
-    ; only DE will be used
-    ;call mul_DE_HL_BCDEu
-    
-    ; copy de to bc
-    ;ld c, e
-    ;ld b, d
-
-    ; Add width
-    ;ld a, [ram_general_use_variable_15]
-    ;add c
-    ;ld c, a
-    ;ld a, b
-    ;adc $00
-    ;ld b, a
-
-    ;pop de
-    ;pop hl
-
-    ;ld a, c
-    ;add l
-    ;ld l, a
-    ;ld a, b
-    ;adc h
-    ;ld h, a
-    
     ; check animation direction
     push hl
     ld l, map_load_left
@@ -1341,44 +1301,6 @@ map_calculate_first_address_in_LUT_horizontal:
 ; hl: holds the initial address of the tile LUT
 ; return (hl): adjusted address based on the map load direction
 map_calculate_first_address_in_LUT_vertical:
-    ; Add offset before start calculation of initial address
-    ; Expression HL + ((initial_y * map_width) + initial_x)
-    push hl
-    push de
-
-    ld a, [ram_general_use_variable_16]
-    ld e, a
-    ld d, $00
-
-    ld a, [map_current_width]
-    ld l, a
-    ld h, $00
-
-    ; only DE will be used
-    call mul_DE_HL_BCDEu
-    
-    ; copy de to bc
-    ld c, e
-    ld b, d
-
-    ; Add width
-    ld a, [ram_general_use_variable_15]
-    add c
-    ld c, a
-    ld a, b
-    adc $00
-    ld b, a
-
-    pop de
-    pop hl
-
-    ld a, c
-    add l
-    ld l, a
-    ld a, b
-    adc h
-    ld h, a
-
     ; check animation direction
     push hl
     ld l, map_load_origin
