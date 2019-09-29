@@ -544,7 +544,40 @@ map_load_room:
     ; TODO: THE INTITIAL y VALUE SHOULD BE CALCULATED BASED ON THE SCREEN OFFSET, NOT ALWAYS 0.
     ; THIS IS ALSO VALID FOR VERTICAL SCREENS (IN THIS CASE THE x POSITION WILL BE CONSIDERED).
     ; ram_general_use_variable_9 holds the actual tile in VRAM, ram_general_use_variable_17 is the loop counter
+    
+    ; load as 0 for maos starting at origin.
+    push hl
+    ld l, map_load_origin
+    call check_animation_direction
+    pop hl
+    cp a, $01
+    jr nz, .adjust_position
+        ; In this case, both ram_general_use_variable_9 and ram_general_use_variable_17 must start at 0
+        ld a, $00
+        jr .continue_variable_initialization
+    
+.adjust_position:
+    push hl
+    ld a, [map_current_x_offset]
+    srl a
+    srl a
+    srl a
+    ld l, a
+    ld a, [map_current_x]
+    sub l
+
+    ; 2's complement
+    inc a
+    cpl
+    inc a
+    ld l, a
+
+    ; Compensate the result in the case of wrap around (subtract the result's 2's complement from the 32).
     ld a, 32
+    sub l
+    pop hl
+
+.continue_variable_initialization:
     ld [ram_general_use_variable_9], a
 
     ld a, $00
@@ -581,6 +614,7 @@ map_load_room:
     ld a, [ram_general_use_variable_17]
     inc a
     ld [ram_general_use_variable_17], a
+
     push hl
     ld l, a
 
@@ -588,7 +622,6 @@ map_load_room:
     ; *NEW* Load the entire room at once
     ;ld a, map_screen_width
     ld a, [map_current_width]
-
     cp l
     pop hl
     jr nz, .tile_loading_inner_loop_vertical
@@ -605,7 +638,6 @@ map_load_room:
     ; *NEW* Load the entire room at once
     ;ld a, map_screen_height
     ld a, [map_current_height]
-
     cp l
     pop hl
     jp z, .complete_map_loading_vertical
@@ -762,6 +794,7 @@ map_load_room:
         call map_adjust_character_offset
 
         ld a, $10
+        ld [character_0_y], a
         jr .adjust_y_position
 
 .final_up_position:
@@ -769,9 +802,24 @@ map_load_room:
         call map_adjust_character_offset
 
         ld a, $90
+        ld [character_0_y], a
 
 .adjust_y_position:
+    push hl
+    ; Adjust X position based on the map offsets
+    ld a, [map_current_x_offset]
+    ld l, a
+    ld a, [character_0_x]
+    add l
+    ld [character_0_x], a
+    
+    ; Adjust Y position based on the map offsets
+    ld a, [map_current_y_offset]
+    ld l, a
+    ld a, [character_0_y]
+    add l
     ld [character_0_y], a
+    pop hl
 
     ; Load map logic
 .load_logic:
@@ -1039,7 +1087,21 @@ map_load_tile_and_attribute_vertical:
     ; result in DE is the fits element in the target row. Add it to ram_general_use_variable_9 (counter in the inner loop)
     ld a, [map_current_x]
     ld c, a
+
+    ; only decrement a if the map is not being loaded in the origin
+    push hl
+    ld l, map_load_origin
+    call check_animation_direction
+    pop hl
+    jr z, .skip_decrement
+        ld a, [ram_general_use_variable_9]
+        dec a
+        jr .continue_calculation
+
+.skip_decrement:
     ld a, [ram_general_use_variable_9]
+
+.continue_calculation:
     add c
     cp 32
     jr c, .no_correction
@@ -1317,6 +1379,7 @@ map_calculate_first_address_in_LUT_vertical:
     call check_animation_direction
     pop hl
     jr nz, .is_movement_downwards
+
         ; Upwards
         ; the first tile in the LUT is the first column in the last row
         ; expression: HL + ((MAP WIDTH) * (MAP HEIGHT - 1))
