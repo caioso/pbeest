@@ -1,0 +1,142 @@
+; Project Beest
+; Game Objects Controller
+; Developed by Caio Souza Oliveira
+; 01 Oct 2019
+
+; Initialize Game Object
+; a: Target game object index (0-15)
+; de: game object position (d: X, e: Y)
+; c: target game object sprite
+goc_initialize_game_object:
+
+    ; after the function call, hl holds the address of the target game object variable
+    push bc
+    call goc_calculate_game_object_address
+    pop bc
+
+    ; load X, Y and tile respectively
+    push hl
+    ld [hl], d
+    inc hl
+    ld [hl], e
+    inc hl
+    ld [hl], c
+    pop hl
+
+    ; copy hl to bc
+    ld c, l
+    ld b, h
+    
+    ; push bc for later use
+    push bc
+    push bc
+    ; Intialize gamobject Sprite
+    ; X
+    ld a, [bc]
+    ld h, a
+    inc bc
+    ; Y
+    ld a, [bc]
+    ld l, a
+    inc bc
+
+    ; Sprite
+    ld a, [bc]
+    ld d, a
+    ; Metadata
+    ld e, $00
+
+    ; load hl with bc value (to be used in the next function call)
+    pop bc
+    push hl
+    ld l, c
+    ld h, b
+
+    ; get sprite ID
+    push de
+    push hl
+    call sptr_get_sprite_number_by_gameobject_id
+    ld c, e
+    ld b, d
+    pop hl
+    pop de
+
+    ; recover hl
+    pop hl
+
+    ; sprite 1
+    call sptr_initialize_sprite
+
+    pop bc
+    push bc
+     ; Intialize gamobject Sprite
+    ; X
+    ld a, [bc]
+    add a, $08
+    ld h, a
+    inc bc
+    ; Y
+    ld a, [bc]
+    ld l, a
+    inc bc
+
+    ; Sprite
+    ld a, [bc]
+    add a, $02
+    ld d, a
+    ; Metadata
+    ld e, $00
+
+    ; load hl with bc value (to be used in the next function call)
+    pop bc
+    push hl
+    ld l, c
+    ld h, b
+
+    ; get sprite ID
+    push de
+    push hl
+    call sptr_get_sprite_number_by_gameobject_id
+    pop hl
+    pop de
+   
+    ; recover hl
+    pop hl
+
+    ; sprite 2
+    call sptr_initialize_sprite
+
+    ret
+
+; Calculate the address of the target game object indicated in a
+; makes use of bc
+; a: target game object index (0-15)
+; return: hl target game object address
+goc_calculate_game_object_address:
+
+    ; calculate game object address
+    ld hl, gobj_0_x
+
+    ; save a (index) in c
+    ld c, a
+    ; use b as the loop counter
+    ld b, a
+
+    ; if a is $00, no increment is needed.
+    cp $00
+    ret z
+
+.continue_increment:
+    ld a, l
+    ; add size_of(game_object) to hl (first game onject)
+    add gobj_game_object_size
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+
+    dec b
+    ld a, b
+    cp $00
+    jr nz, .continue_increment
+    ret

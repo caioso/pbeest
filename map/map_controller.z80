@@ -220,6 +220,16 @@ map_load_room:
     ; is this one really needed? V
     inc hl
 
+    ; Load game objects
+    ; load Room's game object
+    push bc
+    push de
+    push hl
+    call map_load_game_objects
+    pop hl
+    pop de
+    pop bc
+
     ; save tile LUT initial address ram_general_use_variable_5, ram_general_use_variable_6
     ld a, l
     ld [map_current_LUT_address_byte_1], a
@@ -1885,4 +1895,22 @@ map_pixel_to_tile:
     srl a
     srl a
     srl a
+    ret
+
+; Load room's game objects
+map_load_game_objects:
+
+    ; test: load game object 0
+    ld a, $00
+    ld d, $10 ; x
+    ld e, $18 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $01
+    ld d, $20 ; x
+    ld e, $28 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
     ret

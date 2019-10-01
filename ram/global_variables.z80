@@ -66,3 +66,24 @@ current_key_up equ current_key_down + 1
 ; screen constants
 map_screen_width equ 20
 map_screen_height equ 18
+
+; Game Objects
+; Constant (size of the game object variable)
+gobj_game_object_size equ $03
+
+; Variables
+gobj_0_x equ current_key_up + 1
+gobj_0_y equ gobj_0_x + 1
+; The four tiles must always be loaded in sequence
+gobj_0_tile equ gobj_0_y + 1
+
+gobj_1_x equ gobj_0_tile + 1
+gobj_1_y equ gobj_1_x + 1
+; The four tiles must always be loaded in sequence
+gobj_1_tile equ gobj_1_y + 1
+
+; Game Objects Identifiers
+gobj_0 equ gobj_0_x
+gobj_1 equ gobj_1_x
+
+

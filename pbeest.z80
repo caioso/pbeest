@@ -62,6 +62,9 @@ include "hud/dialog/dialogs.z80"
 ; include character contoller
 include "character/character_controller.z80"
 
+; include game objects controller
+include "game_objects/game_objects_controller.z80"
+
 ; include map controller
 include "map/map_controller.z80"
 
