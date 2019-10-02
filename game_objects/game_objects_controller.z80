@@ -140,3 +140,87 @@ goc_calculate_game_object_address:
     cp $00
     jr nz, .continue_increment
     ret
+
+; scroll all game objects by a given amount on X and Y based on camera movement
+; e: amount in X
+; d: amoint in Y
+goc_scroll_game_objects:
+    ; game objects are guaranteed to start at gobj_0. From this point, iterate until the last game object active on screen
+    ld hl, gobj_0
+
+    ld a, [gobj_total_game_objects]
+
+.continue_loop:
+    ld c, a
+    push de
+    push bc
+    push hl
+    ; load X position
+    ld a, [hl]
+    add e
+    ld [hl], a
+    inc hl
+    ; load Y position
+    ld a, [hl]
+    add d
+    ld [hl], a
+    pop hl
+
+    ; load game object sprites
+    push hl
+    call sptr_get_sprite_number_by_gameobject_id
+
+    ; render target game object at new position
+    call goc_render_gameobject
+    pop hl
+
+    ; increment hl (add sizeof(gameobject))
+    ld a, l
+    add gobj_game_object_size
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+
+    pop bc
+    pop de
+    ld a,c 
+    dec a
+    cp $00
+    jr nz,  .continue_loop
+
+    ret
+
+; Renders given game object based on its position and data
+; hl: game object id (starting at gobj_0)
+; de: game object sprite 1
+; bc: game object sprite 2
+goc_render_gameobject:
+    ; load X position
+    ld a, [hl]
+    
+    push hl
+    ld l, e
+    ld h, d
+    call sptr_set_sprite_x
+    
+    ; second sprite
+    ld l, c
+    ld h, b
+    add a, $08
+    call sptr_set_sprite_x
+    pop hl
+
+    ; load Y position
+    inc hl
+    ld a, [hl]
+
+    ld l, e
+    ld h, d
+    call sptr_set_sprite_y
+    
+    ; second sprite
+    ld l, c
+    ld h, b
+    call sptr_set_sprite_y
+    ret

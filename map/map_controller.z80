@@ -1764,6 +1764,11 @@ map_scroll_map_horizontally_if_needed:
             inc a
             ld [rSCX], a
 
+            ; scroll game objects
+            ld d, $00
+            ld e, -1
+            call goc_scroll_game_objects
+
             ld a, [map_current_x_offset]
             inc a
             ld [map_current_x_offset], a
@@ -1797,6 +1802,12 @@ map_scroll_map_horizontally_if_needed:
         ld a, [rSCX]
         dec a
         ld [rSCX], a
+
+        ; scroll game objects
+        ld d, $00
+        ld e, 1
+        call goc_scroll_game_objects
+
 
         ld a, [map_current_x_offset]
         dec a
@@ -1846,6 +1857,11 @@ map_scroll_map_vertically_if_needed:
             inc a
             ld [rSCY], a
 
+            ; scroll game objects
+            ld d, -1
+            ld e, $00
+            call goc_scroll_game_objects
+
             ld a, [map_current_y_offset]
             inc a
             ld [map_current_y_offset], a
@@ -1877,6 +1893,11 @@ map_scroll_map_vertically_if_needed:
         dec a
         ld [rSCY], a
 
+        ; scroll game objects
+        ld d, 1
+        ld e, $00
+        call goc_scroll_game_objects
+
         ld a, [map_current_y_offset]
         dec a
         ld [map_current_y_offset], a
@@ -1900,6 +1921,10 @@ map_pixel_to_tile:
 ; Load room's game objects
 map_load_game_objects:
 
+    ; load total game objects in the map
+    ld a, $02
+    ld [gobj_total_game_objects], a
+
     ; test: load game object 0
     ld a, $00
     ld d, $10 ; x
@@ -1908,8 +1933,8 @@ map_load_game_objects:
     call goc_initialize_game_object
 
     ld a, $01
-    ld d, $20 ; x
-    ld e, $28 ; y
+    ld d, $40 ; x
+    ld e, $48 ; y
     ld c, $56
     call goc_initialize_game_object
 

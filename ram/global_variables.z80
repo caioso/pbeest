@@ -72,7 +72,12 @@ map_screen_height equ 18
 gobj_game_object_size equ $03
 
 ; Variables
-gobj_0_x equ current_key_up + 1
+
+; total gameobjects in the current map
+gobj_total_game_objects equ current_key_up + 1
+
+; game objects objects
+gobj_0_x equ gobj_total_game_objects + 1
 gobj_0_y equ gobj_0_x + 1
 ; The four tiles must always be loaded in sequence
 gobj_0_tile equ gobj_0_y + 1
