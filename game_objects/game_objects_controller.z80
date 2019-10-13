@@ -260,32 +260,32 @@ goc_detect_collision_width_game_objects:
 ; bc: game object sprite 2
 goc_render_gameobject:
     ret
-    
+
     ; load X position
-    ld a, [hl]
+    ;ld a, [hl]
     
-    push hl
-    ld l, e
-    ld h, d
-    call sptr_set_sprite_x
+    ;push hl
+    ;ld l, e
+    ;ld h, d
+    ;call sptr_set_sprite_x
     
     ; second sprite
-    ld l, c
-    ld h, b
-    add a, $08
-    call sptr_set_sprite_x
-    pop hl
+    ;ld l, c
+   ; ld h, b
+    ;add a, $08
+    ;call sptr_set_sprite_x
+    ;pop hl
 
     ; load Y position
-    inc hl
-    ld a, [hl]
+    ;inc hl
+    ;ld a, [hl]
 
-    ld l, e
-    ld h, d
-    call sptr_set_sprite_y
+    ;ld l, e
+    ;ld h, d
+    ;call sptr_set_sprite_y
     
     ; second sprite
-    ld l, c
-    ld h, b
-    call sptr_set_sprite_y
-    ret
+    ;ld l, c
+    ;ld h, b
+    ;call sptr_set_sprite_y
+    ;ret

@@ -112,6 +112,9 @@ main:
     ; Intialize character tiles and palettes
     call chr_load_character_tiles_and_palettes
 
+    ; Initialize Sprite memory
+    call sprt_clear_sprites
+
     ; Intialize character 0
     ld c, $50
     ld b, $50

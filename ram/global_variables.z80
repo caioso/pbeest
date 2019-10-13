@@ -95,6 +95,7 @@ gobj_1_attr equ gobj_1_tile + 1
 
 ; Memory Constants
 sprite_memory_begin equ $DF00
+sprite_memory_end equ sprite_memory_begin + (4*40)
 
 ; Game Objects Identifiers
 gobj_0 equ gobj_0_y

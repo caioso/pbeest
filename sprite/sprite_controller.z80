@@ -47,6 +47,20 @@ sprt_copy_dma:
     jr nz, .continue
   ret
 
+; Clear sprite Memory
+sprt_clear_sprites:
+    ; write 0's to the sprite memory
+    ld hl, sprite_memory_begin
+    ld c, sprite_memory_end -sprite_memory_begin
+.continue:
+    ld [hl], $00
+    inc hl
+    dec c
+    ld a, $00
+    or c
+    jr nz, .continue
+    ret
+
 ; initialize Sprite
 ; bc: sprite ID
 ; h: sprite X
@@ -94,50 +108,6 @@ sprt_load_sprite_palette:
     ld a, e
     or d
     jr nz, .load_palette_bytes
-    ret
-
-; updates target sprite Y position
-; hl: sprite address (_OAMRAM relative)
-; a: target Y position
-sptr_set_sprite_y:
-    ; Y position is the first address
-    ld [hl], a
-    ret
-
-; updates target sprite X position
-; hl: sprite address (_OAMRAM relative)
-; a: target X position
-sptr_set_sprite_x:
-    ; X position is the second address
-    inc hl
-    ld [hl], a
-    ret
-
-; converts character number to real (dual) sprite number 
-; hl: character numner
-; return (hl): corresponding sprite number (character sprite 1)
-; return (bc): corresponding sprite number (character sprite 2)
-sptr_get_sprite_number_by_character_id:
-    push hl
-    ld a, c
-    sub l
-    ld l, a
-    ld a, b
-    sbc h
-    or l
-    jr z, .sprite_1
-    jr .default_sprite
-    
-.sprite_1:
-    pop hl
-    ld hl, sprite_1
-    ld bc, sprite_2
-    ret
-
-.default_sprite:
-    pop hl
-    ld hl, sprite_1
-    ld bc, sprite_2
     ret
 
 ; converts gameobject number to real (dual) sprite number 
