@@ -41,18 +41,12 @@ map_current_room_id equ map_current_y_offset + 1
 map_current_LUT_address_byte_1 equ map_current_room_id + 1
 map_current_LUT_address_byte_2 equ map_current_LUT_address_byte_1 + 1
 
-; Character Controller's Variables
-character_0_x equ map_current_LUT_address_byte_2 + 1
-character_0_y equ character_0_x + 1
-character_0_offset_x equ character_0_y + 1
+; Player Charcater Offset
+character_0_offset_x equ map_current_LUT_address_byte_2 + 1
 character_0_offset_y equ character_0_offset_x + 1
-character_0_tile equ character_0_offset_y + 1
 
 ; division algorith temp varibles (3 bytes must be reserved)
-division_temp equ character_0_tile + 1
-
-; Control constants
-character_0 equ character_0_x
+division_temp equ character_0_offset_y + 1
 
 ; Collision Target ID
 collision_target equ division_temp + 3
@@ -76,19 +70,35 @@ gobj_game_object_size equ $03
 ; total gameobjects in the current map
 gobj_total_game_objects equ current_key_up + 1
 
-; game objects objects
-gobj_0_x equ gobj_total_game_objects + 1
-gobj_0_y equ gobj_0_x + 1
-; The four tiles must always be loaded in sequence
-gobj_0_tile equ gobj_0_y + 1
+; Spites Data
+; Character Controller's Variables
+character_0_y equ $DF00
+character_0_x equ character_0_y + 1
+character_0_tile equ character_0_x + 1
+character_0_attr equ character_0_tile + 1
 
-gobj_1_x equ gobj_0_tile + 1
-gobj_1_y equ gobj_1_x + 1
-; The four tiles must always be loaded in sequence
-gobj_1_tile equ gobj_1_y + 1
+character_0_y_p2 equ character_0_attr + 1
+character_0_x_p2 equ character_0_y_p2 + 1
+character_0_tile_p2 equ character_0_x_p2 + 1
+character_0_attr_p2 equ character_0_tile_p2 + 1
+
+; game objects objects
+gobj_0_y equ character_0_attr_p2 + 1
+gobj_0_x equ gobj_0_y + 1
+gobj_0_tile equ gobj_0_x + 1
+gobj_0_attr equ gobj_0_tile + 1
+
+gobj_1_y equ gobj_0_attr + 1
+gobj_1_x equ gobj_1_y + 1
+gobj_1_tile equ gobj_1_x + 1
+gobj_1_attr equ gobj_1_tile + 1
+
+; Memory Constants
+sprite_memory_begin equ $DF00
 
 ; Game Objects Identifiers
-gobj_0 equ gobj_0_x
-gobj_1 equ gobj_1_x
+gobj_0 equ gobj_0_y
+gobj_1 equ gobj_1_y
 
-
+; Player Character constants
+character_0 equ character_0_y

@@ -152,17 +152,21 @@ goc_scroll_game_objects:
 
 .continue_loop:
     ld c, a
+    call display_wait_for_OAM
+    ld a, c
+
+    ld c, a
     push de
     push bc
     push hl
     ; load X position
     ld a, [hl]
-    add e
+    add d
     ld [hl], a
     inc hl
     ; load Y position
     ld a, [hl]
-    add d
+    add e
     ld [hl], a
     pop hl
 
@@ -191,11 +195,72 @@ goc_scroll_game_objects:
 
     ret
 
+; Detects collision *WITH* active game objects.
+; e: target X position (in pixel)
+; d: target Y position (in pixel)
+; return a: 1 collision detected, 0 collision not detected
+goc_detect_collision_width_game_objects:
+    ; game objects are guaranteed to start at gobj_0. From this point, iterate until the last game object active on screen
+    ld hl, gobj_0
+
+    ld a, [gobj_total_game_objects]
+
+.continue_loop:
+    ld c, a
+    
+    push bc
+    push hl
+    ; load X position
+    ld a, [hl]
+    ld c, a
+    inc hl
+    ; load Y position
+    ld a, [hl]
+    ld b, a
+    pop hl
+    
+    ; compare b, d, c, e
+    ld a, b
+    cp d
+    jr z, .collision_detected
+
+    ld a, c
+    cp e
+    jr z, .collision_detected
+
+    ; increment hl (add sizeof(gameobject))
+    ld a, l
+    add gobj_game_object_size
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+
+    pop bc
+    
+    ld a,c 
+    dec a
+    cp $00
+    jr nz,  .continue_loop
+
+    ; no collision detected
+    ld a, $01
+    ret
+
+.collision_detected:
+    pop bc
+
+    ; collision detected
+    ld a, $00
+    ret
+
 ; Renders given game object based on its position and data
 ; hl: game object id (starting at gobj_0)
 ; de: game object sprite 1
 ; bc: game object sprite 2
 goc_render_gameobject:
+    ret
+    
     ; load X position
     ld a, [hl]
     

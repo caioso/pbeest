@@ -18,6 +18,35 @@ sprite_4 equ sprite_3 + sprite_size
 sprite_5 equ sprite_4 + sprite_size
 sprite_6 equ sprite_5 + sprite_size
 
+; Perform DMA call.
+dma_copy:
+    ld a, $DF
+    ld [$FF46], a
+    ld a, 40
+.loop:
+    dec a
+    jr nz, .loop
+    ret
+dma_copy_end:
+    nop
+
+
+; Copy DMA routine to HRAM memory
+sprt_copy_dma:
+    ld bc, dma_copy
+    ld hl, $FF80
+    ; DMA routine is 13 bytes long
+    ld de, dma_copy_end - dma_copy
+.continue:
+    ld a, [bc]
+    inc bc
+    ld [hl+], a
+    dec e
+    ld a, e
+    cp $00
+    jr nz, .continue
+  ret
+
 ; initialize Sprite
 ; bc: sprite ID
 ; h: sprite X
@@ -40,7 +69,7 @@ sptr_initialize_sprite:
     ld [bc], a
     ret
 
-; loads background palettes
+; loads sprite palettes
 ; hl: holds address to first byte palette
 ; de: number of bytes to be loaded
 ; bc: holds palette index
@@ -83,30 +112,6 @@ sptr_set_sprite_x:
     inc hl
     ld [hl], a
     ret
-
-; Automatically moves all sprites to the left
-; a: number of sprites
-sptr_move_all_sprites_to_left:
-    ld c, a
-    ld hl, _OAMRAM
-    ;inc hl
-.move:
-    ; move sprite
-    ld a, [hl]
-    dec a
-    ld [hl], a
-
-    inc hl
-    inc hl
-    inc hl
-    inc hl
-
-    dec c
-    ld a, c
-    cp $00
-    jr nz, .move
-    ret
-
 
 ; converts character number to real (dual) sprite number 
 ; hl: character numner

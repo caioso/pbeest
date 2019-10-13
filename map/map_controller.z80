@@ -225,7 +225,7 @@ map_load_room:
     push bc
     push de
     push hl
-    call map_load_game_objects
+    ;call map_load_game_objects
     pop hl
     pop de
     pop bc
@@ -1767,7 +1767,7 @@ map_scroll_map_horizontally_if_needed:
             ; scroll game objects
             ld d, $00
             ld e, -1
-            call goc_scroll_game_objects
+            ;call goc_scroll_game_objects
 
             ld a, [map_current_x_offset]
             inc a
@@ -1806,7 +1806,7 @@ map_scroll_map_horizontally_if_needed:
         ; scroll game objects
         ld d, $00
         ld e, 1
-        call goc_scroll_game_objects
+        ;call goc_scroll_game_objects
 
 
         ld a, [map_current_x_offset]
@@ -1860,7 +1860,7 @@ map_scroll_map_vertically_if_needed:
             ; scroll game objects
             ld d, -1
             ld e, $00
-            call goc_scroll_game_objects
+            ;call goc_scroll_game_objects
 
             ld a, [map_current_y_offset]
             inc a
@@ -1896,7 +1896,7 @@ map_scroll_map_vertically_if_needed:
         ; scroll game objects
         ld d, 1
         ld e, $00
-        call goc_scroll_game_objects
+        ;call goc_scroll_game_objects
 
         ld a, [map_current_y_offset]
         dec a
@@ -1927,14 +1927,14 @@ map_load_game_objects:
 
     ; test: load game object 0
     ld a, $00
-    ld d, $10 ; x
+    ld d, $B0 ; x
     ld e, $18 ; y
     ld c, $56
     call goc_initialize_game_object
 
     ld a, $01
     ld d, $40 ; x
-    ld e, $48 ; y
+    ld e, $80 ; y
     ld c, $56
     call goc_initialize_game_object
 

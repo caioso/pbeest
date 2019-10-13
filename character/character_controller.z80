@@ -32,78 +32,38 @@ chr_load_character_tiles_and_palettes:
 
 
 ; Initialize character variables
-; hl: character variable address
 ; bc: character position (c:X, b:Y)
 ; a: character tile (all 4 tiles *MUST* be in sequence)
 ; return: no return
 chr_initialize_character:
-    ; update character variable
-    push hl
-    ld [hl], c
-    inc hl
+    ld hl, character_0
+    ; Initialize First Sprite
     ld [hl], b
     inc hl
-    ld [hl], 0
-    inc hl
-    ld [hl], 0
+    ld [hl], c
     inc hl
     ld [hl], a
-    pop hl
-    ld e, l
-    ld d, h
-    push de
+    inc hl
+    ld [hl], 0
+    inc hl
 
-    ; get sprite number
-    call sptr_get_sprite_number_by_character_id
-    push bc
-    ld c, l
-    ld b, h
-    ; Intialize Hero Sprite
-    ; X
-    ld a, [de]
-    ld h, a
-    inc de
-    ; Y
-    ld a, [de]
-    ld l, a
-    inc de
+    ; Initialize Second Sprite
+    ld [hl], b
+    inc hl
 
-    ; Skip scroll offset variables
-    inc de ; offset x
-    inc de ; offset y
+    push af
+    ld a, c
+    add a, $08
+    ld c, a
+    pop af 
 
-    ; Sprite
-    ld a, [de]
-    ld d, a
-    ; Metadata
-    ld e, $00
-    call sptr_initialize_sprite
-
-    pop bc
-    pop de
-    ld bc, sprite_2
-    ; X (+ 8)
-    ld a, [de]
-    add $08
-    ld h, a 
-    inc de
-    ; Y
-    ld a, [de]
-    ld l, a
-    inc de
-        
-    ; Skip scroll offset variables
-    inc de ; offset x
-    inc de ; offset y
-
-    ; Sprite (+ 2), assumed always to be in sequence
-    ld a, [de]
-    add $02  
-    ld d, a
-    ; Metadata
-    ld e, $00
-    call sptr_initialize_sprite
-
+    ld [hl], c
+    inc hl
+    add a, 2
+    ld [hl], a
+    inc hl
+    ld [hl], 0
+    
     ret
 
 ; Normalize Screen Coordinates
@@ -142,21 +102,17 @@ chr_pixel_to_tile:
     ret
 
 ; Move Character Down
-; hl: character variable address
 chr_move_character_down:
-    ; save character var address
-    ld a, l
-    ld [ram_general_use_variable_1], a
-    ld a, h
-    ld [ram_general_use_variable_2], a
+    ; intiialize variable
+    ld hl, character_0
 
     ; Point HL to the character Y position in the character struct.
     ; BC holds the position (b:X; c:Y) of the player character *IN PIXELS*
     ld a, [hl]
-    ld b, a
+    ld c, a
     inc hl
     ld a, [hl]
-    ld c, a
+    ld b, a
     
     ; Normalize coordinates
     call chr_normalize_coordinates
@@ -181,6 +137,16 @@ chr_move_character_down:
     ld a, c
     add $09
     ld c, a
+
+    ; check game_object collision
+    ;push de
+    ;push bc
+    ;push hl
+    ;ld d, b
+    ;call goc_detect_collision_width_game_objects
+    ;pop hl
+    ;pop bc
+    ;pop de
 
     ; check vertical collision
     ld a, $09
@@ -218,6 +184,13 @@ chr_move_character_down:
     jr nz, .auto_move
 
     ; load current Y, move it down and store it back
+    ld hl, character_0_y
+    ld a, [hl]
+    inc a
+    ld [hl], a
+
+    ; Move second sprite
+    ld hl, character_0_y_p2
     ld a, [hl]
     inc a
     ld [hl], a
@@ -229,15 +202,8 @@ chr_move_character_down:
 
 .auto_move:
 
-    push bc
-    ld c, a
     ; Reload original character position
-    ld a, [ram_general_use_variable_1]
-    ld l, a
-    ld a, [ram_general_use_variable_2]
-    ld h, a
-    ld a, c
-    pop bc
+    ld hl, character_0
 
     cp $03 ; 03 means both tiles triggered the colission
     ret z
@@ -276,21 +242,17 @@ chr_move_character_down:
     ret 
 
 ; Move Character Up
-; hl: character variable address
 chr_move_character_up:
-    ; save character var address
-    ld a, l
-    ld [ram_general_use_variable_1], a
-    ld a, h
-    ld [ram_general_use_variable_2], a
+    ; load character address
+    ld hl, character_0
 
     ; Point HL to the character Y position in the character struct.
     ; BC holds the position (b:X; c:Y) of the player character *IN PIXELS*
     ld a, [hl]
-    ld b, a
+    ld c, a
     inc hl
     ld a, [hl]
-    ld c, a
+    ld b, a
     
     ; Normalize coordinates
     call chr_normalize_coordinates
@@ -352,6 +314,13 @@ chr_move_character_up:
     jr nz, .auto_move
 
     ; load current Y, move it down and store it back
+    ld hl, character_0_y
+    ld a, [hl]
+    dec a
+    ld [hl], a
+
+    ; Update seconds sprite
+    ld hl, character_0_y_p2
     ld a, [hl]
     dec a
     ld [hl], a
@@ -363,15 +332,8 @@ chr_move_character_up:
 
 .auto_move:
 
-    push bc
-    ld c, a
-    ; Reload original character position
-    ld a, [ram_general_use_variable_1]
-    ld l, a
-    ld a, [ram_general_use_variable_2]
-    ld h, a
-    ld a, c
-    pop bc
+    ; reload charcater address
+    ld hl, character_0
 
     cp $03 ; 03 means both tiles triggered the colission
     ret z
@@ -410,21 +372,17 @@ chr_move_character_up:
     ret
 
 ; Move Character Left
-; hl: character variable address
 chr_move_character_left:
-    ; save character var address
-    ld a, l
-    ld [ram_general_use_variable_1], a
-    ld a, h
-    ld [ram_general_use_variable_2], a
+    ; load character address
+    ld hl, character_0
 
     ; Point HL to the character Y position in the character struct.
     ; BC holds the position (b:X; c:Y) of the player character *IN PIXELS*
     ld a, [hl]
-    ld b, a
+    ld c, a
     inc hl
     ld a, [hl]
-    ld c, a
+    ld b, a
     
     ; Normalize coordinates
     call chr_normalize_coordinates
@@ -486,7 +444,13 @@ chr_move_character_left:
     jr nz, .auto_move
 
         ; load current X, move it down and store it back
-        dec hl
+        ld hl, character_0_x
+        ld a, [hl]
+        dec a
+        ld [hl], a
+        
+        ; Update second sprite
+        ld hl, character_0_x_p2
         ld a, [hl]
         dec a
         ld [hl], a
@@ -498,15 +462,8 @@ chr_move_character_left:
 
 .auto_move
     
-    push bc
-    ld c, a
-    ; Reload original character position
-    ld a, [ram_general_use_variable_1]
-    ld l, a
-    ld a, [ram_general_use_variable_2]
-    ld h, a
-    ld a, c
-    pop bc
+    ; reload character address
+    ld hl, character_0
 
     cp $03 ; 03 means both tiles triggered the colission
     ret z
@@ -537,21 +494,17 @@ chr_move_character_left:
     ret
 
 ; Move Character Right
-; hl: character variable address
 chr_move_character_right:
-    ; save character var address
-    ld a, l
-    ld [ram_general_use_variable_1], a
-    ld a, h
-    ld [ram_general_use_variable_2], a
+    ; Load Character address
+    ld hl, character_0
 
     ; Point HL to the character Y position in the character struct.
     ; BC holds the position (b:X; c:Y) of the player character *IN PIXELS*
     ld a, [hl]
-    ld b, a
+    ld c, a
     inc hl
     ld a, [hl]
-    ld c, a
+    ld b, a
     
     ; Normalize coordinates
     call chr_normalize_coordinates
@@ -614,7 +567,13 @@ chr_move_character_right:
     jr nz, .auto_move
 
         ; load current X, move it down and store it back
-        dec hl
+        ld hl, character_0_x
+        ld a, [hl]
+        inc a
+        ld [hl], a
+
+        ; Handle second sprite
+        ld hl, character_0_x_p2
         ld a, [hl]
         inc a
         ld [hl], a
@@ -626,15 +585,8 @@ chr_move_character_right:
 
 .auto_move
     
-    push bc
-    ld c, a
-    ; Reload original character position
-    ld a, [ram_general_use_variable_1]
-    ld l, a
-    ld a, [ram_general_use_variable_2]
-    ld h, a
-    ld a, c
-    pop bc
+    ; Reload character address
+    ld hl, character_0
 
     cp $03 ; 03 means both tiles triggered the colission
     ret z
@@ -675,58 +627,6 @@ chr_get_collision_id:
     and a, $7F
     ld [hl], a
     pop hl
-    ret
-
-; Render sprite(s) on screen, based on their index
-; hl: target sprite index
-chr_render_character:
-    ld a, h
-    ld d, a
-    ld a, l
-    ld e, a
-    ; get character's sprites (will be stored in hl/bc)
-    call sptr_get_sprite_number_by_character_id
-
-    ; target sprite left and right (16x8 times 2) X coordinate
-    ; hl holds address of the first sprite of the target character
-    ld a, [de]
-    push bc
-    ld c, a
-    ld a, [character_0_offset_x]
-    add a, c
-    pop bc
-    inc de
-    call sptr_set_sprite_x
-    ld a, [de]
-    push bc
-    ld c, a
-    ld a, [character_0_offset_y]
-    add a, c
-    pop bc
-    dec de
-    dec hl
-    call sptr_set_sprite_y
-    
-    ; load address of second sprite from bc to hl
-    ld a, [de]
-    add a, $08
-    push bc
-    ld c, a
-    ld a, [character_0_offset_x]
-    add a, c
-    pop bc
-    ld l, c
-    ld h, b
-    call sptr_set_sprite_x
-    inc de
-    ld a, [de]
-    push bc
-    ld c, a
-    ld a, [character_0_offset_y]
-    add a, c
-    pop bc
-    dec hl
-    call sptr_set_sprite_y
     ret
 
 ; Increment next line to the current value of DE
@@ -772,7 +672,6 @@ chr_player_controlled_character_loop:
     call is_key_down_or_held
     jr z, .check_key_up
         ; Move Character Down
-        ld hl, character_0
         call chr_move_character_down
         jr .check_key_left
 
@@ -781,7 +680,6 @@ chr_player_controlled_character_loop:
     call is_key_down_or_held
     jr z, .check_key_left
         ; Move Character Up
-        ld hl, character_0
         call chr_move_character_up
     
 .check_key_left:
@@ -789,7 +687,6 @@ chr_player_controlled_character_loop:
     call is_key_down_or_held
     jr z, .check_key_right
         ; Move Character Up
-        ld hl, character_0
         call chr_move_character_left
         jr .end_character_movement
 
@@ -802,24 +699,6 @@ chr_player_controlled_character_loop:
         call chr_move_character_right
 
 .end_character_movement:
-    ; check whether the player position needs to be updated
-    push de
-    ld a, [current_key_down]
-    ld d, a
-    ld a, [current_key_up]
-    ld e, a
-    ld a, [current_key]
-    or e
-    or d
-    pop de
-    cp $00
-    jr z, .skip_rendering
-
-        ; render sprite on its new position
-        ld hl, character_0
-        call chr_render_character
-
-.skip_rendering
     ret
 
 ; Check Vertical Edges

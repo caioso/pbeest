@@ -13,3 +13,13 @@ display_wait_vblank:
     cp     145
     jr     nz, .wait_vblank
     ret
+
+display_wait_for_OAM:
+.wait_oam
+    di
+    ld a, [rSTAT]
+    and $03
+    cp $03
+    jr z, .wait_oam
+    ei
+    ret

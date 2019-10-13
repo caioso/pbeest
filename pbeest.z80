@@ -84,6 +84,9 @@ main:
     ; load stack
     ld sp, $FFFF
 
+    ; initialize DMA function
+    call sprt_copy_dma
+
     ; intialize global tile counter
     ld hl, $0
     ld bc, $0
@@ -110,7 +113,6 @@ main:
     call chr_load_character_tiles_and_palettes
 
     ; Intialize character 0
-    ld hl, character_0
     ld c, $50
     ld b, $50
     ld a, $56
@@ -182,7 +184,25 @@ main:
     ; ROOM 1 CHECK
     ld a, [map_current_room_id]
     cp $00
-    jr nz, .room_1_loop
+    jp nz, .room_1_loop
+        ; joypad test
+        ld l, key_a
+        call is_key_down
+        jr z, .edge_detection
+            ; check colision target, to show correct message
+            ld hl, collision_target
+            ld a, [hl]
+            cp a, $01
+            jr nz, .edge_detection
+                ; First Target
+                ld de, dialog_page_up_end - dialog_page_up
+                ld hl, dialog_page_up
+                call hud_copy_text_buffer
+                ld de, dialog_page_up_end - dialog_page_up
+                ld a, text_box_all_animations 
+                call hud_show_text
+
+.edge_detection:
         ; Check edge collisions
         ; horizontal edges collision check
         ld a, [edget_collision_target_x]
@@ -548,4 +568,8 @@ main:
         
 
 .no_key_detected:
+
+    ; call the DMA subroutine we copied to HRAM
+    ; which then copies the bytes to the OAM and sprites begin to draw
+    call _HRAM
     jp .main_loop
