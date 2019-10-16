@@ -489,6 +489,8 @@ map_load_room:
 
         ld a, $08
         ld [character_0_x], a
+        add a, $08
+        ld [character_0_x_p2], a
 
         jr .adjust_x_position
         ; For now ONLY left scroling screens will have offset (from screens coming from right, they will always have offset 0 (starting at 0))
@@ -500,24 +502,28 @@ map_load_room:
         ; only required for left-loaded screens
         ld a, $98
         ld [character_0_x], a
+        add a, $08
+        ld [character_0_x_p2], a
 
 .adjust_x_position:
 
-    push hl
+    ;push hl
     ; Adjust X position based on the map offsets
-    ld a, [map_current_x_offset]
-    ld l, a
-    ld a, [character_0_x]
-    add l
-    ld [character_0_x], a
+    ; This is no longer needed because of the use of DMA (the positions cannot be calculated in steps anymoer)
+    ;ld a, [map_current_x_offset]
+    ;ld l, a
+    ;ld a, [character_0_x]
+    ;add l
+    ;ld [character_0_x], a
     
     ; Adjust Y position based on the map offsets
-    ld a, [map_current_y_offset]
-    ld l, a
-    ld a, [character_0_y]
-    add l
-    ld [character_0_y], a
-    pop hl
+    ; This is no longer needed because of the use of DMA (the positions cannot be calculated in steps anymoer)
+    ;ld a, [map_current_y_offset]
+    ;ld l, a
+    ;ld a, [character_0_y]
+    ;add l
+    ;ld [character_0_y], a
+    ;pop hl
 
     ; load map logic layer
     call map_load_logic_layer
@@ -792,6 +798,8 @@ map_load_room:
     push hl
     ld l, map_load_origin
     call check_animation_direction
+    ; adjust offsets
+    call map_adjust_character_offset
     pop hl
     jr z, .load_logic
 
@@ -805,6 +813,7 @@ map_load_room:
 
         ld a, $10
         ld [character_0_y], a
+        ld [character_0_y_p2], a
         jr .adjust_y_position
 
 .final_up_position:
@@ -813,23 +822,26 @@ map_load_room:
 
         ld a, $90
         ld [character_0_y], a
+        ld [character_0_y_p2], a
 
 .adjust_y_position:
-    push hl
+    ; push hl
     ; Adjust X position based on the map offsets
-    ld a, [map_current_x_offset]
-    ld l, a
-    ld a, [character_0_x]
-    add l
-    ld [character_0_x], a
+    ; This is no longer needed because of the use of DMA (the positions cannot be calculated in steps anymoer)
+    ;ld a, [map_current_x_offset]
+    ;ld l, a
+    ;ld a, [character_0_x]
+    ;add l
+    ;ld [character_0_x], a
     
     ; Adjust Y position based on the map offsets
-    ld a, [map_current_y_offset]
-    ld l, a
-    ld a, [character_0_y]
-    add l
-    ld [character_0_y], a
-    pop hl
+    ; This is no longer needed because of the use of DMA (the positions cannot be calculated in steps anymoer)
+    ;ld a, [map_current_y_offset]
+    ;ld l, a
+    ;ld a, [character_0_y]
+    ;add l
+    ;ld [character_0_y], a
+    ;pop hl
 
     ; Load map logic
 .load_logic:
@@ -929,20 +941,10 @@ map_load_logic_layer:
 map_adjust_character_offset:
     ; set character offset to match the screen's initial X position.
     ld a, [map_current_x_offset]
-    
-    ;negative offset (2's complement ~a + 1)
-    cpl 
-    inc a
-
     ld [character_0_offset_x], a
 
     ; set character offset to match the screen's initial Y position.
     ld a, [map_current_y_offset]
-    
-    ;negative offset (2's complement ~a + 1)
-    cpl 
-    inc a
-
     ld [character_0_offset_y], a
     ret
 
@@ -1730,9 +1732,10 @@ map_convert_pixels_to_tiles;
 
 ; Scroll Map Horizontally. The player position used is the raw value in OAMRAM
 ; a: scroll direction (1, left; 0 right)
+; return: a -> 1: scrolled 0: did not scroll
 map_scroll_map_horizontally_if_needed:    
     cp $00
-    jr nz, .scroll_right
+    jr nz, .scroll_left
 
         push hl
 .wait
@@ -1746,7 +1749,7 @@ map_scroll_map_horizontally_if_needed:
         ld a, $50
         cp l
         pop hl
-        jr nc, .finish
+        jr nc, .finish_not_scrolled
 
         ; Check offset position (do not scroll if Offset + Screen Height == map Height)
         push hl
@@ -1759,7 +1762,7 @@ map_scroll_map_horizontally_if_needed:
         sla a
         cp l
         pop hl
-        jr z, .finish
+        jr z, .finish_not_scrolled
             ld a, [rSCX]
             inc a
             ld [rSCX], a
@@ -1773,13 +1776,12 @@ map_scroll_map_horizontally_if_needed:
             inc a
             ld [map_current_x_offset], a
                 
-.skip_left_increment:
             ld a, [character_0_offset_x]
-            sub a, 1
+            add a, 1
             ld [character_0_offset_x], a
-            ret
+            jr .finish
 
-.scroll_right:
+.scroll_left:
     push hl
 .wait_2
     call bgc_wait_for_VRAM
@@ -1792,13 +1794,12 @@ map_scroll_map_horizontally_if_needed:
     ld a, $51
     cp l
     pop hl
-    jr c, .finish
-
+    jr c, .finish_not_scrolled
 
     ; Check offset position (do not scroll if 0)
     ld a, [map_current_x_offset]
     cp $00
-    jr z, .finish
+    jr z, .finish_not_scrolled
         ld a, [rSCX]
         dec a
         ld [rSCX], a
@@ -1808,22 +1809,27 @@ map_scroll_map_horizontally_if_needed:
         ld e, 1
         ;call goc_scroll_game_objects
 
-
         ld a, [map_current_x_offset]
         dec a
         ld [map_current_x_offset], a
 
-.skip_right_increment:
-            ld a, [character_0_offset_x]
-            add a, 1
-            ld [character_0_offset_x], a
+        ld a, [character_0_offset_x]
+        sub a, 1
+        ld [character_0_offset_x], a
+        jr .finish
 
+.finish_not_scrolled:
+    ld a, $00
+    ret 
+    
 .finish
+    ld a, $01
     ret
 
 
 ; Scroll Map Vertically
 ; a: scroll direction (1, up ; 0 down)
+; return: a -> 1: scrolled 0: did not scroll
 map_scroll_map_vertically_if_needed:
     cp $00
     jr nz, .scroll_down
@@ -1839,7 +1845,7 @@ map_scroll_map_vertically_if_needed:
     ld a, $58
     cp l
     pop hl
-    jr nc, .finish
+    jr nc, .finish_not_scrolled
 
     ; Check offset position (do not scroll if Offset + Screen Height == map Height)
     push hl
@@ -1852,7 +1858,7 @@ map_scroll_map_vertically_if_needed:
     sla a
     cp l
     pop hl
-    jr z, .finish
+    jr z, .finish_not_scrolled
             ld a, [rSCY]
             inc a
             ld [rSCY], a
@@ -1867,8 +1873,9 @@ map_scroll_map_vertically_if_needed:
             ld [map_current_y_offset], a
 .skip_up_increment:
             ld a, [character_0_offset_y]
-            sub a, 1
+            add a, 1
             ld [character_0_offset_y], a
+            ld a, $01
             ret
 
 .scroll_down:
@@ -1883,12 +1890,12 @@ map_scroll_map_vertically_if_needed:
     ld a, $59
     cp l
     pop hl
-    jr c, .finish
+    jr c, .finish_not_scrolled
 
     ; Check offset position (do not scroll if 0)
     ld a, [map_current_y_offset]
     cp $00
-    jr z, .finish
+    jr z, .finish_not_scrolled
         ld a, [rSCY]
         dec a
         ld [rSCY], a
@@ -1903,11 +1910,17 @@ map_scroll_map_vertically_if_needed:
         ld [map_current_y_offset], a
 .skip_down_increment:
         ld a, [character_0_offset_y]
-        add a, 1
+        sub a, 1
         ld [character_0_offset_y], a
+        jr .finish
+
+.finish_not_scrolled:
+    ld a, $00
+    ret
 
 .finish:
-    ret
+    ld a, $01
+    ret 
 
 ; Convert map position in pixels into map tiles
 ; a: position in pixels

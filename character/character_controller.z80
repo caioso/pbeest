@@ -124,9 +124,13 @@ chr_move_character_down:
     call chr_calculate_bounding_box_origin
 
     ; save position for later calculation
-    ld a, b
+    ld a, [character_0_offset_x]
+    add b
+    ld b, a
     ld [ram_general_use_variable_4], a
-    ld a, c
+    ld a, [character_0_offset_y]
+    add c
+    ld c, a
     ld [ram_general_use_variable_5], a
 
     ; check collision
@@ -183,6 +187,14 @@ chr_move_character_down:
     cp $00
     jr nz, .auto_move
 
+    ; Scroll map if requied
+    ld a, $00
+    call map_scroll_map_vertically_if_needed
+    
+    ; The background has scrolled, hence no character movement allowed (in the middle of vertical axis)
+    cp $01
+    ret z
+
     ; load current Y, move it down and store it back
     ld hl, character_0_y
     ld a, [hl]
@@ -195,9 +207,6 @@ chr_move_character_down:
     inc a
     ld [hl], a
 
-    ; Scroll map if requied
-    ld a, $00
-    call map_scroll_map_vertically_if_needed
     ret
 
 .auto_move:
@@ -264,9 +273,13 @@ chr_move_character_up:
     call chr_calculate_bounding_box_origin
 
     ; save position for later calculation
-    ld a, b
+    ld a, [character_0_offset_x]
+    add b
+    ld b, a
     ld [ram_general_use_variable_4], a
-    ld a, c
+    ld a, [character_0_offset_y]
+    add c
+    ld c, a
     ld [ram_general_use_variable_5], a
 
     ; check collision
@@ -313,6 +326,14 @@ chr_move_character_up:
     cp $00
     jr nz, .auto_move
 
+    ; Scroll map if requied
+    ld a, $01
+    call map_scroll_map_vertically_if_needed
+    
+    ; The background has scrolled, hence no character movement allowed (in the middle of vertical axis)
+    cp $01
+    ret z
+
     ; load current Y, move it down and store it back
     ld hl, character_0_y
     ld a, [hl]
@@ -325,13 +346,9 @@ chr_move_character_up:
     dec a
     ld [hl], a
 
-    ; Scroll map if requied
-    ld a, $01
-    call map_scroll_map_vertically_if_needed
     ret
 
 .auto_move:
-
     ; reload charcater address
     ld hl, character_0
 
@@ -394,9 +411,13 @@ chr_move_character_left:
     call chr_calculate_bounding_box_origin
 
     ; save position for later calculation
-    ld a, b
+    ld a, [character_0_offset_x]
+    add b
+    ld b, a
     ld [ram_general_use_variable_4], a
-    ld a, c
+    ld a, [character_0_offset_y]
+    add c
+    ld c, a
     ld [ram_general_use_variable_5], a
 
     ; check collision
@@ -443,6 +464,13 @@ chr_move_character_left:
     cp $00
     jr nz, .auto_move
 
+        ; Scroll map if requied
+        ld a, $01
+        call map_scroll_map_horizontally_if_needed
+        ; The background has scrolled, hence no character movement allowed (in the middle of vertical axis)
+        cp $01
+        ret z
+
         ; load current X, move it down and store it back
         ld hl, character_0_x
         ld a, [hl]
@@ -455,9 +483,6 @@ chr_move_character_left:
         dec a
         ld [hl], a
 
-        ; Scroll map if requied
-        ld a, $01
-        call map_scroll_map_horizontally_if_needed
         ret
 
 .auto_move
@@ -516,9 +541,13 @@ chr_move_character_right:
     call chr_calculate_bounding_box_origin
 
     ; save position for later calculation
-    ld a, b
+    ld a, [character_0_offset_x]
+    add b
+    ld b, a
     ld [ram_general_use_variable_4], a
-    ld a, c
+    ld a, [character_0_offset_y]
+    add c
+    ld c, a
     ld [ram_general_use_variable_5], a
 
     ; check collision
@@ -566,6 +595,13 @@ chr_move_character_right:
     cp $00
     jr nz, .auto_move
 
+        ; Scroll map if requied
+        ld a, $00
+        call map_scroll_map_horizontally_if_needed
+        ; The background has scrolled, hence no character movement allowed (in the middle of vertical axis)
+        cp $01
+        ret z
+        
         ; load current X, move it down and store it back
         ld hl, character_0_x
         ld a, [hl]
@@ -578,9 +614,6 @@ chr_move_character_right:
         inc a
         ld [hl], a
 
-        ; Scroll map if requied
-        ld a, $00
-        call map_scroll_map_horizontally_if_needed
         ret
 
 .auto_move
