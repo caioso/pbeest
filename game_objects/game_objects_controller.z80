@@ -8,284 +8,64 @@
 ; de: game object position (d: X, e: Y)
 ; c: target game object sprite
 goc_initialize_game_object:
-
-    ; after the function call, hl holds the address of the target game object variable
-    push bc
-    call goc_calculate_game_object_address
-    pop bc
-
-    ; load X, Y and tile respectively
-    push hl
-    ld [hl], d
-    inc hl
-    ld [hl], e
-    inc hl
-    ld [hl], c
-    pop hl
-
-    ; copy hl to bc
-    ld c, l
-    ld b, h
     
-    ; push bc for later use
-    push bc
-    push bc
-    ; Intialize gamobject Sprite
-    ; X
-    ld a, [bc]
-    ld h, a
-    inc bc
+    ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
+    call goc_get_gameobject_address
+
+    ; Note: In global_variables.z80 will holds the two halfs of the sprites in sequence.
+    ; That's why hl is always incremented between each value loaded to the game object.
     ; Y
-    ld a, [bc]
-    ld l, a
-    inc bc
-
-    ; Sprite
-    ld a, [bc]
-    ld d, a
-    ; Metadata
-    ld e, $00
-
-    ; load hl with bc value (to be used in the next function call)
-    pop bc
-    push hl
-    ld l, c
-    ld h, b
-
-    ; get sprite ID
-    push de
-    push hl
-    call sptr_get_sprite_number_by_gameobject_id
-    ld c, e
-    ld b, d
-    pop hl
-    pop de
-
-    ; recover hl
-    pop hl
-
-    ; sprite 1
-    call sptr_initialize_sprite
-
-    pop bc
-    push bc
-     ; Intialize gamobject Sprite
-    ; X
-    ld a, [bc]
-    add a, $08
-    ld h, a
-    inc bc
-    ; Y
-    ld a, [bc]
-    ld l, a
-    inc bc
-
-    ; Sprite
-    ld a, [bc]
-    add a, $02
-    ld d, a
-    ; Metadata
-    ld e, $00
-
-    ; load hl with bc value (to be used in the next function call)
-    pop bc
-    push hl
-    ld l, c
-    ld h, b
-
-    ; get sprite ID
-    push de
-    push hl
-    call sptr_get_sprite_number_by_gameobject_id
-    pop hl
-    pop de
-   
-    ; recover hl
-    pop hl
-
-    ; sprite 2
-    call sptr_initialize_sprite
-
-    ret
-
-; Calculate the address of the target game object indicated in a
-; makes use of bc
-; a: target game object index (0-15)
-; return: hl target game object address
-goc_calculate_game_object_address:
-
-    ; calculate game object address
-    ld hl, gobj_0_x
-
-    ; save a (index) in c
-    ld c, a
-    ; use b as the loop counter
-    ld b, a
-
-    ; if a is $00, no increment is needed.
-    cp $00
-    ret z
-
-.continue_increment:
-    ld a, l
-    ; add size_of(game_object) to hl (first game onject)
-    add gobj_game_object_size
-    ld l, a
-    ld a, h
-    adc $00
-    ld h, a
-
-    dec b
-    ld a, b
-    cp $00
-    jr nz, .continue_increment
-    ret
-
-; scroll all game objects by a given amount on X and Y based on camera movement
-; e: amount in X
-; d: amoint in Y
-goc_scroll_game_objects:
-    ; game objects are guaranteed to start at gobj_0. From this point, iterate until the last game object active on screen
-    ld hl, gobj_0
-
-    ld a, [gobj_total_game_objects]
-
-.continue_loop:
-    ld c, a
-    call display_wait_for_OAM
-    ld a, c
-
-    ld c, a
-    push de
-    push bc
-    push hl
-    ; load X position
-    ld a, [hl]
-    add d
+    ld a, e
     ld [hl], a
     inc hl
-    ; load Y position
-    ld a, [hl]
-    add e
+
+    ; X
+    ld a, d
     ld [hl], a
-    pop hl
-
-    ; load game object sprites
-    push hl
-    call sptr_get_sprite_number_by_gameobject_id
-
-    ; render target game object at new position
-    call goc_render_gameobject
-    pop hl
-
-    ; increment hl (add sizeof(gameobject))
-    ld a, l
-    add gobj_game_object_size
-    ld l, a
-    ld a, h
-    adc $00
-    ld h, a
-
-    pop bc
-    pop de
-    ld a,c 
-    dec a
-    cp $00
-    jr nz,  .continue_loop
-
-    ret
-
-; Detects collision *WITH* active game objects.
-; e: target X position (in pixel)
-; d: target Y position (in pixel)
-; return a: 1 collision detected, 0 collision not detected
-goc_detect_collision_width_game_objects:
-    ; game objects are guaranteed to start at gobj_0. From this point, iterate until the last game object active on screen
-    ld hl, gobj_0
-
-    ld a, [gobj_total_game_objects]
-
-.continue_loop:
-    ld c, a
-    
-    push bc
-    push hl
-    ; load X position
-    ld a, [hl]
-    ld c, a
     inc hl
-    ; load Y position
-    ld a, [hl]
-    ld b, a
-    pop hl
-    
-    ; compare b, d, c, e
-    ld a, b
-    cp d
-    jr z, .collision_detected
 
+    ; Tile
     ld a, c
-    cp e
-    jr z, .collision_detected
+    ld [hl], a
+    inc hl
 
-    ; increment hl (add sizeof(gameobject))
-    ld a, l
-    add gobj_game_object_size
-    ld l, a
-    ld a, h
-    adc $00
-    ld h, a
-
-    pop bc
-    
-    ld a,c 
-    dec a
-    cp $00
-    jr nz,  .continue_loop
-
-    ; no collision detected
-    ld a, $01
-    ret
-
-.collision_detected:
-    pop bc
-
-    ; collision detected
+    ; Attribute
     ld a, $00
+    ld [hl], a
+    inc hl
+
+    ; Y
+    ld a, e
+    ld [hl], a
+    inc hl
+
+    ; X (+0x8)
+    ld a, d
+    add a, $08
+    ld [hl], a
+    inc hl
+
+    ; Tile 2
+    ; The four parts of game object (4 tiles) must be loaded in sequence in memory.
+    ld a, c
+    add a, $02
+    ld [hl], a
+    inc hl
+
+    ; Attribute
+    ld a, $00
+    ld [hl], a
+    inc hl
+
     ret
 
-; Renders given game object based on its position and data
-; hl: game object id (starting at gobj_0)
-; de: game object sprite 1
-; bc: game object sprite 2
-goc_render_gameobject:
-    ret
-
-    ; load X position
-    ;ld a, [hl]
-    
-    ;push hl
-    ;ld l, e
-    ;ld h, d
-    ;call sptr_set_sprite_x
-    
-    ; second sprite
-    ;ld l, c
-   ; ld h, b
-    ;add a, $08
-    ;call sptr_set_sprite_x
-    ;pop hl
-
-    ; load Y position
-    ;inc hl
-    ;ld a, [hl]
-
-    ;ld l, e
-    ;ld h, d
-    ;call sptr_set_sprite_y
-    
-    ; second sprite
-    ;ld l, c
-    ;ld h, b
-    ;call sptr_set_sprite_y
-    ;ret
+; Returns base address for target game object
+; a: target game objecy
+; hl: initial address of the game object register
+goc_get_gameobject_address:
+    cp a, $00
+    ld hl, gobj_0_y
+    ret z
+    cp a, $01
+    ld hl, gobj_1_y
+    ret 

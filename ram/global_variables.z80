@@ -88,10 +88,20 @@ gobj_0_x equ gobj_0_y + 1
 gobj_0_tile equ gobj_0_x + 1
 gobj_0_attr equ gobj_0_tile + 1
 
-gobj_1_y equ gobj_0_attr + 1
+gobj_0_y_p2 equ gobj_0_attr + 1
+gobj_0_x_p2 equ gobj_0_y_p2 + 1
+gobj_0_tile_p2 equ gobj_0_x_p2 + 1
+gobj_0_attr_p2 equ gobj_0_tile_p2 + 1
+
+gobj_1_y equ gobj_0_attr_p2 + 1
 gobj_1_x equ gobj_1_y + 1
 gobj_1_tile equ gobj_1_x + 1
 gobj_1_attr equ gobj_1_tile + 1
+
+gobj_1_y_p2 equ gobj_1_attr + 1
+gobj_1_x_p2 equ gobj_1_y_p2 + 1
+gobj_1_tile_p2 equ gobj_1_x_p2 + 1
+gobj_1_attr_p2 equ gobj_1_tile_p2 + 1
 
 ; Memory Constants
 sprite_memory_begin equ $DF00
