@@ -1770,7 +1770,7 @@ map_scroll_map_horizontally_if_needed:
             ; scroll game objects
             ld d, $00
             ld e, -1
-            ;call goc_scroll_game_objects
+            call goc_scroll_game_objects
 
             ld a, [map_current_x_offset]
             inc a
@@ -1807,7 +1807,7 @@ map_scroll_map_horizontally_if_needed:
         ; scroll game objects
         ld d, $00
         ld e, 1
-        ;call goc_scroll_game_objects
+        call goc_scroll_game_objects
 
         ld a, [map_current_x_offset]
         dec a
@@ -1866,7 +1866,7 @@ map_scroll_map_vertically_if_needed:
             ; scroll game objects
             ld d, -1
             ld e, $00
-            ;call goc_scroll_game_objects
+            call goc_scroll_game_objects
 
             ld a, [map_current_y_offset]
             inc a
@@ -1903,7 +1903,7 @@ map_scroll_map_vertically_if_needed:
         ; scroll game objects
         ld d, 1
         ld e, $00
-        ;call goc_scroll_game_objects
+        call goc_scroll_game_objects
 
         ld a, [map_current_y_offset]
         dec a
@@ -1934,19 +1934,55 @@ map_pixel_to_tile:
 ; Load room's game objects
 map_load_game_objects:
 
+    push hl
+    ld l, map_load_origin
+    call check_animation_direction
+    pop hl
+    ret z
+    
     ; load total game objects in the map
-    ld a, $02
+    ld a, $07
     ld [gobj_total_game_objects], a
 
     ; test: load game object 0
     ld a, $00
-    ld d, $80 ; x
+    ld d, $B0 ; x
     ld e, $18 ; y
     ld c, $56
     call goc_initialize_game_object
 
     ld a, $01
     ld d, $40 ; x
+    ld e, $80 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $02
+    ld d, $40 ; x
+    ld e, $B0 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $03
+    ld d, $10 ; x
+    ld e, $10 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $04
+    ld d, $6D ; x
+    ld e, $77 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $05
+    ld d, $97 ; x
+    ld e, $6D ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $06
+    ld d, $20 ; x
     ld e, $80 ; y
     ld c, $56
     call goc_initialize_game_object

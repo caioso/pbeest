@@ -10,14 +10,6 @@ sprite_tile equ 2
 sprite_attr equ 3
 sprite_size equ 4
 
-; Sprite 1
-sprite_1 equ _OAMRAM 
-sprite_2 equ _OAMRAM + sprite_size
-sprite_3 equ sprite_2 + sprite_size
-sprite_4 equ sprite_3 + sprite_size
-sprite_5 equ sprite_4 + sprite_size
-sprite_6 equ sprite_5 + sprite_size
-
 ; Perform DMA call.
 dma_copy:
     ld a, $DF
@@ -109,53 +101,3 @@ sprt_load_sprite_palette:
     or d
     jr nz, .load_palette_bytes
     ret
-
-; converts gameobject number to real (dual) sprite number 
-; hl: gameobject number
-; return (de): corresponding sprite number (character sprite 1)
-; return (bc): corresponding sprite number (character sprite 2)
-sptr_get_sprite_number_by_gameobject_id:
-    push bc
-    push hl
-    ld bc, gobj_0
-    ld a, c
-    sub l
-    ld l, a
-    ld a, b
-    sbc h
-    or l
-    pop hl
-    jr z, .sprite_3
-    jr .next_1
-    
-.sprite_3:
-    pop bc
-    ld de, sprite_3
-    ld bc, sprite_4
-    ret
-
-.next_1:
-    push hl
-    ld bc, gobj_1
-    ld a, c
-    sub l
-    ld l, a
-    ld a, b
-    sbc h
-    or l
-    pop hl
-    jr z, .sprite_5
-    jr .default_sprite
-    
-.sprite_5:
-    pop bc
-    ld de, sprite_5
-    ld bc, sprite_6
-    ret
-
-.default_sprite:
-    pop bc
-    ld de, sprite_5
-    ld bc, sprite_6
-    ret
-    

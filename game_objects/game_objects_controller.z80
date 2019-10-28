@@ -68,4 +68,58 @@ goc_get_gameobject_address:
     ret z
     cp a, $01
     ld hl, gobj_1_y
-    ret 
+    ret z
+    cp a, $02
+    ld hl, gobj_2_y
+    ret z
+    cp a, $03
+    ld hl, gobj_3_y
+    ret z
+    cp a, $04
+    ld hl, gobj_4_y
+    ret z
+    cp a, $05
+    ld hl, gobj_5_y
+    ret z
+    ld hl, gobj_6_y
+    ret
+
+
+; scroll all game objects by a given amount on X and Y based on camera movement
+; e: amount in X
+; d: amoint in Y
+goc_scroll_game_objects:
+
+    ld a, [gobj_total_game_objects]
+    ld c, a
+    ld b, $00
+
+.update_game_object:
+    ld a, b
+    ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
+    call goc_get_gameobject_address
+
+    ; Adjust Positions
+    ld a, [hl]
+    add a, d
+    ld [hl], a
+    inc hl
+    ld a, [hl]
+    add a, e
+    ld [hl], a
+    inc hl
+    inc hl
+    inc hl
+    ld a, [hl]
+    add a, d
+    ld [hl], a
+    inc hl
+    ld a, [hl]
+    add a, e
+    ld [hl], a
+
+    inc b
+    ld a, b
+    cp c
+    ret z
+    jr .update_game_object

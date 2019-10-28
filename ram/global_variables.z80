@@ -103,6 +103,56 @@ gobj_1_x_p2 equ gobj_1_y_p2 + 1
 gobj_1_tile_p2 equ gobj_1_x_p2 + 1
 gobj_1_attr_p2 equ gobj_1_tile_p2 + 1
 
+gobj_2_y equ gobj_1_attr_p2 + 1
+gobj_2_x equ gobj_2_y + 1
+gobj_2_tile equ gobj_2_x + 1
+gobj_2_attr equ gobj_2_tile + 1
+
+gobj_2_y_p2 equ gobj_2_attr + 1
+gobj_2_x_p2 equ gobj_2_y_p2 + 1
+gobj_2_tile_p2 equ gobj_2_x_p2 + 1
+gobj_2_attr_p2 equ gobj_2_tile_p2 + 1
+
+gobj_3_y equ gobj_2_attr_p2 + 1
+gobj_3_x equ gobj_3_y + 1
+gobj_3_tile equ gobj_3_x + 1
+gobj_3_attr equ gobj_3_tile + 1
+
+gobj_3_y_p2 equ gobj_3_attr + 1
+gobj_3_x_p2 equ gobj_3_y_p2 + 1
+gobj_3_tile_p2 equ gobj_3_x_p2 + 1
+gobj_3_attr_p2 equ gobj_3_tile_p2 + 1
+
+gobj_4_y equ gobj_3_attr_p2 + 1
+gobj_4_x equ gobj_4_y + 1
+gobj_4_tile equ gobj_4_x + 1
+gobj_4_attr equ gobj_4_tile + 1
+
+gobj_4_y_p2 equ gobj_4_attr + 1
+gobj_4_x_p2 equ gobj_4_y_p2 + 1
+gobj_4_tile_p2 equ gobj_4_x_p2 + 1
+gobj_4_attr_p2 equ gobj_4_tile_p2 + 1
+
+gobj_5_y equ gobj_4_attr_p2 + 1
+gobj_5_x equ gobj_5_y + 1
+gobj_5_tile equ gobj_5_x + 1
+gobj_5_attr equ gobj_5_tile + 1
+
+gobj_5_y_p2 equ gobj_5_attr + 1
+gobj_5_x_p2 equ gobj_5_y_p2 + 1
+gobj_5_tile_p2 equ gobj_5_x_p2 + 1
+gobj_5_attr_p2 equ gobj_5_tile_p2 + 1
+
+gobj_6_y equ gobj_5_attr_p2 + 1
+gobj_6_x equ gobj_6_y + 1
+gobj_6_tile equ gobj_6_x + 1
+gobj_6_attr equ gobj_6_tile + 1
+
+gobj_6_y_p2 equ gobj_6_attr + 1
+gobj_6_x_p2 equ gobj_6_y_p2 + 1
+gobj_6_tile_p2 equ gobj_6_x_p2 + 1
+gobj_6_attr_p2 equ gobj_6_tile_p2 + 1
+
 ; Memory Constants
 sprite_memory_begin equ $DF00
 sprite_memory_end equ sprite_memory_begin + (4*40)
@@ -110,6 +160,7 @@ sprite_memory_end equ sprite_memory_begin + (4*40)
 ; Game Objects Identifiers
 gobj_0 equ gobj_0_y
 gobj_1 equ gobj_1_y
+gobj_2 equ gobj_2_y
 
 ; Player Character constants
 character_0 equ character_0_y
