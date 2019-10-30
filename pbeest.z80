@@ -115,6 +115,10 @@ main:
     ; Initialize Sprite memory
     call sprt_clear_sprites
 
+    ; Initialize total number of game objects
+    ld a, $00
+    ld [gobj_total_game_objects], a
+
     ; Intialize character 0
     ld c, $50
     ld b, $50

@@ -143,15 +143,18 @@ chr_move_character_down:
     ld c, a
 
     ; check game_object collision
-    ;push de
-    ;push bc
-    ;push hl
-    ;ld d, b
-    ;call goc_detect_collision_width_game_objects
-    ;pop hl
-    ;pop bc
-    ;pop de
+    push de
+    push bc
+    push hl
+    call goc_detect_collision_width_game_objects
+    pop hl
+    pop bc
+    pop de
 
+    cp a, $01
+    jr nz, .skip
+        ld a, $00
+.skip:
     ; check vertical collision
     ld a, $09
     call chr_check_vertical_edges
@@ -291,6 +294,20 @@ chr_move_character_up:
     sub $01
     ld c, a
 
+    ; check game_object collision
+    push de
+    push bc
+    push hl
+    call goc_detect_collision_width_game_objects
+    pop hl
+    pop bc
+    pop de
+
+    cp a, $01
+    jr nz, .skip
+        ld a, $00
+.skip:
+
     ; check vertical collision
     ld a, -$01
     call chr_check_vertical_edges
@@ -429,6 +446,20 @@ chr_move_character_left:
     sub $01
     ld b, a
 
+    ; check game_object collision
+    push de
+    push bc
+    push hl
+    call goc_detect_collision_width_game_objects
+    pop hl
+    pop bc
+    pop de
+
+    cp a, $01
+    jr nz, .skip
+        ld a, $00
+.skip:
+
     ; check horizontal collision
     ld a, -$01
     call chr_check_horizontal_edges
@@ -558,6 +589,20 @@ chr_move_character_right:
     ld a, b
     add $0A
     ld b, a
+
+; check game_object collision
+    push de
+    push bc
+    push hl
+    call goc_detect_collision_width_game_objects
+    pop hl
+    pop bc
+    pop de
+
+    cp a, $01
+    jr nz, .skip
+        ld a, $00
+.skip:
 
     ; check horizontal collision
     ld a, $0A

@@ -123,3 +123,78 @@ goc_scroll_game_objects:
     cp c
     ret z
     jr .update_game_object
+
+
+; Detects collisiton between caracter 0 and character 
+; b: X position
+; c: Y Position
+; a: 1 - collision happened; 0 - no collision happened
+goc_detect_collision_width_game_objects:
+
+    ld a, [gobj_total_game_objects]
+    ld e, a
+    ld d, $00
+
+.check_game_object:
+    push de
+    ld a, [map_current_y_offset]
+    ld e, a
+    ld a, [hl]
+    sub e
+    ld a, e
+
+    inc hl
+    ld a, [map_current_x_offset]
+    ld d, a
+    ld a, [hl]
+    sub d
+    ld d, a
+
+    push hl
+    ; Width and height is assumed to be 16 and 16 respectively
+    ; calculate r2
+    ld a, d
+    add a, $10
+    ld l, a
+
+    ; load l1
+    ld a, b
+    cp l
+
+    jr c, .break
+
+    ; calculate l2
+    ld a, b
+    add a, $08
+    ld l, a
+
+    ; load r1
+    ld a, d
+    cp l
+
+    jr c, .break
+
+    ; Player's character is meant to be 8 x 9
+    pop hl
+    pop de
+
+    ld a, l
+    add a, $06
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+
+    inc d
+    ld a, d
+    cp e
+    jr nz, .check_game_object
+
+    ld a, 0
+    ret
+
+.break:
+    ld a, 1
+    pop hl
+    pop de
+    ret
