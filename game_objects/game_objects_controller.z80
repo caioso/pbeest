@@ -131,70 +131,58 @@ goc_scroll_game_objects:
 ; a: 1 - collision happened; 0 - no collision happened
 goc_detect_collision_width_game_objects:
 
+    ld a, [$DF00]
+    ld b, a
+    ld a, [$DF01]
+    ld c, a
+
     ld a, [gobj_total_game_objects]
+    cp $00
+    ret z
+
     ld e, a
     ld d, $00
 
 .check_game_object:
+
+    ld a, d
+    ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
+    call goc_get_gameobject_address
+
     push de
-    ld a, [map_current_y_offset]
-    ld e, a
     ld a, [hl]
-    sub e
-    ld a, e
+    ld d, a
 
     inc hl
-    ld a, [map_current_x_offset]
-    ld d, a
     ld a, [hl]
-    sub d
-    ld d, a
+    ld e, a
 
-    push hl
-    ; Width and height is assumed to be 16 and 16 respectively
-    ; calculate r2
-    ld a, d
-    add a, $10
-    ld l, a
 
     ; load l1
-    ld a, b
-    cp l
+    ld a, c
+    cp e
 
-    jr c, .break
+    jr nz, .break
 
     ; calculate l2
     ld a, b
-    add a, $08
-    ld l, a
+    cp d
 
-    ; load r1
-    ld a, d
-    cp l
-
-    jr c, .break
+    jr nz, .break
 
     ; Player's character is meant to be 8 x 9
-    pop hl
     pop de
-
-    ld a, l
-    add a, $06
-    ld l, a
-    ld a, h
-    adc $00
-    ld h, a
-
-    inc d
-    ld a, d
-    cp e
-    jr nz, .check_game_object
 
     ld a, 0
     ret
 
 .break:
-    ld a, 1
-    pop hl
     pop de
+
+    inc d
+    ld a, e
+    cp d
+    jr nz, .check_game_object
+
+    ld a, 1
     ret
