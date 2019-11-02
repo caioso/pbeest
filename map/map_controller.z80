@@ -1941,7 +1941,7 @@ map_load_game_objects:
     ret z
     
     ; load total game objects in the map
-    ld a, $07
+    ld a, $12
     ld [gobj_total_game_objects], a
 
     ; test: load game object 0
@@ -1982,6 +1982,72 @@ map_load_game_objects:
     call goc_initialize_game_object
 
     ld a, $06
+    ld d, $20 ; x
+    ld e, $80 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $07
+    ld d, $20 ; x
+    ld e, $80 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $08
+    ld d, $20 ; x
+    ld e, $80 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $09
+    ld d, $20 ; x
+    ld e, $80 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $0A
+    ld d, $20 ; x
+    ld e, $80 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $0B
+    ld d, $20 ; x
+    ld e, $80 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $0C
+    ld d, $20 ; x
+    ld e, $80 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $0D
+    ld d, $20 ; x
+    ld e, $80 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $0E
+    ld d, $20 ; x
+    ld e, $80 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $0F
+    ld d, $20 ; x
+    ld e, $80 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $10
+    ld d, $20 ; x
+    ld e, $80 ; y
+    ld c, $56
+    call goc_initialize_game_object
+
+    ld a, $11
     ld d, $20 ; x
     ld e, $80 ; y
     ld c, $56

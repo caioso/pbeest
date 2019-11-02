@@ -153,6 +153,116 @@ gobj_6_x_p2 equ gobj_6_y_p2 + 1
 gobj_6_tile_p2 equ gobj_6_x_p2 + 1
 gobj_6_attr_p2 equ gobj_6_tile_p2 + 1
 
+gobj_7_y equ gobj_6_attr_p2 + 1
+gobj_7_x equ gobj_7_y + 1
+gobj_7_tile equ gobj_7_x + 1
+gobj_7_attr equ gobj_7_tile + 1
+
+gobj_7_y_p2 equ gobj_7_attr + 1
+gobj_7_x_p2 equ gobj_7_y_p2 + 1
+gobj_7_tile_p2 equ gobj_7_x_p2 + 1
+gobj_7_attr_p2 equ gobj_7_tile_p2 + 1
+
+gobj_8_y equ gobj_7_attr_p2 + 1
+gobj_8_x equ gobj_8_y + 1
+gobj_8_tile equ gobj_8_x + 1
+gobj_8_attr equ gobj_8_tile + 1
+
+gobj_8_y_p2 equ gobj_8_attr + 1
+gobj_8_x_p2 equ gobj_8_y_p2 + 1
+gobj_8_tile_p2 equ gobj_8_x_p2 + 1
+gobj_8_attr_p2 equ gobj_8_tile_p2 + 1
+
+gobj_9_y equ gobj_8_attr_p2 + 1
+gobj_9_x equ gobj_9_y + 1
+gobj_9_tile equ gobj_9_x + 1
+gobj_9_attr equ gobj_9_tile + 1
+
+gobj_9_y_p2 equ gobj_9_attr + 1
+gobj_9_x_p2 equ gobj_9_y_p2 + 1
+gobj_9_tile_p2 equ gobj_9_x_p2 + 1
+gobj_9_attr_p2 equ gobj_9_tile_p2 + 1
+
+gobj_10_y equ gobj_9_attr_p2 + 1
+gobj_10_x equ gobj_10_y + 1
+gobj_10_tile equ gobj_10_x + 1
+gobj_10_attr equ gobj_10_tile + 1
+
+gobj_10_y_p2 equ gobj_10_attr + 1
+gobj_10_x_p2 equ gobj_10_y_p2 + 1
+gobj_10_tile_p2 equ gobj_10_x_p2 + 1
+gobj_10_attr_p2 equ gobj_10_tile_p2 + 1
+
+gobj_11_y equ gobj_10_attr_p2 + 1
+gobj_11_x equ gobj_11_y + 1
+gobj_11_tile equ gobj_11_x + 1
+gobj_11_attr equ gobj_11_tile + 1
+
+gobj_11_y_p2 equ gobj_11_attr + 1
+gobj_11_x_p2 equ gobj_11_y_p2 + 1
+gobj_11_tile_p2 equ gobj_11_x_p2 + 1
+gobj_11_attr_p2 equ gobj_11_tile_p2 + 1
+
+gobj_12_y equ gobj_11_attr_p2 + 1
+gobj_12_x equ gobj_12_y + 1
+gobj_12_tile equ gobj_12_x + 1
+gobj_12_attr equ gobj_12_tile + 1
+
+gobj_12_y_p2 equ gobj_12_attr + 1
+gobj_12_x_p2 equ gobj_12_y_p2 + 1
+gobj_12_tile_p2 equ gobj_12_x_p2 + 1
+gobj_12_attr_p2 equ gobj_12_tile_p2 + 1
+
+gobj_13_y equ gobj_12_attr_p2 + 1
+gobj_13_x equ gobj_13_y + 1
+gobj_13_tile equ gobj_13_x + 1
+gobj_13_attr equ gobj_13_tile + 1
+
+gobj_13_y_p2 equ gobj_13_attr + 1
+gobj_13_x_p2 equ gobj_13_y_p2 + 1
+gobj_13_tile_p2 equ gobj_13_x_p2 + 1
+gobj_13_attr_p2 equ gobj_13_tile_p2 + 1
+
+gobj_14_y equ gobj_13_attr_p2 + 1
+gobj_14_x equ gobj_14_y + 1
+gobj_14_tile equ gobj_14_x + 1
+gobj_14_attr equ gobj_14_tile + 1
+
+gobj_14_y_p2 equ gobj_14_attr + 1
+gobj_14_x_p2 equ gobj_14_y_p2 + 1
+gobj_14_tile_p2 equ gobj_14_x_p2 + 1
+gobj_14_attr_p2 equ gobj_14_tile_p2 + 1
+
+gobj_15_y equ gobj_14_attr_p2 + 1
+gobj_15_x equ gobj_15_y + 1
+gobj_15_tile equ gobj_15_x + 1
+gobj_15_attr equ gobj_15_tile + 1
+
+gobj_15_y_p2 equ gobj_15_attr + 1
+gobj_15_x_p2 equ gobj_15_y_p2 + 1
+gobj_15_tile_p2 equ gobj_15_x_p2 + 1
+gobj_15_attr_p2 equ gobj_15_tile_p2 + 1
+
+gobj_16_y equ gobj_15_attr_p2 + 1
+gobj_16_x equ gobj_16_y + 1
+gobj_16_tile equ gobj_16_x + 1
+gobj_16_attr equ gobj_16_tile + 1
+
+gobj_16_y_p2 equ gobj_16_attr + 1
+gobj_16_x_p2 equ gobj_16_y_p2 + 1
+gobj_16_tile_p2 equ gobj_16_x_p2 + 1
+gobj_16_attr_p2 equ gobj_16_tile_p2 + 1
+
+gobj_17_y equ gobj_16_attr_p2 + 1
+gobj_17_x equ gobj_17_y + 1
+gobj_17_tile equ gobj_17_x + 1
+gobj_17_attr equ gobj_17_tile + 1
+
+gobj_17_y_p2 equ gobj_17_attr + 1
+gobj_17_x_p2 equ gobj_17_y_p2 + 1
+gobj_17_tile_p2 equ gobj_17_x_p2 + 1
+gobj_17_attr_p2 equ gobj_17_tile_p2 + 1
+
 ; Memory Constants
 sprite_memory_begin equ $DF00
 sprite_memory_end equ sprite_memory_begin + (4*40)
@@ -161,6 +271,21 @@ sprite_memory_end equ sprite_memory_begin + (4*40)
 gobj_0 equ gobj_0_y
 gobj_1 equ gobj_1_y
 gobj_2 equ gobj_2_y
+gobj_3 equ gobj_3_y
+gobj_4 equ gobj_4_y
+gobj_5 equ gobj_5_y
+gobj_6 equ gobj_6_y
+gobj_7 equ gobj_7_y
+gobj_8 equ gobj_8_y
+gobj_9 equ gobj_9_y
+gobj_10 equ gobj_10_y
+gobj_11 equ gobj_11_y
+gobj_12 equ gobj_12_y
+gobj_13 equ gobj_13_y
+gobj_14 equ gobj_14_y
+gobj_15 equ gobj_15_y
+gobj_16 equ gobj_16_y
+gobj_17 equ gobj_17_y
 
 ; Player Character constants
 character_0 equ character_0_y
