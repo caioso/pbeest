@@ -166,10 +166,10 @@ goc_scroll_game_objects:
 goc_detect_collision_width_game_objects:
 
     ld a, [$DF01]
-    ;add a, d
+    add a, d
     ld b, a
     ld a, [$DF00]
-    ;add a, e
+    add a, e
     ld c, a
 
     ld a, [gobj_total_game_objects]

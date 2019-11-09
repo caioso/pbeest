@@ -147,6 +147,7 @@ chr_move_character_down:
     push bc
     push hl
     ld e, 1
+    ld d, 0
     call goc_detect_collision_width_game_objects
     pop hl
     pop bc
@@ -302,6 +303,7 @@ chr_move_character_up:
     push bc
     push hl
     ld e, -1
+    ld d, 0
     call goc_detect_collision_width_game_objects
     pop hl
     pop bc
@@ -456,6 +458,8 @@ chr_move_character_left:
     push de
     push bc
     push hl
+    ld e, 0
+    ld d, -1
     call goc_detect_collision_width_game_objects
     pop hl
     pop bc
@@ -602,6 +606,8 @@ chr_move_character_right:
     push de
     push bc
     push hl
+    ld e, 0
+    ld d, 1
     call goc_detect_collision_width_game_objects
     pop hl
     pop bc
@@ -797,9 +803,9 @@ chr_check_vertical_edges:
     push de
     push hl
     ld l, a
-    ld a, [_OAMRAM]
+    ld a, [character_0_y]
     ld c, a
-    ld a, [_OAMRAM + 1]
+    ld a, [character_0_x]
     ld b, a
     call chr_normalize_coordinates
     call chr_calculate_bounding_box_origin
@@ -831,9 +837,9 @@ chr_check_horizontal_edges:
     push de
     push hl
     ld l, a
-    ld a, [_OAMRAM]
+    ld a, [character_0_y]
     ld c, a
-    ld a, [_OAMRAM + 1]
+    ld a, [character_0_x]
     ld b, a
     call chr_normalize_coordinates
     call chr_calculate_bounding_box_origin
