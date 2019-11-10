@@ -578,5 +578,6 @@ main:
 
     ; call the DMA subroutine we copied to HRAM
     ; which then copies the bytes to the OAM and sprites begin to draw
+    call display_wait_vblank
     call _HRAM
     jp .main_loop

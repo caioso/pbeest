@@ -167,9 +167,13 @@ goc_detect_collision_width_game_objects:
 
     ld a, [$DF01]
     add a, d
+    ; Add bounding box origin
+    add a, $03
     ld b, a
     ld a, [$DF00]
     add a, e
+    ; Add bounding box origin
+    add a, $07
     ld c, a
 
     ld a, [gobj_total_game_objects]
@@ -231,7 +235,7 @@ goc_detect_collision_width_game_objects:
     ; calculate rect1.x + rect1.width > rect2.x
     push bc
     ld a, b
-    add a, $10
+    add a, $0A
     ld b, a
 
     ld a, b
@@ -256,9 +260,12 @@ goc_detect_collision_width_game_objects:
     ; calculate rect1.y + rect1.height > rect2.y
     push bc
     ld a, c
-    add a, $10
+    add a, $09
     ld c, a
 
+    ld a, d
+    add a, $07
+    ld d, a
     ld a, c
     cp d
     pop bc
