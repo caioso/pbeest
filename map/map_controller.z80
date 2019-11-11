@@ -488,9 +488,18 @@ map_load_room:
         call map_adjust_character_offset
 
         ld a, $08
-        ld [character_0_x], a
+        push hl
+        call ram_get_player_game_obj_address
+        inc hl
+        ld [hl], a
+        pop hl
         add a, $08
-        ld [character_0_x_p2], a
+        push hl
+        call ram_get_player_game_obj_address
+        call ram_get_sprite_second_half
+        inc hl
+        ld [hl], a
+        pop hl
 
         jr .adjust_x_position
         ; For now ONLY left scroling screens will have offset (from screens coming from right, they will always have offset 0 (starting at 0))
@@ -501,9 +510,18 @@ map_load_room:
 
         ; only required for left-loaded screens
         ld a, $98
-        ld [character_0_x], a
+        push hl
+        call ram_get_player_game_obj_address
+        inc hl
+        ld [hl], a
+        pop hl
         add a, $08
-        ld [character_0_x_p2], a
+        push hl
+        call ram_get_player_game_obj_address
+        call ram_get_sprite_second_half
+        inc hl
+        ld [hl], a
+        pop hl
 
 .adjust_x_position:
 
@@ -812,8 +830,12 @@ map_load_room:
         call map_adjust_character_offset
 
         ld a, $10
-        ld [character_0_y], a
-        ld [character_0_y_p2], a
+        push hl
+        call ram_get_player_game_obj_address
+        ld [hl], a
+        call ram_get_sprite_second_half
+        ld [hl], a
+        pop hl
         jr .adjust_y_position
 
 .final_up_position:
@@ -821,8 +843,12 @@ map_load_room:
         call map_adjust_character_offset
 
         ld a, $90
-        ld [character_0_y], a
-        ld [character_0_y_p2], a
+        push hl
+        call ram_get_player_game_obj_address
+        ld [hl], a
+        call ram_get_sprite_second_half
+        ld [hl], a
+        pop hl
 
 .adjust_y_position:
     ; push hl
@@ -1534,6 +1560,8 @@ map_scroll_bg_vertically_with_animation:
     push hl
     push de
     call map_move_player_character_vertically
+    call display_wait_vblank
+    call _HRAM
     pop de
     pop hl
 
@@ -1546,6 +1574,8 @@ map_scroll_bg_vertically_with_animation:
     push hl
     push de
     call map_move_player_character_vertically
+    call display_wait_vblank
+    call _HRAM
     pop de
     pop hl
 
@@ -1583,21 +1613,27 @@ map_move_player_character_horizontally:
     jr z, .double_increment
 .single_increment:
     ld a, c
-    ld hl, _OAMRAM + 1
+    call ram_get_player_game_obj_address
+    inc hl
     ld a, [hl]
     add a, e
     ld [hl], a
-    ld hl, _OAMRAM + 5
+    call ram_get_player_game_obj_address
+    call ram_get_sprite_second_half
+    inc hl
     ld a, [hl]
     add a, e
     ld [hl], a
     jr .complete
 .double_increment:
-    ld hl, _OAMRAM + 1
+    call ram_get_player_game_obj_address
+    inc hl
     ld a, [hl]
     add a, d
     ld [hl], a
-    ld hl, _OAMRAM + 5
+    call ram_get_player_game_obj_address
+    call ram_get_sprite_second_half
+    inc hl
     ld a, [hl]
     add a, d
     ld [hl], a
@@ -1628,21 +1664,23 @@ map_move_player_character_vertically:
     jr z, .double_increment
 .single_increment:
     ld a, c
-    ld hl, _OAMRAM
+    call ram_get_player_game_obj_address
     ld a, [hl]
     add a, e
     ld [hl], a
-    ld hl, _OAMRAM + 4
+    call ram_get_player_game_obj_address
+    call ram_get_sprite_second_half
     ld a, [hl]
     add a, e
     ld [hl], a
     jr .complete
 .double_increment:
-    ld hl, _OAMRAM
+    call ram_get_player_game_obj_address
     ld a, [hl]
     add a, d
     ld [hl], a
-    ld hl, _OAMRAM + 4
+    call ram_get_player_game_obj_address
+    call ram_get_sprite_second_half
     ld a, [hl]
     add a, d
     ld [hl], a
@@ -1664,6 +1702,8 @@ map_scroll_bg_horizontally_with_animation:
     push hl
     push de
     call map_move_player_character_horizontally
+    call display_wait_vblank
+    call _HRAM
     pop de
     pop hl
     
@@ -1676,6 +1716,8 @@ map_scroll_bg_horizontally_with_animation:
     push hl
     push de
     call map_move_player_character_horizontally
+    call display_wait_vblank
+    call _HRAM
     pop de
     pop hl
 
@@ -1740,7 +1782,12 @@ map_scroll_map_horizontally_if_needed:
         push hl
 .wait
         call bgc_wait_for_VRAM
-        ld a, [_OAMRAM + 1]
+        push hl
+        call ram_get_player_game_obj_address
+        inc hl
+        ld a, [hl]
+        pop hl
+        
         ; sometimes the result will be $FF (try again until it is correct)
         cp $FF 
         jr z, .wait
@@ -1785,7 +1832,11 @@ map_scroll_map_horizontally_if_needed:
     push hl
 .wait_2
     call bgc_wait_for_VRAM
-    ld a, [_OAMRAM + 1]
+    push hl
+    call ram_get_player_game_obj_address
+    inc hl
+    ld a, [hl]
+    pop hl
     ; sometimes the result will be $FF (try again until it is correct)
     cp $FF 
     jr z, .wait_2
@@ -1837,7 +1888,10 @@ map_scroll_map_vertically_if_needed:
     push hl
 .wait
     call bgc_wait_for_VRAM
-    ld a, [_OAMRAM]
+    push hl
+    call ram_get_player_game_obj_address
+    ld a, [hl]
+    pop hl
     cp $FF
     jr z, .wait
     inc a
@@ -1882,7 +1936,10 @@ map_scroll_map_vertically_if_needed:
     push hl
 .wait_2
     call bgc_wait_for_VRAM
-    ld a, [_OAMRAM]
+    push hl
+    call ram_get_player_game_obj_address
+    ld a, [hl]
+    pop hl
     cp $FF
     jr z, .wait_2
     inc a

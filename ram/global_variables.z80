@@ -72,18 +72,8 @@ gobj_total_game_objects equ current_key_up + 1
 
 ; Spites Data
 ; Character Controller's Variables
-character_0_y equ $DF00
-character_0_x equ character_0_y + 1
-character_0_tile equ character_0_x + 1
-character_0_attr equ character_0_tile + 1
-
-character_0_y_p2 equ character_0_attr + 1
-character_0_x_p2 equ character_0_y_p2 + 1
-character_0_tile_p2 equ character_0_x_p2 + 1
-character_0_attr_p2 equ character_0_tile_p2 + 1
-
 ; game objects objects
-gobj_0_y equ character_0_attr_p2 + 1
+gobj_0_y equ $DF00
 gobj_0_x equ gobj_0_y + 1
 gobj_0_tile equ gobj_0_x + 1
 gobj_0_attr equ gobj_0_tile + 1
@@ -263,6 +253,37 @@ gobj_17_x_p2 equ gobj_17_y_p2 + 1
 gobj_17_tile_p2 equ gobj_17_x_p2 + 1
 gobj_17_attr_p2 equ gobj_17_tile_p2 + 1
 
+gobj_18_y equ gobj_17_attr_p2 + 1
+gobj_18_x equ gobj_18_y + 1
+gobj_18_tile equ gobj_18_x + 1
+gobj_18_attr equ gobj_18_tile + 1
+
+gobj_18_y_p2 equ gobj_18_attr + 1
+gobj_18_x_p2 equ gobj_18_y_p2 + 1
+gobj_18_tile_p2 equ gobj_18_x_p2 + 1
+gobj_18_attr_p2 equ gobj_18_tile_p2 + 1
+
+gobj_19_y equ gobj_18_attr_p2 + 1
+gobj_19_x equ gobj_19_y + 1
+gobj_19_tile equ gobj_19_x + 1
+gobj_19_attr equ gobj_19_tile + 1
+
+gobj_19_y_p2 equ gobj_19_attr + 1
+gobj_19_x_p2 equ gobj_19_y_p2 + 1
+gobj_19_tile_p2 equ gobj_19_x_p2 + 1
+gobj_19_attr_p2 equ gobj_19_tile_p2 + 1
+
+gobj_20_y equ gobj_19_attr_p2 + 1
+gobj_20_x equ gobj_20_y + 1
+gobj_20_tile equ gobj_20_x + 1
+gobj_20_attr equ gobj_20_tile + 1
+
+gobj_20_y_p2 equ gobj_20_attr + 1
+gobj_20_x_p2 equ gobj_20_y_p2 + 1
+gobj_20_tile_p2 equ gobj_20_x_p2 + 1
+gobj_20_attr_p2 equ gobj_20_tile_p2 + 1
+
+
 ; Memory Constants
 sprite_memory_begin equ $DF00
 sprite_memory_end equ sprite_memory_begin + (4*40)
@@ -286,6 +307,6 @@ gobj_14 equ gobj_14_y
 gobj_15 equ gobj_15_y
 gobj_16 equ gobj_16_y
 gobj_17 equ gobj_17_y
-
-; Player Character constants
-character_0 equ character_0_y
+gobj_18 equ gobj_18_y
+gobj_19 equ gobj_19_y
+gobj_20 equ gobj_20_y

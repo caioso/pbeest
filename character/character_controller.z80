@@ -36,7 +36,7 @@ chr_load_character_tiles_and_palettes:
 ; a: character tile (all 4 tiles *MUST* be in sequence)
 ; return: no return
 chr_initialize_character:
-    ld hl, character_0
+    call ram_get_player_game_obj_address
     ; Initialize First Sprite
     ld [hl], b
     inc hl
@@ -104,7 +104,7 @@ chr_pixel_to_tile:
 ; Move Character Down
 chr_move_character_down:
     ; intiialize variable
-    ld hl, character_0
+    call ram_get_player_game_obj_address
 
     ; Point HL to the character Y position in the character struct.
     ; BC holds the position (b:X; c:Y) of the player character *IN PIXELS*
@@ -203,13 +203,14 @@ chr_move_character_down:
     ret z
 
     ; load current Y, move it down and store it back
-    ld hl, character_0_y
+    call ram_get_player_game_obj_address
     ld a, [hl]
     inc a
     ld [hl], a
 
     ; Move second sprite
-    ld hl, character_0_y_p2
+    call ram_get_player_game_obj_address
+    call ram_get_sprite_second_half
     ld a, [hl]
     inc a
     ld [hl], a
@@ -219,7 +220,7 @@ chr_move_character_down:
 .auto_move:
 
     ; Reload original character position
-    ld hl, character_0
+    call ram_get_player_game_obj_address
 
     cp $03 ; 03 means both tiles triggered the colission
     ret z
@@ -260,7 +261,7 @@ chr_move_character_down:
 ; Move Character Up
 chr_move_character_up:
     ; load character address
-    ld hl, character_0
+    call ram_get_player_game_obj_address
 
     ; Point HL to the character Y position in the character struct.
     ; BC holds the position (b:X; c:Y) of the player character *IN PIXELS*
@@ -360,13 +361,14 @@ chr_move_character_up:
     ret z
 
     ; load current Y, move it down and store it back
-    ld hl, character_0_y
+    call ram_get_player_game_obj_address
     ld a, [hl]
     dec a
     ld [hl], a
 
     ; Update seconds sprite
-    ld hl, character_0_y_p2
+    call ram_get_player_game_obj_address
+    call ram_get_sprite_second_half
     ld a, [hl]
     dec a
     ld [hl], a
@@ -375,7 +377,7 @@ chr_move_character_up:
 
 .auto_move:
     ; reload charcater address
-    ld hl, character_0
+    call ram_get_player_game_obj_address
 
     cp $03 ; 03 means both tiles triggered the colission
     ret z
@@ -416,7 +418,7 @@ chr_move_character_up:
 ; Move Character Left
 chr_move_character_left:
     ; load character address
-    ld hl, character_0
+    call ram_get_player_game_obj_address
 
     ; Point HL to the character Y position in the character struct.
     ; BC holds the position (b:X; c:Y) of the player character *IN PIXELS*
@@ -515,13 +517,16 @@ chr_move_character_left:
         ret z
 
         ; load current X, move it down and store it back
-        ld hl, character_0_x
+        call ram_get_player_game_obj_address
+        inc hl
         ld a, [hl]
         dec a
         ld [hl], a
         
         ; Update second sprite
-        ld hl, character_0_x_p2
+        call ram_get_player_game_obj_address
+        call ram_get_sprite_second_half
+        inc hl
         ld a, [hl]
         dec a
         ld [hl], a
@@ -531,7 +536,7 @@ chr_move_character_left:
 .auto_move
     
     ; reload character address
-    ld hl, character_0
+    call ram_get_player_game_obj_address
 
     cp $03 ; 03 means both tiles triggered the colission
     ret z
@@ -564,7 +569,7 @@ chr_move_character_left:
 ; Move Character Right
 chr_move_character_right:
     ; Load Character address
-    ld hl, character_0
+    call ram_get_player_game_obj_address
 
     ; Point HL to the character Y position in the character struct.
     ; BC holds the position (b:X; c:Y) of the player character *IN PIXELS*
@@ -664,13 +669,16 @@ chr_move_character_right:
         ret z
         
         ; load current X, move it down and store it back
-        ld hl, character_0_x
+        call ram_get_player_game_obj_address
+        inc hl
         ld a, [hl]
         inc a
         ld [hl], a
 
         ; Handle second sprite
-        ld hl, character_0_x_p2
+        call ram_get_player_game_obj_address
+        call ram_get_sprite_second_half
+        inc hl
         ld a, [hl]
         inc a
         ld [hl], a
@@ -680,7 +688,7 @@ chr_move_character_right:
 .auto_move
     
     ; Reload character address
-    ld hl, character_0
+    call ram_get_player_game_obj_address
 
     cp $03 ; 03 means both tiles triggered the colission
     ret z
@@ -789,7 +797,7 @@ chr_player_controlled_character_loop:
     call is_key_down_or_held
     jr z, .end_character_movement
         ; Move Character Up
-        ld hl, character_0
+        call ram_get_player_game_obj_address
         call chr_move_character_right
 
 .end_character_movement:
@@ -803,9 +811,16 @@ chr_check_vertical_edges:
     push de
     push hl
     ld l, a
-    ld a, [character_0_y]
+    push hl
+    call ram_get_player_game_obj_address
+    ld a, [hl]
     ld c, a
-    ld a, [character_0_x]
+    pop hl
+    push hl
+    call ram_get_player_game_obj_address
+    inc hl
+    ld a, [hl]
+    pop hl
     ld b, a
     call chr_normalize_coordinates
     call chr_calculate_bounding_box_origin
@@ -837,9 +852,16 @@ chr_check_horizontal_edges:
     push de
     push hl
     ld l, a
-    ld a, [character_0_y]
+    push hl
+    call ram_get_player_game_obj_address
+    ld a, [hl]
     ld c, a
-    ld a, [character_0_x]
+    pop hl
+    push hl
+    call ram_get_player_game_obj_address
+    inc hl
+    ld a, [hl]
+    pop hl
     ld b, a
     call chr_normalize_coordinates
     call chr_calculate_bounding_box_origin

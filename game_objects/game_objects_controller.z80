@@ -64,58 +64,63 @@ goc_initialize_game_object:
 ; hl: initial address of the game object register
 goc_get_gameobject_address:
     cp a, $00
-    ld hl, gobj_0
-    ret z
-    cp a, $01
     ld hl, gobj_1
     ret z
-    cp a, $02
+    cp a, $01
     ld hl, gobj_2
     ret z
-    cp a, $03
+    cp a, $02
     ld hl, gobj_3
     ret z
-    cp a, $04
+    cp a, $03
     ld hl, gobj_4
     ret z
-    cp a, $05
+    cp a, $04
     ld hl, gobj_5
     ret z
-    cp a, $06
+    cp a, $05
     ld hl, gobj_6
     ret z
-    cp a, $07
+    cp a, $06
     ld hl, gobj_7
+    ret z
+    cp a, $07
+    ld hl, gobj_8
     ret z 
     cp a, $08
-    ld hl, gobj_8
-    ret z
-    cp a, $09
     ld hl, gobj_9
     ret z
-    cp a, $0A
+    cp a, $09
     ld hl, gobj_10
     ret z
-    cp a, $0B
+    cp a, $0A
     ld hl, gobj_11
     ret z
-    cp a, $0C
+    cp a, $0B
     ld hl, gobj_12
     ret z
-    cp a, $0D
+    cp a, $0C
     ld hl, gobj_13
     ret z
-    cp a, $0E
+    cp a, $0D
     ld hl, gobj_14
     ret z
-    cp a, $0F
+    cp a, $0E
     ld hl, gobj_15
     ret z
-    cp a, $10
+    cp a, $0F
     ld hl, gobj_16
     ret z
-    cp a, $11
+    cp a, $10
     ld hl, gobj_17
+    ret z
+    cp a, $11
+    ld hl, gobj_18
+    ret z
+    cp a, $12
+    ld hl, gobj_19
+    ret z
+    ld hl, gobj_20
     ret
 
 
