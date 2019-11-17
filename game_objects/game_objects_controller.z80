@@ -64,60 +64,63 @@ goc_initialize_game_object:
 ; hl: initial address of the game object register
 goc_get_gameobject_address:
     cp a, $00
-    ld hl, gobj_1
+    ld hl, gobj_0
     ret z
     cp a, $01
-    ld hl, gobj_2
+    ld hl, gobj_1
     ret z
     cp a, $02
-    ld hl, gobj_3
+    ld hl, gobj_2
     ret z
     cp a, $03
-    ld hl, gobj_4
+    ld hl, gobj_3
     ret z
     cp a, $04
-    ld hl, gobj_5
+    ld hl, gobj_4
     ret z
     cp a, $05
-    ld hl, gobj_6
+    ld hl, gobj_5
     ret z
     cp a, $06
-    ld hl, gobj_7
+    ld hl, gobj_6
     ret z
     cp a, $07
-    ld hl, gobj_8
+    ld hl, gobj_7
     ret z 
     cp a, $08
-    ld hl, gobj_9
+    ld hl, gobj_8
     ret z
     cp a, $09
-    ld hl, gobj_10
+    ld hl, gobj_9
     ret z
     cp a, $0A
-    ld hl, gobj_11
+    ld hl, gobj_10
     ret z
     cp a, $0B
-    ld hl, gobj_12
+    ld hl, gobj_11
     ret z
     cp a, $0C
-    ld hl, gobj_13
+    ld hl, gobj_12
     ret z
     cp a, $0D
-    ld hl, gobj_14
+    ld hl, gobj_13
     ret z
     cp a, $0E
-    ld hl, gobj_15
+    ld hl, gobj_14
     ret z
     cp a, $0F
-    ld hl, gobj_16
+    ld hl, gobj_15
     ret z
     cp a, $10
-    ld hl, gobj_17
+    ld hl, gobj_16
     ret z
     cp a, $11
-    ld hl, gobj_18
+    ld hl, gobj_17
     ret z
     cp a, $12
+    ld hl, gobj_18
+    ret z
+    cp a, $13
     ld hl, gobj_19
     ret z
     ld hl, gobj_20
@@ -130,11 +133,19 @@ goc_get_gameobject_address:
 goc_scroll_game_objects:
 
     ld a, [gobj_total_game_objects]
+    ; add the player's game object
+    inc a
     ld c, a
     ld b, $00
 
 .update_game_object:
+    ; check whether A is the player character.
+    ld a, [ram_player_character_id]
+    cp b
+    jr z, .skip
+
     ld a, b
+
     ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
     call goc_get_gameobject_address
 
@@ -156,7 +167,7 @@ goc_scroll_game_objects:
     ld a, [hl]
     add a, e
     ld [hl], a
-
+.skip:
     inc b
     ld a, b
     cp c
@@ -170,27 +181,44 @@ goc_scroll_game_objects:
 ; a: 1 - collision happened; 0 - no collision happened
 goc_detect_collision_width_game_objects:
 
-    ld a, [$DF01]
+    push af
+    ld a, [ram_player_character_id]
+    call goc_get_gameobject_address
+    pop af
+
+    inc hl
+    ld a, [hl]
     add a, d
     ; Add bounding box origin
     add a, $03
     ld b, a
-    ld a, [$DF00]
+    dec hl
+    ld a, [hl]
     add a, e
     ; Add bounding box origin
     add a, $07
     ld c, a
 
     ld a, [gobj_total_game_objects]
-    cp $00
-    ret z
+    ; compensate for the player game object
+    inc a
+    cp $01
+    jr z, .finalize
 
     ld e, a
     ld d, $00
 
 .check_game_object:
 
+    ld a, [ram_player_character_id]
+    cp d
+    ; align stack (continue will pop de)
+    push de
+    jr z, .continue
+    pop de
+    
     ld a, d
+
     ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
     call goc_get_gameobject_address
 
@@ -290,5 +318,6 @@ goc_detect_collision_width_game_objects:
     cp d
     jr nz, .check_game_object
 
+.finalize:
     ld a, 0
     ret

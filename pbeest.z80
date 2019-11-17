@@ -101,10 +101,6 @@ main:
     ; initialize hud
     call hud_initialize_hud
 
-    ; Load Player's game objects
-    ld hl, gobj_0
-    call ram_set_player_game_obj_address
-
     ; TEMP
     ; load intial background palettes
     ld hl, hud_palette_begin
@@ -122,6 +118,10 @@ main:
     ; Initialize total number of game objects
     ld a, $00
     ld [gobj_total_game_objects], a
+
+    ; Load player character at ID 0
+    ld a, 0
+    ld [ram_player_character_id], a
 
     ; Intialize character 0
     ld c, $50
