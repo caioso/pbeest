@@ -142,6 +142,18 @@ chr_move_character_down:
     add $09
     ld c, a
 
+    ; check game_object collision for z-index adjustments (may have other uses in the future)
+    push de
+    push bc
+    push hl
+    ld e, 1
+    ld d, 0
+    call goc_detect_collision_width_game_objects_full_obj
+    pop hl
+    pop bc
+    pop de
+
+
     ; check game_object collision
     push de
     push bc
@@ -298,6 +310,17 @@ chr_move_character_up:
     ld a, c
     sub $01
     ld c, a
+
+    ; check game_object collision for z-index adjustments (may have other uses in the future)
+    push de
+    push bc
+    push hl
+    ld e, -1
+    ld d, 0
+    call goc_detect_collision_width_game_objects_full_obj
+    pop hl
+    pop bc
+    pop de
 
     ; check game_object collision
     push de
@@ -462,6 +485,17 @@ chr_move_character_left:
     push hl
     ld e, 0
     ld d, -1
+    call goc_detect_collision_width_game_objects_full_obj
+    pop hl
+    pop bc
+    pop de
+
+    ; check game_object collision
+    push de
+    push bc
+    push hl
+    ld e, 0
+    ld d, -1
     call goc_detect_collision_width_game_objects
     pop hl
     pop bc
@@ -606,6 +640,17 @@ chr_move_character_right:
     ld a, b
     add $0A
     ld b, a
+
+    ; check game_object collision
+    push de
+    push bc
+    push hl
+    ld e, 0
+    ld d, 1
+    call goc_detect_collision_width_game_objects_full_obj
+    pop hl
+    pop bc
+    pop de
 
     ; check game_object collision
     push de
