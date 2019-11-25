@@ -487,19 +487,19 @@ map_load_room:
         ; adjust offsets
         call map_adjust_character_offset
 
-        ; ld a, $08
-        ; push hl
-        ; call ram_get_player_game_obj_address
-        ; inc hl
-        ; ld [hl], a
-        ; pop hl
-        ; add a, $08
-        ; push hl
-        ; call ram_get_player_game_obj_address
-        ; call ram_get_sprite_second_half
-        ; inc hl
-        ; ld [hl], a
-        ; pop hl
+         ld a, $08
+         push hl
+         call ram_get_player_game_obj_address
+         inc hl
+         ld [hl], a
+         pop hl
+         add a, $08
+         push hl
+         call ram_get_player_game_obj_address
+         call ram_get_sprite_second_half
+         inc hl
+         ld [hl], a
+         pop hl
 
         jr .adjust_x_position
         ; For now ONLY left scroling screens will have offset (from screens coming from right, they will always have offset 0 (starting at 0))
@@ -829,26 +829,26 @@ map_load_room:
         ; adjust offsets
         ; call map_adjust_character_offset
 
-        ; ld a, $10
-        ; push hl
-        ; call ram_get_player_game_obj_address
-        ; ld [hl], a
-        ; call ram_get_sprite_second_half
-        ; ld [hl], a
-        ; pop hl
-        ; jr .adjust_y_position
+         ld a, $10
+         push hl
+         call ram_get_player_game_obj_address
+         ld [hl], a
+         call ram_get_sprite_second_half
+         ld [hl], a
+         pop hl
+         jr .adjust_y_position
 
 .final_up_position:
         ; adjust offsets
         ; call map_adjust_character_offset
 
-        ; ld a, $90
-        ; push hl
-        ; call ram_get_player_game_obj_address
-        ; ld [hl], a
-        ; call ram_get_sprite_second_half
-        ; ld [hl], a
-        ; pop hl
+         ;ld a, $90
+         ;push hl
+         ;call ram_get_player_game_obj_address
+         ;ld [hl], a
+         ;call ram_get_sprite_second_half
+         ;ld [hl], a
+         ;pop hl
 
 .adjust_y_position:
     ; push hl
@@ -1577,15 +1577,14 @@ map_scroll_bg_vertically_with_animation:
     push hl
     push de
     push bc
-    ld c, 3
-    ld b, 4
+    ld c, 4
+    ld b, 2
     call map_move_player_character_vertically
     call display_wait_vblank
     call _HRAM
     pop bc
     pop de
     pop hl
-
 
     ld a, [hl]
     add a, -4
@@ -1601,6 +1600,18 @@ map_scroll_bg_vertically_with_animation:
 ; c: small increment
 ; b: large increment
 map_move_player_character_horizontally:
+    push hl
+    ld l, map_load_right
+    call check_animation_direction
+    pop hl
+    jr nz, .movement_left
+        ld e, c
+        ld a, [ram_general_use_variable_8]
+        cp $0F
+        jr nc, .update_position
+        ld e, b
+        jr .update_position
+.movement_left:
     ld e, c
     ld a, [ram_general_use_variable_8]
     cp $0F
@@ -1633,8 +1644,8 @@ map_move_player_character_vertically:
     jr nz, .movement_down
         ld e, c
         ld a, [ram_general_use_variable_8]
-        cp $0E
-        jr nc, .update_position
+        cp $0F
+        jr c, .update_position
         ld e, b
         jr .update_position
 .movement_down:
