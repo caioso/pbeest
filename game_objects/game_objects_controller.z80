@@ -308,6 +308,14 @@ goc_detect_collision_width_game_objects:
 .break:
     pop de
 
+    ; set collision target
+    ld a, d
+    ld [collision_target], a
+    
+    ; set collision type
+    ld a, collision_type_gob
+    ld [collision_target_type], a
+    
     ld a, 1
     ret
 

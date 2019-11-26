@@ -50,8 +50,14 @@ division_temp equ character_0_offset_y + 1
 
 ; Collision Target ID
 collision_target equ division_temp + 3
-edget_collision_target_x equ collision_target + 1
+collision_target_type equ collision_target + 1
+edget_collision_target_x equ collision_target_type + 1
 edget_collision_target_y equ edget_collision_target_x + 1
+
+; Collision types
+collision_type_map equ 01
+collision_type_gob equ 02
+collision_type_edge equ 03
 
 ; key Controlle variables
 current_key_down equ edget_collision_target_y + 1

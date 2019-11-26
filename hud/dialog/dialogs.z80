@@ -37,3 +37,7 @@ dialog_page_down:
 db $11, $28, $28, $26, $FF, $03, $48, $FF, $38, $13, $2B, $2E, $2C, $2D, $FF, $32, $28, $2E, $2B, $2C
 db $1E, $25, $1F, $FF, $22, $27, $FF, $1A, $FF, $FF, $03, $2E, $1E, $25, $34, $34, $34, $38, $FE
 dialog_page_down_end:
+
+dialog_page_sprite:
+db $12, $29, $2B, $22, $2D, $1E, $FF, $1C, $28, $25, $25, $22, $2C, $22, $28, $27, $FE
+dialog_page_sprite_end:

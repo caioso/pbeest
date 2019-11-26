@@ -153,7 +153,6 @@ chr_move_character_down:
     pop bc
     pop de
 
-
     ; check game_object collision
     push de
     push bc
@@ -879,11 +878,15 @@ chr_check_vertical_edges:
     jr z, .not_allowed
     cp chr_top_edge_limit
     jr z, .not_allowed
+        ld a, collision_type_edge
+        ld [collision_target_type], a
         ld a, $01
         pop de
         pop bc
         ret
 .not_allowed:
+    ld a, collision_type_edge
+    ld [collision_target_type], a
     ld a, $00
     pop de
     pop bc
@@ -920,11 +923,15 @@ chr_check_horizontal_edges:
     jr z, .not_allowed
     cp chr_right_edge_limit
     jr z, .not_allowed
+        ld a, collision_type_edge
+        ld [collision_target_type], a
         ld a, $01
         pop de
         pop bc
         ret
 .not_allowed:
+    ld a, collision_type_edge
+    ld [collision_target_type], a
     ld a, $00
     pop de
     pop bc
@@ -969,6 +976,8 @@ chr_check_vertical_movement:
     ld a, [bc]
     and a, $80
     jr z, .check_second_tile
+        ld a, collision_type_map
+        ld [collision_target_type], a
         ; the target tile is not crossable
         ld a, d
         or $01
@@ -982,6 +991,8 @@ chr_check_vertical_movement:
     ld a, [bc]
     and a, $80
     jr z, .check_third_tile
+        ld a, collision_type_map
+        ld [collision_target_type], a
         ; the target tile is not crossable
         ld a, d
         or $02
@@ -1002,6 +1013,8 @@ chr_check_vertical_movement:
         ld a, [bc]
         and a, $80
         jr z, .finalize
+            ld a, collision_type_map
+            ld [collision_target_type], a
             ; the target tile is not crossable
             ld a, d
             or $04
@@ -1056,6 +1069,8 @@ chr_check_horizontal_movement:
     ld a, [bc]
     and a, $80
     jr z, .check_second_tile
+        ld a, collision_type_map
+        ld [collision_target_type], a
         ; the target tile is not crossable
         ld a, d
         or $01
@@ -1075,6 +1090,8 @@ chr_check_horizontal_movement:
     ld a, [bc]
     and a, $80
     jr z, .finalize
+        ld a, collision_type_map
+        ld [collision_target_type], a
         ; the target tile is not crossable
         ld a, d
         or $02

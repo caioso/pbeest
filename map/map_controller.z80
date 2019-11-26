@@ -1986,116 +1986,116 @@ map_load_game_objects:
     ret z
     
     ; load total game objects in the map
-    ld a, $12
+    ld a, $01
     ld [gobj_total_game_objects], a
 
     ; test: load game object 0
     ld a, $01
-    ld d, $B0 ; x
-    ld e, $18 ; y
-    ld c, $56
-    call goc_initialize_game_object
-
-    ld a, $02
-    ld d, $40 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
-
-    ld a, $03
-    ld d, $40 ; x
+    ld d, $30 ; x
     ld e, $B0 ; y
     ld c, $56
     call goc_initialize_game_object
 
-    ld a, $04
-    ld d, $10 ; x
-    ld e, $10 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $02
+    ; ld d, $40 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $05
-    ld d, $6D ; x
-    ld e, $77 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $03
+    ; ld d, $40 ; x
+    ; ld e, $B0 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $06
-    ld d, $97 ; x
-    ld e, $6D ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $04
+    ; ld d, $10 ; x
+    ; ld e, $10 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $07
-    ld d, $20 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $05
+    ; ld d, $6D ; x
+    ; ld e, $77 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $08
-    ld d, $20 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $06
+    ; ld d, $97 ; x
+    ; ld e, $6D ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $09
-    ld d, $20 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $07
+    ; ld d, $20 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $0A
-    ld d, $20 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $08
+    ; ld d, $20 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $0B
-    ld d, $20 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $09
+    ; ld d, $20 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $0C
-    ld d, $20 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $0A
+    ; ld d, $20 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $0D
-    ld d, $20 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $0B
+    ; ld d, $20 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $0E
-    ld d, $20 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $0C
+    ; ld d, $20 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $0F
-    ld d, $20 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $0D
+    ; ld d, $20 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $10
-    ld d, $20 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $0E
+    ; ld d, $20 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $11
-    ld d, $20 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $0F
+    ; ld d, $20 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
-    ld a, $12
-    ld d, $20 ; x
-    ld e, $80 ; y
-    ld c, $56
-    call goc_initialize_game_object
+    ; ld a, $10
+    ; ld d, $20 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
+
+    ; ld a, $11
+    ; ld d, $20 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
+
+    ; ld a, $12
+    ; ld d, $20 ; x
+    ; ld e, $80 ; y
+    ; ld c, $56
+    ; call goc_initialize_game_object
 
     ret

@@ -284,6 +284,22 @@ main:
         ld l, key_a
         call is_key_down
         jr z, .edge_detection_right
+            jr z, .edge_detection_right
+            ld hl, collision_target_type
+            ld a, [hl]
+            cp a, collision_type_gob
+            jr nz, .check_other_colision
+                ; First Target
+                ld de, dialog_page_sprite_end - dialog_page_sprite
+                ld hl, dialog_page_sprite
+                call hud_copy_text_buffer
+                ld de, dialog_page_sprite_end - dialog_page_sprite
+                ld a, text_box_all_animations 
+                call hud_show_text
+                jr .edge_detection_right
+
+.check_other_colision:
+
             ; check colision target, to show correct message
             ld hl, collision_target
             ld a, [hl]
@@ -406,7 +422,6 @@ main:
         ; joypad test
         ld l, key_a
         call is_key_down
-        jr z, .edge_detection_up
             ; check colision target, to show correct message
             ld hl, collision_target
             ld a, [hl]
