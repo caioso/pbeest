@@ -289,6 +289,13 @@ gobj_20_x_p2 equ gobj_20_y_p2 + 1
 gobj_20_tile_p2 equ gobj_20_x_p2 + 1
 gobj_20_attr_p2 equ gobj_20_tile_p2 + 1
 
+; GameObject Sprite Table
+gobj_table equ gobj_20_attr_p2 + 1
+gobj_table_end equ gobj_table + 20
+
+; Constant 
+max_gobj_per_map equ 10
+game_object_taken equ $AA
 
 ; Memory Constants
 sprite_memory_begin equ $DF00
@@ -316,3 +323,4 @@ gobj_17 equ gobj_17_y
 gobj_18 equ gobj_18_y
 gobj_19 equ gobj_19_y
 gobj_20 equ gobj_20_y
+

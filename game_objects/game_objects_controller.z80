@@ -9,6 +9,17 @@
 ; c: target game object sprite
 goc_initialize_game_object:
     
+    ; set table
+    push af
+    ld hl, gobj_table
+    add l
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+    ld [hl], game_object_taken
+    pop af
+
     ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
     call goc_get_gameobject_address
 
@@ -56,6 +67,11 @@ goc_initialize_game_object:
     ld a, $00
     ld [hl], a
     inc hl
+
+    ; load total game objects in the map
+    ld a, [gobj_total_game_objects]
+    inc a
+    ld [gobj_total_game_objects], a
 
     ret
 
@@ -126,19 +142,76 @@ goc_get_gameobject_address:
     ld hl, gobj_20
     ret
 
+; Initializes Game Object table with 0xFF
+goc_initialize_gobj_table:
+    ld c, $00
+    ld hl, gobj_table
+    ld b, $FF
+.next:
+    ld a, b
+    ld [hl], a
+    inc hl
+    inc c
+    ld a, 20
+    cp c
+    jr nz, .next
+    ret
+
+; Finds a slot in the game object table
+; return a: target game objhecr index
+goc_find_game_object_table_slot:
+    push bc
+    push hl
+    ld c, $00
+    ld hl, gobj_table
+.next:
+    ld a, [hl]
+    cp a, $FF
+    ld a, c
+    jr z, .finish
+
+    inc hl
+    inc c
+    ld a, 20
+    cp c
+    jr nz, .next
+
+    ; if running this line, no slots have been fond
+    ld a, $FF
+
+.finish:
+    pop hl
+    pop bc
+    ret
+ 
+    ret
 
 ; scroll all game objects by a given amount on X and Y based on camera movement
 ; e: amount in X
 ; d: amoint in Y
 goc_scroll_game_objects:
 
-    ld a, [gobj_total_game_objects]
+    ld a, gobj_table_end - gobj_table
     ; add the player's game object
     inc a
     ld c, a
     ld b, $00
 
 .update_game_object:
+
+    ld hl, gobj_table
+    ld a, b
+    add l
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+
+    ; if $FF (game pbject has not been taken), skip
+    ld a, [hl]
+    cp $FF
+    jr z, .skip
+
     ; check whether A is the player character.
     ld a, [ram_player_character_id]
     cp b
@@ -205,6 +278,9 @@ goc_detect_collision_width_game_objects:
     cp $01
     jr z, .finalize
 
+    ; load table size
+    ld a, gobj_table_end - gobj_table
+
     ld e, a
     ld d, $00
 
@@ -212,11 +288,30 @@ goc_detect_collision_width_game_objects:
 
     ld a, [ram_player_character_id]
     cp d
+    
     ; align stack (continue will pop de)
     push de
     jr z, .continue
     pop de
+
+    push hl
+    ld hl, gobj_table
+    ld a, d
+    add l
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+
+    ; if $FF (game pbject has not been taken), skip
+    ld a, [hl]
+    cp $FF
+    pop hl
     
+    ; align stack (continue will pop de)
+    push de
+    jr z, .continue
+    pop de
     ld a, d
 
     ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite

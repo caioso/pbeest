@@ -1984,13 +1984,10 @@ map_load_game_objects:
     call check_animation_direction
     pop hl
     ret z
-    
-    ; load total game objects in the map
-    ld a, $01
-    ld [gobj_total_game_objects], a
 
     ; test: load game object 0
-    ld a, $01
+    call goc_find_game_object_table_slot
+    ; from this point onwards, h Holds the address of the slot in the table
     ld d, $30 ; x
     ld e, $B0 ; y
     ld c, $56

@@ -36,6 +36,21 @@ chr_load_character_tiles_and_palettes:
 ; a: character tile (all 4 tiles *MUST* be in sequence)
 ; return: no return
 chr_initialize_character:
+   
+    push af
+    ; get player character ID
+    call goc_find_game_object_table_slot
+    ld [ram_player_character_id], a
+
+    ld hl, gobj_table
+    add l
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+    ld [hl], game_object_taken
+    pop af
+
     call ram_get_player_game_obj_address
     ; Initialize First Sprite
     ld [hl], b
