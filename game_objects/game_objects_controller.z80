@@ -59,21 +59,11 @@ goc_initialize_game_object:
             ; it is necessary to add a negartive cap to the position of the target game object.
             ; This is calculated as follows:
             ; Po(x) = (0xFF - (ScreenX - MapInitialX)*0x08) + 1 + (GameObject.x + 0x08);
-            push de
-            ld a, [ram_general_use_variable_15]
-            ld d, a
-            ld a, [ram_general_use_variable_12]
-            sub d
-            rla 
-            rla
-            rla
-            ld d, a
-            ld a, $FF
-            sub d
-            inc a
-            ; Add screen extra hidden 8 piexles
-            add a, $08
-            pop de
+            push hl
+            ld a, $00
+            call map_get_map_origin_X_offset
+            ld a, l
+            pop hl
             add d
             ld d, a
 
@@ -85,9 +75,15 @@ goc_initialize_game_object:
         call check_animation_direction
         pop hl
         jr nz, .skip_position_adjustment
-            ld a, d
-            add a, $00 ; 144 pixels above
+            push hl
+            ; Offset Right
+            ld a, $01
+            call map_get_map_origin_X_offset
+            ld a, l
+            pop hl
+            add d
             ld d, a
+
 
 .skip_position_adjustment:
     ; Note: In global_variables.z80 will holds the two halfs of the sprites in sequence.
