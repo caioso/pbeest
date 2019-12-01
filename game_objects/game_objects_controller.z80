@@ -7,6 +7,7 @@
 ; a: Target game object index (0-15)
 ; de: game object position (d: X, e: Y)
 ; c: target game object sprite
+; d: Is the initialization meant for map loading?
 goc_initialize_game_object:
     
     ; set table
@@ -23,6 +24,72 @@ goc_initialize_game_object:
     ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
     call goc_get_gameobject_address
 
+    ld a, b
+    cp $01
+    jr nz, .skip_position_adjustment
+        ; Adjust Position based on the flag stored in d    
+        push hl
+        ld l, map_load_above
+        call check_animation_direction
+        pop hl
+        jr nz, .load_below
+            ld a, e
+            sub a, $90 ; 144 pixels above
+            ld e, a
+            jr .skip_position_adjustment
+.load_below:     
+        push hl
+        ld l, map_load_below
+        call check_animation_direction
+        pop hl
+        jr nz, .load_left
+            ld a, e
+            add a, $90 ; 144 pixels above
+            ld e, a
+            jr .skip_position_adjustment
+
+.load_left:     
+        push hl
+        ld l, map_load_left
+        call check_animation_direction
+        pop hl
+        jr nz, .load_right
+            ; What's gonna happen next:
+            ; Since the game object has to be scrolled as it appear on screen (and the positions are always positive in the game boy)
+            ; it is necessary to add a negartive cap to the position of the target game object.
+            ; This is calculated as follows:
+            ; Po(x) = (0xFF - (ScreenX - MapInitialX)*0x08) + 1 + (GameObject.x + 0x08);
+            push de
+            ld a, [ram_general_use_variable_15]
+            ld d, a
+            ld a, [ram_general_use_variable_12]
+            sub d
+            rla 
+            rla
+            rla
+            ld d, a
+            ld a, $FF
+            sub d
+            inc a
+            ; Add screen extra hidden 8 piexles
+            add a, $08
+            pop de
+            add d
+            ld d, a
+
+            jr .skip_position_adjustment
+
+.load_right:     
+        push hl
+        ld l, map_load_right
+        call check_animation_direction
+        pop hl
+        jr nz, .skip_position_adjustment
+            ld a, d
+            add a, $00 ; 144 pixels above
+            ld d, a
+
+.skip_position_adjustment:
     ; Note: In global_variables.z80 will holds the two halfs of the sprites in sequence.
     ; That's why hl is always incremented between each value loaded to the game object.
     ; Y

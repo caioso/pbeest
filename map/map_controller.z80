@@ -3,19 +3,6 @@
 ; Developed by Caio Souza Oliveira
 ; 19 Aug 2019
 
-; ROOM Attributes
-; inform that a new batch of palettes will be loaded VRAM 
-map_load_palettes equ $01
-; inform that a new batch of tiles will be loaded VRAM 
-map_load_tiles equ $02
-
-; in Map transition animation
-map_load_origin equ $00
-map_load_above equ $04
-map_load_below equ $08
-map_load_left equ $0C
-map_load_right equ $10
-
 ; base tile memory base section address
 map_tile_base_section_8000 equ 0
 map_tile_base_section_9000 equ $20
@@ -220,16 +207,6 @@ map_load_room:
     ; is this one really needed? V
     inc hl
 
-    ; Load game objects
-    ; load Room's game object
-    push bc
-    push de
-    push hl
-    call map_load_game_objects
-    pop hl
-    pop de
-    pop bc
-
     ; save tile LUT initial address ram_general_use_variable_5, ram_general_use_variable_6
     ld a, l
     ld [map_current_LUT_address_byte_1], a
@@ -265,6 +242,16 @@ map_load_room:
     ld [ram_general_use_variable_12], a
     ; only required for maps loaded to the left. Adjust 12 in case of wraparound
     call map_adjust_final_map_x
+
+    ; Load game objects
+    ; load Room's game object
+    push bc
+    push de
+    push hl
+    call map_load_game_objects
+    pop hl
+    pop de
+    pop bc
 
     ; calculate first tile address in LUT
     call map_calculate_first_address_in_LUT_horizontal 
@@ -1988,9 +1975,10 @@ map_load_game_objects:
     ; test: load game object 0
     call goc_find_game_object_table_slot
     ; from this point onwards, h Holds the address of the slot in the table
-    ld d, $30 ; x
-    ld e, $B0 ; y
-    ld c, $56
+    ld d, $10 ; x
+    ld e, $10 ; y
+    ld c, $56 ; sprite
+    ld b, $01 ; For scrolling
     call goc_initialize_game_object
 
     ; ld a, $02

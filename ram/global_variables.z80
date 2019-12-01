@@ -7,6 +7,19 @@
 ; Joypad's Variables
 current_key equ _RAM
 
+; ROOM Attributes
+; inform that a new batch of palettes will be loaded VRAM 
+map_load_palettes equ $01
+; inform that a new batch of tiles will be loaded VRAM 
+map_load_tiles equ $02
+
+; in Map transition animation
+map_load_origin equ $00
+map_load_above equ $04
+map_load_below equ $08
+map_load_left equ $0C
+map_load_right equ $10
+
 ; HUD Controller's variables
 ; Adjustable textbox buffer size
 text_buffer_size equ 68
