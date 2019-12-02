@@ -11,7 +11,7 @@
 ; Room begin
 sample_room_left_begin:
 ; Room dimensions (W:22 H:20 -> max: W:32 H:32)
-db $1A, 32
+db $1A, $20
 
 ; Palette Data
 ; Bank 0

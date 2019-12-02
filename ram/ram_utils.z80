@@ -21,9 +21,11 @@ ram_general_use_variable_14 equ ram_general_use_variable_13 + 1
 ram_general_use_variable_15 equ ram_general_use_variable_14 + 1
 ram_general_use_variable_16 equ ram_general_use_variable_15 + 1
 ram_general_use_variable_17 equ ram_general_use_variable_16 + 1
+ram_general_use_variable_18 equ ram_general_use_variable_17 + 1
+ram_general_use_variable_19 equ ram_general_use_variable_18 + 1
 
 ; Player Character
-ram_player_character_id equ ram_general_use_variable_17 + 1
+ram_player_character_id equ ram_general_use_variable_19 + 1
 
 ; Temporary game object
 temp_gobj_y equ ram_player_character_id + 1

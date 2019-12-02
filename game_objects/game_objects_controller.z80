@@ -24,66 +24,15 @@ goc_initialize_game_object:
     ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
     call goc_get_gameobject_address
 
-    ld a, b
-    cp $01
-    jr nz, .skip_position_adjustment
-        ; Adjust Position based on the flag stored in d    
-        push hl
-        ld l, map_load_above
-        call check_animation_direction
-        pop hl
-        jr nz, .load_below
-            ld a, e
-            sub a, $90 ; 144 pixels above
-            ld e, a
-            jr .skip_position_adjustment
-.load_below:     
-        push hl
-        ld l, map_load_below
-        call check_animation_direction
-        pop hl
-        jr nz, .load_left
-            ld a, e
-            add a, $90 ; 144 pixels above
-            ld e, a
-            jr .skip_position_adjustment
-
-.load_left:     
-        push hl
-        ld l, map_load_left
-        call check_animation_direction
-        pop hl
-        jr nz, .load_right
-            ; What's gonna happen next:
-            ; Since the game object has to be scrolled as it appear on screen (and the positions are always positive in the game boy)
-            ; it is necessary to add a negartive cap to the position of the target game object.
-            ; This is calculated as follows:
-            ; Po(x) = (0xFF - (ScreenX - MapInitialX)*0x08) + 1 + (GameObject.x + 0x08);
-            push hl
-            ld a, $00
-            call map_get_map_origin_X_offset
-            ld a, l
-            pop hl
-            add d
-            ld d, a
-
-            jr .skip_position_adjustment
-
-.load_right:     
-        push hl
-        ld l, map_load_right
-        call check_animation_direction
-        pop hl
-        jr nz, .skip_position_adjustment
-            push hl
-            ; Offset Right
-            ld a, $01
-            call map_get_map_origin_X_offset
-            ld a, l
-            pop hl
-            add d
-            ld d, a
-
+    push hl
+    call map_get_map_origin_offset
+    ld a, l
+    add d
+    ld d, a
+    ld a, h
+    add e
+    ld e, a
+    pop hl
 
 .skip_position_adjustment:
     ; Note: In global_variables.z80 will holds the two halfs of the sprites in sequence.

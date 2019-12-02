@@ -21,30 +21,20 @@ map_initialize_map_controller:
 ; l: offset X
 ; h: offset Y
 ; a: 0: left, 1: right
-map_get_map_origin_X_offset:
-    cp a, $00
-    jr nz, .right_offset
-        ; Calculate Left Offset
-        ld a, [ram_general_use_variable_15]
-        ld l, a
-        ld a, [ram_general_use_variable_12]
-        sub l
-        rla 
-        rla
-        rla
-        ld l, a
-        ld a, $FF
-        sub l
-        inc a
-        ; Add screen extra hidden 8 piexles
-        add a, $08
-        ld l, a
-        ret
+map_get_map_origin_offset:
+    ; X position + Offset
+    ld a, [map_current_x_offset]
+    cpl 
+    inc a
+    ld l, a
+   
+    ld a, [map_current_y_offset]
+    cpl
+    inc a
+    add a, 8
+    ld h, a
 
-.right_offset:
-        ; Calculate Right Offset
-        ld l, $08
-        ret
+    ret
 
 ; Loads Room data (tiles, palletes and logic) at a specific position in the video buffer (video buffer size 32x32). With or without animations.
 ; hl: Room initial address
@@ -575,6 +565,16 @@ map_load_room:
     ld [ram_general_use_variable_12], a
     ; only required for upwards movement. Adjust 12 in case of wraparound
     call map_adjust_final_map_y
+
+    ; Load game objects
+    ; load Room's game object
+    push bc
+    push de
+    push hl
+    call map_load_game_objects
+    pop hl
+    pop de
+    pop bc
 
     ; calculate first tile address in LUT
     call map_calculate_first_address_in_LUT_vertical
@@ -2004,8 +2004,17 @@ map_load_game_objects:
     ; test: load game object 0
     call goc_find_game_object_table_slot
     ; from this point onwards, h Holds the address of the slot in the table
-    ld d, $10 ; x
-    ld e, $10 ; y
+    ld d, $3*8 ; x
+    ld e, $3*8 ; y
+    ld c, $56 ; sprite
+    ld b, $01 ; For scrolling
+    call goc_initialize_game_object
+
+    ; test: load game object 0
+    call goc_find_game_object_table_slot
+    ; from this point onwards, h Holds the address of the slot in the table
+    ld d, $13*8 ; x
+    ld e, $15*8 ; y
     ld c, $56 ; sprite
     ld b, $01 ; For scrolling
     call goc_initialize_game_object
