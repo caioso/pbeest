@@ -7,7 +7,7 @@
 ; a: Target game object index (0-15)
 ; de: game object position (d: X, e: Y)
 ; c: target game object sprite
-; d: Is the initialization meant for map loading?
+; b: Is the initialization meant for map loading?
 goc_initialize_game_object:
     
     ; set table
@@ -24,9 +24,26 @@ goc_initialize_game_object:
     ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
     call goc_get_gameobject_address
 
+    ld a, b
+    cp $00
+    jr z, .skip_position_adjustment
+
     push hl
     call map_get_map_origin_offset
-    ld a, l
+
+    push hl
+    ld l, map_load_left
+    call check_animation_direction
+    pop hl
+    jr nz, .scroll_right
+        ld a, l
+        sub $A0
+        jr .continue
+.scroll_right:
+        ld a, l
+        add $A0
+
+.continue:
     add d
     ld d, a
     ld a, h

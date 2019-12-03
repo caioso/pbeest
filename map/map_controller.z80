@@ -468,10 +468,10 @@ map_load_room:
     ld l, map_load_right
     call check_animation_direction
     pop hl
-    jr nz, .scroll_up_h
+    jr nz, .scroll_left_h
         ld a, 0
         jr .last_scroll_h
-.scroll_up_h:
+.scroll_left_h:
         ld a, 1
 .last_scroll_h:
         push hl
@@ -1701,6 +1701,9 @@ map_scroll_bg_horizontally_with_animation:
     ld c, -3
     ld b, -4
     call map_move_player_character_horizontally
+    ld d, $00
+    ld e, -4
+    call goc_scroll_game_objects
     call display_wait_vblank
     call _HRAM
     pop bc
@@ -1719,6 +1722,9 @@ map_scroll_bg_horizontally_with_animation:
     ld c, 3
     ld b, 4
     call map_move_player_character_horizontally
+    ld d, $00
+    ld e, 4
+    call goc_scroll_game_objects
     call display_wait_vblank
     call _HRAM
     pop bc
@@ -1999,8 +2005,18 @@ map_load_game_objects:
     ld l, map_load_origin
     call check_animation_direction
     pop hl
-    ret z
+    jr nz, .normal_loading
+        ; test: load game object 0
+        call goc_find_game_object_table_slot
+        ; from this point onwards, h Holds the address of the slot in the table
+        ld d, $4*8 ; x
+        ld e, $8*8 ; y
+        ld c, $56 ; sprite
+        ld b, $00 ; For scrolling
+        call goc_initialize_game_object
+    ret
 
+.normal_loading:
     ; test: load game object 0
     call goc_find_game_object_table_slot
     ; from this point onwards, h Holds the address of the slot in the table
