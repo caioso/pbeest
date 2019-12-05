@@ -3,13 +3,54 @@
 ; Developed by Caio Souza Oliveira
 ; 01 Oct 2019
 
+; Initializes game objec map table
+goc_initialize_game_object_usage_table:
+    push hl
+    push de
+    ld hl, gobj_usage_table
+    ld d, $00
+.continue:
+    ld a, $FF
+    ld [hl], a
+    inc hl
+    inc d
+    ld a, d
+    cp 20
+    jr nz, .continue
+    pop de
+    pop hl
+    ret
+
+; Normalize game objec map table
+goc_normalize_game_object_usage_table:
+    push hl
+    push de
+    ld hl, gobj_usage_table
+    ld d, $00
+.continue:
+    ld a, [hl]
+    cp $AA
+    jr nz, .skip_cleanup
+        ld a, $00
+        ld [hl], a
+
+.skip_cleanup:
+    inc hl
+    inc d
+    ld a, d
+    cp 20
+    jr nz, .continue
+    pop de
+    pop hl
+    ret
+
 ; Initialize Game Object
 ; a: Target game object index (0-15)
 ; de: game object position (d: X, e: Y)
 ; c: target game object sprite
 ; b: Is the initialization meant for map loading?
 goc_initialize_game_object:
-    
+
     ; set table
     push af
     ld hl, gobj_table
@@ -19,6 +60,27 @@ goc_initialize_game_object:
     adc $00
     ld h, a
     ld [hl], game_object_taken
+    pop af
+
+    ; mark goc in usage table
+    push af
+    ld hl, gobj_usage_table
+    add l
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+
+    ; Load the table with the value of AA (generic marker) into hl
+    ld a, b
+    cp $00
+    jr z, .load_zero
+        ld a, $AA
+        jr .load_marker
+.load_zero:
+        ld a, $00
+.load_marker:
+    ld [hl], a
     pop af
 
     ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
@@ -101,6 +163,68 @@ goc_initialize_game_object:
     ld a, [gobj_total_game_objects]
     inc a
     ld [gobj_total_game_objects], a
+
+    ret
+
+; Clears game object, based on its postiion.
+; a: game object index
+goc_clear_game_object:
+    push bc
+    ld b, a
+
+    ld hl, gobj_table
+    add l
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+    ld a, $FF
+    ld [hl], a
+
+    ld a, b
+    ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
+    call goc_get_gameobject_address
+
+    ld a, $00
+    ld [hl], a
+    inc hl
+
+    ; X
+    ld [hl], a
+    inc hl
+
+    ; Tile
+    ld [hl], a
+    inc hl
+
+    ; Attribute
+    ld [hl], a
+    inc hl
+
+    ; Y
+    ld [hl], a
+    inc hl
+
+    ; X
+    ld [hl], a
+    inc hl
+
+    ld [hl], a
+    inc hl
+
+    ; Attribute
+    ld [hl], a
+    inc hl
+
+    ; load total game objects in the map
+    ld a, [gobj_total_game_objects]
+    cp $00
+    jr z, .skip
+        dec a
+        ld [gobj_total_game_objects], a
+
+.skip:
+    pop bc
 
     ret
 
@@ -218,7 +342,17 @@ goc_find_game_object_table_slot:
 ; scroll all game objects by a given amount on X and Y based on camera movement
 ; e: amount in X
 ; d: amoint in Y
+; b: is for transition? (1: will unload out of bounds GameObjects, 0: will not unload them)
 goc_scroll_game_objects:
+
+    ld a, [ram_general_use_variable_1]
+    push af
+    ld a, [ram_general_use_variable_2]
+    push af
+
+    ; save b
+    ld a, b
+    ld [ram_general_use_variable_2], a
 
     ld a, gobj_table_end - gobj_table
     ; add the player's game object
@@ -227,6 +361,9 @@ goc_scroll_game_objects:
     ld b, $00
 
 .update_game_object:
+    ; initialize counter
+    ld a, $00
+    ld [ram_general_use_variable_1], a
 
     ld hl, gobj_table
     ld a, b
@@ -255,10 +392,25 @@ goc_scroll_game_objects:
     ld a, [hl]
     add a, d
     ld [hl], a
+    ; Check whether Y is outside of the screen Height
+    cp $90
+    jr c, .continue_update_1
+        ld a, $01
+        ld [ram_general_use_variable_1], a
+
+.continue_update_1:
     inc hl
     ld a, [hl]
     add a, e
     ld [hl], a
+
+    ; Check whether X is outside of the screen Width
+    cp $A0
+    jr c, .continue_update_2
+        ld a, $01
+        ld [ram_general_use_variable_1], a
+
+.continue_update_2:
     inc hl
     inc hl
     inc hl
@@ -269,13 +421,55 @@ goc_scroll_game_objects:
     ld a, [hl]
     add a, e
     ld [hl], a
+
+    ld hl, gobj_usage_table
+    ld a, b
+    add l
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+    ld a, [hl]
+    cp $AA
+    jr z, .skip
+    ld a, [ram_general_use_variable_2]
+    cp $00
+    jr z, .skip
+
+    ; Check whether the game object in the list must be cleared
+    ld a, [ram_general_use_variable_1]
+    cp $01
+    jr nz, .skip
+        push hl
+        ; clear the entry in the game object usage table
+        ld hl, gobj_usage_table
+        ld a, b
+        add l
+        ld l, a
+        ld a, h
+        adc $00
+        ld h, a
+        ; FF means the entry is not used. anything else means it has been taken.
+        ld a, $FF
+        ld [hl], a
+        pop hl
+
+        ; clear game object
+        ld a, b
+        call goc_clear_game_object
 .skip:
     inc b
     ld a, b
     cp c
-    ret z
+    jr z, .finish
     jr .update_game_object
 
+.finish:
+    pop af
+    ld [ram_general_use_variable_2], a
+    pop af
+    ld [ram_general_use_variable_1], a
+    ret
 
 ; Detects collisiton between character [ram_player_character_id] and character 
 ; d: X position

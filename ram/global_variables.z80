@@ -306,6 +306,10 @@ gobj_20_attr_p2 equ gobj_20_tile_p2 + 1
 gobj_table equ gobj_20_attr_p2 + 1
 gobj_table_end equ gobj_table + 20
 
+; GameObject usage map
+gobj_usage_table equ gobj_table_end + 1
+gobj_usage_table_size equ 20
+
 ; Constant 
 max_gobj_per_map equ 10
 game_object_taken equ $AA

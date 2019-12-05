@@ -32,52 +32,17 @@ chr_load_character_tiles_and_palettes:
 
 
 ; Initialize character variables
-; bc: character position (c:X, b:Y)
-; a: character tile (all 4 tiles *MUST* be in sequence)
+; de: game object position (d: X, e: Y)
+; c: target game object sprite
+; b: Is the initialization meant for map loading?
 ; return: no return
 chr_initialize_character:
-   
-    push af
     ; get player character ID
     call goc_find_game_object_table_slot
     ld [ram_player_character_id], a
 
-    ld hl, gobj_table
-    add l
-    ld l, a
-    ld a, h
-    adc $00
-    ld h, a
-    ld [hl], game_object_taken
-    pop af
-
-    call ram_get_player_game_obj_address
-    ; Initialize First Sprite
-    ld [hl], b
-    inc hl
-    ld [hl], c
-    inc hl
-    ld [hl], a
-    inc hl
-    ld [hl], 0
-    inc hl
-
-    ; Initialize Second Sprite
-    ld [hl], b
-    inc hl
-
-    push af
-    ld a, c
-    add a, $08
-    ld c, a
-    pop af 
-
-    ld [hl], c
-    inc hl
-    add a, 2
-    ld [hl], a
-    inc hl
-    ld [hl], 0
+    ; from this point onwards, h Holds the address of the slot in the table
+    call goc_initialize_game_object
     
     ret
 

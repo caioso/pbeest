@@ -531,23 +531,8 @@ map_load_room:
 
 .adjust_x_position:
 
-    ;push hl
-    ; Adjust X position based on the map offsets
-    ; This is no longer needed because of the use of DMA (the positions cannot be calculated in steps anymoer)
-    ;ld a, [map_current_x_offset]
-    ;ld l, a
-    ;ld a, [character_0_x]
-    ;add l
-    ;ld [character_0_x], a
-    
-    ; Adjust Y position based on the map offsets
-    ; This is no longer needed because of the use of DMA (the positions cannot be calculated in steps anymoer)
-    ;ld a, [map_current_y_offset]
-    ;ld l, a
-    ;ld a, [character_0_y]
-    ;add l
-    ;ld [character_0_y], a
-    ;pop hl
+    ; Normalize gamobject usage map (remove transitinoal $AA)
+    call goc_normalize_game_object_usage_table
 
     ; load map logic layer
     call map_load_logic_layer
@@ -1684,6 +1669,7 @@ map_move_player_character_vertically:
     add a, e
     ld [hl], a
     ret
+
 ; Scroll maps (one tile) horizontal, in the direction held by a
 ; a: scrolling direction: 0 -> right 1 -> left
 map_scroll_bg_horizontally_with_animation:
@@ -1703,6 +1689,7 @@ map_scroll_bg_horizontally_with_animation:
     call map_move_player_character_horizontally
     ld d, $00
     ld e, -4
+    ld b, $01 ; a indicate that the scrolling is for screen transitions, so game objects will be unloaded
     call goc_scroll_game_objects
     call display_wait_vblank
     call _HRAM
@@ -1715,7 +1702,6 @@ map_scroll_bg_horizontally_with_animation:
     jr .scroll_complete
 
 .scroll_right:
-
     push hl
     push de
     push bc
@@ -1724,6 +1710,7 @@ map_scroll_bg_horizontally_with_animation:
     call map_move_player_character_horizontally
     ld d, $00
     ld e, 4
+    ld b, $01 ; a indicate that the scrolling is for screen transitions, so game objects will be unloaded
     call goc_scroll_game_objects
     call display_wait_vblank
     call _HRAM
@@ -1827,6 +1814,7 @@ map_scroll_map_horizontally_if_needed:
             ; scroll game objects
             ld d, $00
             ld e, -1
+            ld b, $00 ; a indicate that the srolling is not for screen transitions, so game objects will not be unloaded
             call goc_scroll_game_objects
 
             ld a, [map_current_x_offset]
@@ -1868,6 +1856,7 @@ map_scroll_map_horizontally_if_needed:
         ; scroll game objects
         ld d, $00
         ld e, 1
+        ld b, $00 ; a indicate that the scrolling is for screen transitions, so game objects will be unloaded
         call goc_scroll_game_objects
 
         ld a, [map_current_x_offset]
@@ -1930,6 +1919,7 @@ map_scroll_map_vertically_if_needed:
             ; scroll game objects
             ld d, -1
             ld e, $00
+            ld b, $00 ; a indicate that the srolling is not for screen transitions, so game objects will not be unloaded
             call goc_scroll_game_objects
 
             ld a, [map_current_y_offset]
@@ -1970,6 +1960,7 @@ map_scroll_map_vertically_if_needed:
         ; scroll game objects
         ld d, 1
         ld e, $00
+        ld b, $00 ; a indicate that the srolling is not for screen transitions, so game objects will not be unloaded
         call goc_scroll_game_objects
 
         ld a, [map_current_y_offset]
