@@ -641,7 +641,7 @@ goc_detect_collision_width_game_objects:
     pop de
 
     inc d
-    ld a, e
+    ld a, 20
     cp d
     jr nz, .check_game_object
 
@@ -691,6 +691,25 @@ goc_detect_collision_width_game_objects_full_obj:
     jr z, .continue
     pop de
     
+    push hl
+    ld hl, gobj_table
+    ld a, d
+    add l
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+
+    ; if $FF (game pbject has not been taken), skip
+    ld a, [hl]
+    cp $FF
+    pop hl
+    
+    ; align stack (continue will pop de)
+    push de
+    jr z, .continue
+    pop de
+
     ld a, d
 
     ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
@@ -792,7 +811,8 @@ goc_detect_collision_width_game_objects_full_obj:
     pop de
 
     inc d
-    ld a, e
+    ; check if all game objects have been checked
+    ld a, 20
     cp d
     jr nz, .check_game_object
 

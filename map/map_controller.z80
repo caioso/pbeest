@@ -2000,8 +2000,8 @@ map_load_game_objects:
         ; test: load game object 0
         call goc_find_game_object_table_slot
         ; from this point onwards, h Holds the address of the slot in the table
-        ld d, $4*8 ; x
-        ld e, $8*8 ; y
+        ld d, $5*8 ; x
+        ld e, $9*8 ; y
         ld c, $56 ; sprite
         ld b, $00 ; For scrolling
         call goc_initialize_game_object
@@ -2011,8 +2011,8 @@ map_load_game_objects:
     ; test: load game object 0
     call goc_find_game_object_table_slot
     ; from this point onwards, h Holds the address of the slot in the table
-    ld d, $3*8 ; x
-    ld e, $3*8 ; y
+    ld d, $5*8 ; x
+    ld e, $5*8 ; y
     ld c, $56 ; sprite
     ld b, $01 ; For scrolling
     call goc_initialize_game_object
