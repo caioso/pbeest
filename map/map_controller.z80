@@ -21,6 +21,7 @@ map_initialize_map_controller:
 ; l: offset X
 ; h: offset Y
 ; a: 0: left, 1: right
+; return hl holds the origin offset
 map_get_map_origin_offset:
     ; X position + Offset
     ld a, [map_current_x_offset]
@@ -1563,6 +1564,10 @@ map_scroll_bg_vertically_with_animation:
     ld c, -2
     ld b, -4
     call map_move_player_character_vertically
+    ld d, -4
+    ld e, $00
+    ld b, $01 ; a indicate that the scrolling is for screen transitions, so game objects will be unloaded
+    call goc_scroll_game_objects
     call display_wait_vblank
     call _HRAM
     pop bc
@@ -1581,6 +1586,10 @@ map_scroll_bg_vertically_with_animation:
     ld c, 4
     ld b, 2
     call map_move_player_character_vertically
+    ld d, 4
+    ld e, $00
+    ld b, $01 ; a indicate that the scrolling is for screen transitions, so game objects will be unloaded
+    call goc_scroll_game_objects
     call display_wait_vblank
     call _HRAM
     pop bc
@@ -1589,6 +1598,7 @@ map_scroll_bg_vertically_with_animation:
 
     ld a, [hl]
     add a, -4
+
 .scroll_complete:
     ld [rSCY], a
     dec c

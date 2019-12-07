@@ -425,6 +425,7 @@ main:
         ; joypad test
         ld l, key_a
         call is_key_down
+        jr z, .edge_detection_up
             ; check colision target, to show correct message
             ld hl, collision_target
             ld a, [hl]

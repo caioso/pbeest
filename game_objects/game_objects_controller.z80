@@ -100,17 +100,64 @@ goc_initialize_game_object:
     jr nz, .scroll_right
         ld a, l
         sub $A0
+        add d
+        ld d, a
+        ld a, h
+        add e
+        ld e, a
         jr .continue
 .scroll_right:
-        ld a, l
-        add $A0
-
+        push hl
+        ld l, map_load_right
+        call check_animation_direction
+        pop hl
+        jr nz, .scroll_up
+            ld a, l
+            add $90
+            add d
+            ld d, a
+            ld a, h
+            add e
+            ld e, a
+            jr .continue
+.scroll_up:
+        push hl
+        ld l, map_load_above
+        call check_animation_direction
+        pop hl
+        jr nz, .scroll_down
+            ld a, h
+            sub $90
+            add e
+            ld e, a
+            ld a, l
+            add d
+            ld d, a
+            jr .continue
+.scroll_down:
+        push hl
+        ld l, map_load_below
+        call check_animation_direction
+        pop hl
+        jr nz, .no_scroll
+            ld a, h
+            add $90
+            add e
+            ld e, a
+            ld a, l
+            add d
+            ld d, a
+            jr .continue
+.no_scroll:
+            ld a, h
+            add e
+            ld e, a
+            ld a, l
+            add d
+            ld d, a
+            jr .continue
 .continue:
-    add d
-    ld d, a
-    ld a, h
-    add e
-    ld e, a
+    
     pop hl
 
 .skip_position_adjustment:
@@ -344,7 +391,7 @@ goc_find_game_object_table_slot:
 ; d: amoint in Y
 ; b: is for transition? (1: will unload out of bounds GameObjects, 0: will not unload them)
 goc_scroll_game_objects:
-
+    
     ld a, [ram_general_use_variable_1]
     push af
     ld a, [ram_general_use_variable_2]

@@ -314,6 +314,7 @@ gobj_usage_table_size equ 20
 max_gobj_per_map equ 10
 game_object_taken equ $AA
 
+
 ; Memory Constants
 sprite_memory_begin equ $DF00
 sprite_memory_end equ sprite_memory_begin + (4*40)
