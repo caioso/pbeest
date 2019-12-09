@@ -873,6 +873,9 @@ map_load_room:
 
     ; Load map logic
 .load_logic:
+    ; Normalize gamobject usage map (remove transitinoal $AA)
+    call goc_normalize_game_object_usage_table
+
     call map_load_logic_layer
     ret
 

@@ -83,12 +83,13 @@ goc_initialize_game_object:
     ld [hl], a
     pop af
 
+    push af
     ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
     call goc_get_gameobject_address
 
     ld a, b
     cp $00
-    jr z, .skip_position_adjustment
+    jr z, .clear_af
 
     push hl
     call map_get_map_origin_offset
@@ -157,8 +158,47 @@ goc_initialize_game_object:
             ld d, a
             jr .continue
 .continue:
-    
     pop hl
+    pop af
+    
+    ; Check on-screen case
+    push af
+    ld a, $90
+    cp e
+    jr c, .check_x
+    jr .mark_goj
+
+.check_x:
+    pop af
+
+    ; Check on-screen case
+    push af
+    ld a, $A0
+    cp d
+    jr c, .finish
+    jr .mark_goj
+
+.mark_goj:
+    pop af
+
+    push hl
+    ld hl, gobj_usage_table
+    add l
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+    ld a, $AA
+    ld [hl], a
+    pop hl
+    jr .skip_position_adjustment
+    
+.finish:
+    pop af
+    jr .skip_position_adjustment
+
+.clear_af:
+    pop af
 
 .skip_position_adjustment:
     ; Note: In global_variables.z80 will holds the two halfs of the sprites in sequence.
