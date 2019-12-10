@@ -89,7 +89,7 @@ goc_initialize_game_object:
 
     ld a, b
     cp $00
-    jr z, .clear_af
+    jp z, .clear_af
 
     push hl
     call map_get_map_origin_offset
@@ -165,8 +165,7 @@ goc_initialize_game_object:
     push af
     ld a, $90
     cp e
-    jr c, .check_x
-    jr .mark_goj
+    jr c, .finish
 
 .check_x:
     pop af
@@ -181,6 +180,7 @@ goc_initialize_game_object:
 .mark_goj:
     pop af
 
+    push af
     push hl
     ld hl, gobj_usage_table
     add l
@@ -188,9 +188,15 @@ goc_initialize_game_object:
     ld a, h
     adc $00
     ld h, a
-    ld a, $AA
+    ; for now AA. Use another index to label the game to remove it from the transition.
+    ld a, $BB
     ld [hl], a
     pop hl
+    pop af
+
+    ld a, $00
+    ld d, a
+    ld e, a
     jr .skip_position_adjustment
     
 .finish:
@@ -230,7 +236,10 @@ goc_initialize_game_object:
 
     ; X (+0x8)
     ld a, d
+    cp $00
+    jr z, .skip_extra
     add a, $08
+.skip_extra:
     ld [hl], a
     inc hl
 
@@ -518,6 +527,8 @@ goc_scroll_game_objects:
     ld h, a
     ld a, [hl]
     cp $AA
+    jr z, .skip
+    cp $BB
     jr z, .skip
     ld a, [ram_general_use_variable_2]
     cp $00
