@@ -44,6 +44,77 @@ goc_normalize_game_object_usage_table:
     pop hl
     ret
 
+; restore hidden game objects position
+goc_restore_hidden_position:
+    push hl
+    push bc
+    push de
+    ld a, [gobt_batch_size]
+
+    cp $00
+    jr z, .finish_up
+
+    ld b, a
+    ld c, $00
+
+    ld de, gobt_batch_size
+    inc de
+.restore_position:
+
+    ; get index
+    ld a, [de]
+    call goc_get_gameobject_address
+    ; from this point onwards, hl has the address of the target game object
+    inc de
+    inc de
+    push bc
+    ld a, [de]
+    ld c, a
+    ; Note: In global_variables.z80 will holds the two halfs of the sprites in sequence.
+    ; That's why hl is always incremented between each value loaded to the game object.
+    ; Y
+    ld [hl], a
+    inc hl
+
+    inc de
+    ld a, [de]
+    ld b, a
+    ; X
+    ld [hl], a
+    inc hl
+    inc hl
+    inc hl
+
+    ld a, c
+    ld [hl], a
+    inc hl
+
+    ld a, b
+    add a, $08
+    ld [hl], a
+    inc hl
+    inc hl
+    inc hl
+
+    inc de
+    pop bc 
+    inc c
+    ld a, c
+    cp b
+    jr nz, .restore_position
+
+.finish_up:
+    pop de
+    pop bc
+    pop hl
+    ret
+
+; Preapare memory to receive a batch of game objects (to be used during map loading *ONLY*)
+gobj_initialize_game_object_batch:
+    ld a, $00
+    ld [gobt_batch_size], a
+    ret
+
 ; Initialize Game Object
 ; a: Target game object index (0-15)
 ; de: game object position (d: X, e: Y)
@@ -193,6 +264,38 @@ goc_initialize_game_object:
     ld [hl], a
     pop hl
     pop af
+
+    push hl
+    push af
+    ; Save position to logic_map region
+    ld a, [gobt_batch_size]
+    ld hl, gobt_batch_size
+    inc hl
+
+    ; multiply 'a' by 4 (X and Y)
+    sla a
+    sla a
+
+    ; add a to hl
+    add l
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+    pop af
+    ld [hl], a
+    inc hl
+    ; reserve 1 byte to simplify calculation (always mutiply by 4).
+    inc hl
+    ld [hl], e
+    inc hl
+    ld [hl], d
+    pop hl
+
+    ; increment the amount of game objects in the list
+    ld a, [gobt_batch_size]
+    inc a
+    ld [gobt_batch_size], a
 
     ld a, $00
     ld d, a

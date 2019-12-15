@@ -535,6 +535,9 @@ map_load_room:
     ; Normalize gamobject usage map (remove transitinoal $AA)
     call goc_normalize_game_object_usage_table
 
+    ; restore hidden game objects position
+    call goc_restore_hidden_position
+
     ; load map logic layer
     call map_load_logic_layer
     ret
@@ -875,6 +878,9 @@ map_load_room:
 .load_logic:
     ; Normalize gamobject usage map (remove transitinoal $AA)
     call goc_normalize_game_object_usage_table
+
+    ; restore hidden game objects position
+    call goc_restore_hidden_position
 
     call map_load_logic_layer
     ret
@@ -2005,6 +2011,9 @@ map_pixel_to_tile:
 ; Load room's game objects
 map_load_game_objects:
 
+    ; this must be executed before loading any game object
+    call gobj_initialize_game_object_batch
+
     push hl
     ld l, map_load_origin
     call check_animation_direction
@@ -2033,7 +2042,16 @@ map_load_game_objects:
     ; test: load game object 0
     call goc_find_game_object_table_slot
     ; from this point onwards, h Holds the address of the slot in the table
-    ld d, $13*8 ; x
+    ld d, $8*8 ; x
+    ld e, $5*8 ; y
+    ld c, $56 ; sprite
+    ld b, $01 ; For scrolling
+    call goc_initialize_game_object
+
+    ; test: load game object 0
+    call goc_find_game_object_table_slot
+    ; from this point onwards, h Holds the address of the slot in the table
+    ld d, $11*8 ; x
     ld e, $15*8 ; y
     ld c, $56 ; sprite
     ld b, $01 ; For scrolling

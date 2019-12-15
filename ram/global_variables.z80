@@ -54,6 +54,9 @@ map_current_room_id equ map_current_y_offset + 1
 map_current_LUT_address_byte_1 equ map_current_room_id + 1
 map_current_LUT_address_byte_2 equ map_current_LUT_address_byte_1 + 1
 
+; temporary variables to be used on *BATCH GAME OBJECT* loading
+gobt_batch_size equ map_logic
+
 ; Player Charcater Offset
 character_0_offset_x equ map_current_LUT_address_byte_2 + 1
 character_0_offset_y equ character_0_offset_x + 1
