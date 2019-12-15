@@ -185,7 +185,7 @@ goc_initialize_game_object:
         pop hl
         jr nz, .scroll_up
             ld a, l
-            add $90
+            add $A0
             add d
             ld d, a
             ld a, h
@@ -287,6 +287,48 @@ goc_initialize_game_object:
     inc hl
     ; reserve 1 byte to simplify calculation (always mutiply by 4).
     inc hl
+
+    push hl
+    ld l, map_load_left
+    call check_animation_direction
+    pop hl
+    jr nz, .correct_scroll_right
+        ld a, d
+        add a, $A0
+        ld d, a
+        jr .finish_loading
+.correct_scroll_right:
+    push hl
+    ld l, map_load_right
+    call check_animation_direction
+    pop hl
+    jr nz, .correct_scroll_up
+        ld a, d
+        sub a, $A0
+        ld d, a
+        jr .finish_loading
+.correct_scroll_up:
+    push hl
+    ld l, map_load_above
+    call check_animation_direction
+    pop hl
+    jr nz, .correct_scroll_down
+        ld a, e
+        add a, $90
+        ld e, a
+        jr .finish_loading
+.correct_scroll_down:
+    push hl
+    ld l, map_load_below
+    call check_animation_direction
+    pop hl
+    jr nz, .finish_loading
+        ld a, e
+        sub a, $90
+        ld e, a
+
+.finish_loading:
+    ld a, e
     ld [hl], e
     inc hl
     ld [hl], d

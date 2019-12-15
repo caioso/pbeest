@@ -2057,6 +2057,16 @@ map_load_game_objects:
     ld b, $01 ; For scrolling
     call goc_initialize_game_object
 
+    ; test: load game object 0
+    call goc_find_game_object_table_slot
+    ; from this point onwards, h Holds the address of the slot in the table
+    ld d, $11*8 ; x
+    ld e, $18*8 ; y
+    ld c, $56 ; sprite
+    ld b, $01 ; For scrolling
+    call goc_initialize_game_object
+
+
     ; ld a, $02
     ; ld d, $40 ; x
     ; ld e, $80 ; y
