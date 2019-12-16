@@ -3,12 +3,8 @@
 ; Developed by Caio Souza Oliveira
 ; 19 Aug 2019
 
-; TEMP
-; include palettes and tiles
-include "graphics/sample_map_palette.z80"
-include "graphics/sample_map_tiles.z80"
-
 ; Room begin
+SECTION "room_start", ROMX, BANK[2]
 sample_room_begin:
 ; Room dimensions (W:22 H:20 -> max: W:32 H:32)
 db $14, $12
@@ -88,3 +84,18 @@ db $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $0
 db $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $80
 db $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $80
 db $80, $80, $80, $80, $80, $80, $80, $80, $80, $00, $00, $80, $80, $80, $80, $80, $80, $80, $80, $BB
+
+; Loads game object
+room_initialize_game_objects:
+    ; this must be executed before loading any game object
+    call gobj_initialize_game_object_batch
+    ; load room 1's game objects
+    ; test: load game object 0
+    call goc_find_game_object_table_slot
+    ; from this point onwards, h Holds the address of the slot in the table
+    ld d, $5*8 ; x
+    ld e, $9*8 ; y
+    ld c, $56 ; sprite
+    ld b, $00 ; For scrolling
+    call goc_initialize_game_object
+    jp bac_return_address

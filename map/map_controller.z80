@@ -38,6 +38,7 @@ map_get_map_origin_offset:
     ret
 
 ; Loads Room data (tiles, palletes and logic) at a specific position in the video buffer (video buffer size 32x32). With or without animations.
+; *Important*: This method expects that a bank switching intention has been posted, with the target bank where the room code is located.
 ; hl: Room initial address
 ; a: animation & Data Loading Bit Map
 ;    bit 0: load palettes
@@ -52,6 +53,9 @@ map_get_map_origin_offset:
 ; bc: initial tile address (full 16 bits tile address)
 ; de: map initial position X(d) and Y(e) [in tiles, not pixels]
 map_load_room:
+    ; Switch to target bank
+    call bac_switch_bank
+
     ; save temp variables 
     ; save map data loading attributes bit map
     push hl
@@ -263,12 +267,11 @@ map_load_room:
     ; only required for maps loaded to the left. Adjust 12 in case of wraparound
     call map_adjust_final_map_x
 
-    ; Load game objects
-    ; load Room's game object
+    ; ; Load game objects
     push bc
     push de
     push hl
-    call map_load_game_objects
+    call bac_dynamic_jump
     pop hl
     pop de
     pop bc
@@ -540,6 +543,10 @@ map_load_room:
 
     ; load map logic layer
     call map_load_logic_layer
+
+    ; restore target bank
+    call bac_restore_bank
+
     ret
 
 .vertical_scrolling:
@@ -555,12 +562,11 @@ map_load_room:
     ; only required for upwards movement. Adjust 12 in case of wraparound
     call map_adjust_final_map_y
 
-    ; Load game objects
-    ; load Room's game object
+    ; ; Load game objects
     push bc
     push de
     push hl
-    call map_load_game_objects
+    call bac_dynamic_jump
     pop hl
     pop de
     pop bc
@@ -883,6 +889,10 @@ map_load_room:
     call goc_restore_hidden_position
 
     call map_load_logic_layer
+
+    ; restore bank
+    call bac_restore_bank
+
     ret
 
 ; Load Map Logic Layer

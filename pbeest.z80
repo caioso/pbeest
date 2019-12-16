@@ -6,6 +6,7 @@
 ; includes
 include "inc/hardware.inc"
 
+
 ; interrupt routine reservation
 section "interrupt_vector", rom0[$0040]
 include "infra/interrupt_vector.z80"
@@ -50,8 +51,15 @@ include "graphics/hud_tiles.z80"
 include "graphics/hero.z80"
 include "graphics/hero_palette.z80"
 
+; include palettes and tiles
+include "graphics/sample_map_palette.z80"
+include "graphics/sample_map_tiles.z80"
+
 ; include sprite controller
 include "sprite/sprite_controller.z80"
+
+; include bank controller
+include "banks/banks_controller.z80"
 
 ; include hud controller
 include "hud/hud_controller.z80"
@@ -74,6 +82,8 @@ include "map/rooms/sample_room_right.z80"
 include "map/rooms/sample_room_top.z80"
 include "map/rooms/sample_room_left.z80"
 include "map/rooms/sample_room_bottom.z80"
+
+section "main_function", rom0
 
 ; main function
 ; bootstrap ROM
@@ -142,6 +152,15 @@ main:
     ; map GRAPHICAL-LUTs position (d:X, e:Y) the logic LUT is always loaded in the same place.a
     ld a, $00
     ld [map_current_room_id], a
+
+    ; initialize game object
+    ld hl, room_initialize_game_objects
+    call bac_set_gob_initializer
+
+    ; load target bank to be used during map loading
+    ld d, $00
+    ld e, $02
+    call bac_set_bank_switching_intention
 
     ld a, map_tile_base_section_8000 | map_load_origin | map_load_tiles | map_load_palettes
     ld hl, sample_room_begin
@@ -235,6 +254,15 @@ main:
         ld a, $02
         ld [map_current_room_id], a
 
+        ; initialize game object
+        ld hl, room_left_initialize_game_objects
+        call bac_set_gob_initializer
+
+        ; load target bank to be used during map loading
+        ld d, $00
+        ld e, $01
+        call bac_set_bank_switching_intention
+
         ld a, map_tile_base_section_8000 | map_load_left | map_load_tiles | map_load_palettes
         ld hl, sample_room_left_begin
         ld bc, $85A0
@@ -246,6 +274,15 @@ main:
 .load_room_right:
         ld a, $01
         ld [map_current_room_id], a
+
+        ; initialize game object
+        ld hl, room_right_initialize_game_objects
+        call bac_set_gob_initializer
+
+        ; load target bank to be used during map loading
+        ld d, $00
+        ld e, $01
+        call bac_set_bank_switching_intention
 
         ld a, map_tile_base_section_8000 | map_load_right | map_load_tiles | map_load_palettes
         ld hl, sample_room_right_begin
@@ -259,6 +296,15 @@ main:
         ld a, $03
         ld [map_current_room_id], a
 
+         ; initialize game object
+        ld hl, room_top_initialize_game_objects
+        call bac_set_gob_initializer
+
+        ; load target bank to be used during map loading
+        ld d, $00
+        ld e, $01
+        call bac_set_bank_switching_intention
+
         ld a, map_tile_base_section_8000 | map_load_above | map_load_tiles | map_load_palettes
         ld hl, sample_room_top_begin
         ld bc, $85A0
@@ -270,6 +316,15 @@ main:
 .load_room_bottom:
         ld a, $04
         ld [map_current_room_id], a
+
+         ; initialize game object
+        ld hl, room_bottom_initialize_game_objects
+        call bac_set_gob_initializer
+
+        ; load target bank to be used during map loading
+        ld d, $00
+        ld e, $01
+        call bac_set_bank_switching_intention
 
         ld a, map_tile_base_section_8000 | map_load_below | map_load_tiles | map_load_palettes
         ld hl, sample_room_bottom_begin

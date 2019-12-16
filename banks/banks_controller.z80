@@ -1,0 +1,58 @@
+; Project Beest
+; Banks control routines
+; Developed by Caio Souza Oliveira
+; 16 Dec 2019
+
+; Sets bank switching intention
+; de: holds the 10 bits of the target bank address
+bac_set_bank_switching_intention:
+    ld a, e
+    ld [bank_target_bank_LSB], a
+    ld a, d
+    ld [bank_target_bank_HSB], a
+    ret
+
+; Switch Bank. Commits a bank swithing intention
+bac_switch_bank:
+    push af
+    ld a, [$2000]
+    ld [bank_restore_bank_LSB], a
+    ld a, [$3000]
+    ld [bank_restore_bank_HSB], a
+
+    ld a, [bank_target_bank_LSB]
+    ld [$2000], a
+    ld a, [bank_target_bank_HSB]
+    ld [$3000], a
+    pop af
+    ret
+
+; Restores a bank that has been previously unloaded
+bac_restore_bank:
+    push af
+    ld a, [bank_restore_bank_LSB]
+    ld [$2000], a
+    ld a, [bank_restore_bank_HSB]
+    ld [$3000], a
+    pop af
+    ret
+
+; Prepare game object initializer method address
+; hl: target address
+bac_set_gob_initializer:
+    ld a, l
+    ld [game_object_initializer_address_LSB], a
+    ld a, h
+    ld [game_object_initializer_address_HSB], a
+    ret
+
+; Prepares dynamic Jump
+bac_dynamic_jump:
+    ld a, [game_object_initializer_address_LSB]
+    ld l, a
+    ld a, [game_object_initializer_address_HSB]
+    ld h, a
+    dec hl
+    jp hl
+bac_return_address:
+    ret

@@ -3,18 +3,14 @@
 ; Developed by Caio Souza Oliveira
 ; 19 Aug 2019
 
-; TEMP
-; include palettes and tiles
-;include "graphics/sample_map_palette.z80" ; (already included, reusing palettes)
-;include "graphics/sample_map_tiles.z80"   ; (already included, reusing tiles)
-
 ; Room begin
+SECTION "room_left", ROMX, BANK[1]
 sample_room_left_begin:
 ; Room dimensions (W:22 H:20 -> max: W:32 H:32)
 db $1A, $20
 
 ; Palette Data
-; Bank 0
+; Bank 1
 db $00
 ; Palette Address
 dw sample_map_palette_begin
@@ -130,3 +126,46 @@ db $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $0
 db $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $80
 db $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $80
 db $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80
+
+; Loads game object
+room_left_initialize_game_objects:
+    ; this must be executed before loading any game object
+    call gobj_initialize_game_object_batch
+
+    ; test: load game object 0
+    call goc_find_game_object_table_slot
+    ; from this point onwards, h Holds the address of the slot in the table
+    ld d, $5*8 ; x
+    ld e, $5*8 ; y
+    ld c, $56 ; sprite
+    ld b, $01 ; For scrolling
+    call goc_initialize_game_object
+
+    ; test: load game object 0
+    call goc_find_game_object_table_slot
+    ; from this point onwards, h Holds the address of the slot in the table
+    ld d, $8*8 ; x
+    ld e, $5*8 ; y
+    ld c, $56 ; sprite
+    ld b, $01 ; For scrolling
+    call goc_initialize_game_object
+
+    ; test: load game object 0
+    call goc_find_game_object_table_slot
+    ; from this point onwards, h Holds the address of the slot in the table
+    ld d, $11*8 ; x
+    ld e, $15*8 ; y
+    ld c, $56 ; sprite
+    ld b, $01 ; For scrolling
+    call goc_initialize_game_object
+
+    ; test: load game object 0
+    call goc_find_game_object_table_slot
+    ; from this point onwards, h Holds the address of the slot in the table
+    ld d, $11*8 ; x
+    ld e, $18*8 ; y
+    ld c, $56 ; sprite
+    ld b, $01 ; For scrolling
+    call goc_initialize_game_object
+
+     jp bac_return_address
