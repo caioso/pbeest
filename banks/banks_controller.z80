@@ -18,6 +18,7 @@ bac_switch_bank:
     ld a, [$2000]
     ld [bank_restore_bank_LSB], a
     ld a, [$3000]
+    and $03
     ld [bank_restore_bank_HSB], a
 
     ld a, [bank_target_bank_LSB]
@@ -47,12 +48,32 @@ bac_set_gob_initializer:
     ret
 
 ; Prepares dynamic Jump
-bac_dynamic_jump:
+bac_jump_to_game_object_initializer:
     ld a, [game_object_initializer_address_LSB]
     ld l, a
     ld a, [game_object_initializer_address_HSB]
     ld h, a
     dec hl
     jp hl
-bac_return_address:
+bac_jump_to_game_object_initializer_return_address:
+    ret
+
+; Prepare game object initializer method address
+; hl: target address
+bac_set_process_callback:
+    ld a, l
+    ld [room_process_callback_address_LSB], a
+    ld a, h
+    ld [room_process_callback_address_HSB], a
+    ret
+
+; Prepares dynamic Jump
+bac_jump_to_process_callback:
+    ld a, [room_process_callback_address_LSB]
+    ld l, a
+    ld a, [room_process_callback_address_HSB]
+    ld h, a
+    dec hl
+    jp hl
+bac_jump_to_process_callback_return_address:
     ret

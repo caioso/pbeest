@@ -98,4 +98,51 @@ room_initialize_game_objects:
     ld c, $56 ; sprite
     ld b, $00 ; For scrolling
     call goc_initialize_game_object
-    jp bac_return_address
+
+    ; TEMP!!!
+    ld a, $00
+    ld [room_sketchpad], a
+
+    jp bac_jump_to_game_object_initializer_return_address
+
+
+; Room process callback
+room_process_callback:
+    ld a, [room_sketchpad]
+    inc a
+    ld [room_sketchpad], a
+    cp a, $1
+    jp nz, .skip_movement
+        ld a, $00
+        ld [room_sketchpad], a
+
+        ; Move NPC
+        ld a, $01
+        ld d, $01
+        ld e, $00
+        ld c, $00
+        call goc_set_game_object_by_xy
+
+.skip_movement:
+     ; joypad test
+    ld l, key_a
+    call is_key_down
+    jr z, .end_loop
+        ; check colision target, to show correct message
+        ld hl, collision_target
+        ld a, [hl]
+        cp a, $01
+        jr nz, .end_loop
+        ld hl, collision_target_type
+        ld a, [hl]
+        cp a, collision_type_map
+        jr nz, .end_loop
+            ; First Target
+            ld de, dialog_page_up_end - dialog_page_up
+            ld hl, dialog_page_up
+            call hud_copy_text_buffer
+            ld de, dialog_page_up_end - dialog_page_up
+            ld a, text_box_all_animations 
+            call hud_show_text
+.end_loop:
+    jp bac_jump_to_process_callback_return_address

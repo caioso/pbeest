@@ -168,4 +168,9 @@ room_left_initialize_game_objects:
     ld b, $01 ; For scrolling
     call goc_initialize_game_object
 
-     jp bac_return_address
+     jp bac_jump_to_game_object_initializer_return_address
+
+; Room process callback
+room_left_process_callback:
+    nop
+    jp bac_jump_to_process_callback_return_address

@@ -157,6 +157,10 @@ main:
     ld hl, room_initialize_game_objects
     call bac_set_gob_initializer
 
+    ; initialize process callback addresss
+    ld hl, room_process_callback
+    call bac_set_process_callback
+
     ; load target bank to be used during map loading
     ld d, $00
     ld e, $02
@@ -214,125 +218,147 @@ main:
     ; Player Controlled Loop Iteration
     call chr_player_controlled_character_loop
 
-    ; ROOM 1 CHECK
-    ld a, [map_current_room_id]
-    cp $00
-    jp nz, .room_1_loop
-        ; joypad test
-        ld l, key_a
-        call is_key_down
-        jr z, .edge_detection
-            ; check colision target, to show correct message
-            ld hl, collision_target
-            ld a, [hl]
-            cp a, $01
-            jr nz, .edge_detection
-                ; First Target
-                ld de, dialog_page_up_end - dialog_page_up
-                ld hl, dialog_page_up
-                call hud_copy_text_buffer
-                ld de, dialog_page_up_end - dialog_page_up
-                ld a, text_box_all_animations 
-                call hud_show_text
+    ; run current process callback
+    ; load target bank to be used during map loading
+    call bac_switch_bank
+    call bac_jump_to_process_callback
+    call bac_restore_bank
 
-.edge_detection:
-        ; Check edge collisions
-        ; horizontal edges collision check
-        ld a, [edget_collision_target_x]
-        cp chr_left_edge_limit
-        jr z, .load_room_left
-        cp chr_right_edge_limit
-        jr z, .load_room_right
-        ld a, [edget_collision_target_y]
-        cp chr_top_edge_limit
-        jr z, .load_room_top
-        cp chr_bottom_edge_limit
-        jr z, .load_room_bottom
-        jp .edge_check_complete
+;     ; ROOM 1 CHECK
+;     ld a, [map_current_room_id]
+;     cp $00
+;     jp nz, .room_1_loop
+;         ; joypad test
+;         ld l, key_a
+;         call is_key_down
+;         jr z, .edge_detection
+;             ; check colision target, to show correct message
+;             ld hl, collision_target
+;             ld a, [hl]
+;             cp a, $01
+;             jr nz, .edge_detection
+;                 ; First Target
+;                 ld de, dialog_page_up_end - dialog_page_up
+;                 ld hl, dialog_page_up
+;                 call hud_copy_text_buffer
+;                 ld de, dialog_page_up_end - dialog_page_up
+;                 ld a, text_box_all_animations 
+;                 call hud_show_text
 
-.load_room_left:
-        ld a, $02
-        ld [map_current_room_id], a
+; .edge_detection:
+;         ; Check edge collisions
+;         ; horizontal edges collision check
+;         ld a, [edget_collision_target_x]
+;         cp chr_left_edge_limit
+;         jr z, .load_room_left
+;         cp chr_right_edge_limit
+;         jr z, .load_room_right
+;         ld a, [edget_collision_target_y]
+;         cp chr_top_edge_limit
+;         jr z, .load_room_top
+;         cp chr_bottom_edge_limit
+;         jp z, .load_room_bottom
+;         jp .edge_check_complete
 
-        ; initialize game object
-        ld hl, room_left_initialize_game_objects
-        call bac_set_gob_initializer
+; .load_room_left:
+;         ld a, $02
+;         ld [map_current_room_id], a
 
-        ; load target bank to be used during map loading
-        ld d, $00
-        ld e, $01
-        call bac_set_bank_switching_intention
+;         ; initialize game object callback address
+;         ld hl, room_left_initialize_game_objects
+;         call bac_set_gob_initializer
 
-        ld a, map_tile_base_section_8000 | map_load_left | map_load_tiles | map_load_palettes
-        ld hl, sample_room_left_begin
-        ld bc, $85A0
-        ld de, $060E
-        call map_load_room
-        call chr_clear_collision
-        jp .edge_check_complete
+;         ; initialize process callback addresss
+;         ld hl, room_left_process_callback
+;         call bac_set_process_callback
 
-.load_room_right:
-        ld a, $01
-        ld [map_current_room_id], a
+;         ; load target bank to be used during map loading
+;         ld d, $00
+;         ld e, $01
+;         call bac_set_bank_switching_intention
 
-        ; initialize game object
-        ld hl, room_right_initialize_game_objects
-        call bac_set_gob_initializer
+;         ld a, map_tile_base_section_8000 | map_load_left | map_load_tiles | map_load_palettes
+;         ld hl, sample_room_left_begin
+;         ld bc, $85A0
+;         ld de, $060E
+;         call map_load_room
+;         call chr_clear_collision
+;         jp .edge_check_complete
 
-        ; load target bank to be used during map loading
-        ld d, $00
-        ld e, $01
-        call bac_set_bank_switching_intention
+; .load_room_right:
+;         ld a, $01
+;         ld [map_current_room_id], a
 
-        ld a, map_tile_base_section_8000 | map_load_right | map_load_tiles | map_load_palettes
-        ld hl, sample_room_right_begin
-        ld bc, $85A0
-        ld de, $0001
-        call map_load_room
-        call chr_clear_collision
-        jp .edge_check_complete
+;         ; initialize game object
+;         ld hl, room_right_initialize_game_objects
+;         call bac_set_gob_initializer
 
-.load_room_top:
-        ld a, $03
-        ld [map_current_room_id], a
+;         ; initialize process callback addresss
+;         ld hl, room_right_process_callback
+;         call bac_set_process_callback
 
-         ; initialize game object
-        ld hl, room_top_initialize_game_objects
-        call bac_set_gob_initializer
+;         ; load target bank to be used during map loading
+;         ld d, $00
+;         ld e, $01
+;         call bac_set_bank_switching_intention
 
-        ; load target bank to be used during map loading
-        ld d, $00
-        ld e, $01
-        call bac_set_bank_switching_intention
+;         ld a, map_tile_base_section_8000 | map_load_right | map_load_tiles | map_load_palettes
+;         ld hl, sample_room_right_begin
+;         ld bc, $85A0
+;         ld de, $0001
+;         call map_load_room
+;         call chr_clear_collision
+;         jp .edge_check_complete
 
-        ld a, map_tile_base_section_8000 | map_load_above | map_load_tiles | map_load_palettes
-        ld hl, sample_room_top_begin
-        ld bc, $85A0
-        ld de, $010E
-        call map_load_room
-        call chr_clear_collision
-        jp .edge_check_complete
+; .load_room_top:
+;         ld a, $03
+;         ld [map_current_room_id], a
 
-.load_room_bottom:
-        ld a, $04
-        ld [map_current_room_id], a
+;          ; initialize game object
+;         ld hl, room_top_initialize_game_objects
+;         call bac_set_gob_initializer
 
-         ; initialize game object
-        ld hl, room_bottom_initialize_game_objects
-        call bac_set_gob_initializer
+;         ; initialize process callback addresss
+;         ld hl, room_top_process_callback
+;         call bac_set_process_callback
 
-        ; load target bank to be used during map loading
-        ld d, $00
-        ld e, $01
-        call bac_set_bank_switching_intention
+;         ; load target bank to be used during map loading
+;         ld d, $00
+;         ld e, $01
+;         call bac_set_bank_switching_intention
 
-        ld a, map_tile_base_section_8000 | map_load_below | map_load_tiles | map_load_palettes
-        ld hl, sample_room_bottom_begin
-        ld bc, $85A0
-        ld de, $0A00
-        call map_load_room
-        call chr_clear_collision
-        jp .edge_check_complete
+;         ld a, map_tile_base_section_8000 | map_load_above | map_load_tiles | map_load_palettes
+;         ld hl, sample_room_top_begin
+;         ld bc, $85A0
+;         ld de, $010E
+;         call map_load_room
+;         call chr_clear_collision
+;         jp .edge_check_complete
+
+; .load_room_bottom:
+;         ld a, $04
+;         ld [map_current_room_id], a
+
+;          ; initialize game object
+;         ld hl, room_bottom_initialize_game_objects
+;         call bac_set_gob_initializer
+
+;         ; initialize process callback addresss
+;         ld hl, room_bottom_process_callback
+;         call bac_set_process_callback
+
+;         ; load target bank to be used during map loading
+;         ld d, $00
+;         ld e, $01
+;         call bac_set_bank_switching_intention
+
+;         ld a, map_tile_base_section_8000 | map_load_below | map_load_tiles | map_load_palettes
+;         ld hl, sample_room_bottom_begin
+;         ld bc, $85A0
+;         ld de, $0A00
+;         call map_load_room
+;         call chr_clear_collision
+;         jp .edge_check_complete
 
 .room_1_loop:
     ld a, [map_current_room_id]

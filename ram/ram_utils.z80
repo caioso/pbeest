@@ -33,6 +33,10 @@ temp_gobj_x equ temp_gobj_y + 1
 temp_gobj_tile equ temp_gobj_x + 1
 temp_gobj_attr equ temp_gobj_tile + 1
 
+; Room Sketchpad
+room_sketchpad equ temp_gobj_attr + 1
+room_sketchpad_size equ $20 ; 32 bytes
+
 ; Calculates the second half of a game object.
 ; hl: address of the Y coordinate of the first sprite half
 ; return hl: address of the second half

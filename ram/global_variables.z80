@@ -314,13 +314,16 @@ gobj_usage_table equ gobj_table_end + 1
 gobj_usage_table_size equ 20
 
 ; bank control
-bank_target_bank_LSB equ gobj_usage_table + 1
+bank_target_bank_LSB equ gobj_usage_table + 21
 bank_target_bank_HSB equ bank_target_bank_LSB + 1
 bank_restore_bank_LSB equ bank_target_bank_HSB + 1
 bank_restore_bank_HSB equ bank_restore_bank_LSB + 1
 
 game_object_initializer_address_LSB equ bank_restore_bank_HSB + 1 
 game_object_initializer_address_HSB equ game_object_initializer_address_LSB + 1
+
+room_process_callback_address_LSB equ game_object_initializer_address_HSB + 1 
+room_process_callback_address_HSB equ room_process_callback_address_LSB + 1
 
 ; Constant 
 max_gobj_per_map equ 10

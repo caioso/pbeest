@@ -271,7 +271,7 @@ map_load_room:
     push bc
     push de
     push hl
-    call bac_dynamic_jump
+    call bac_jump_to_game_object_initializer
     pop hl
     pop de
     pop bc
@@ -566,7 +566,7 @@ map_load_room:
     push bc
     push de
     push hl
-    call bac_dynamic_jump
+    call bac_jump_to_game_object_initializer
     pop hl
     pop de
     pop bc

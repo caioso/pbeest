@@ -1163,3 +1163,51 @@ goc_swap_gameobject_by_index:
     cp $08
     jr nz, .continue_copy
     ret
+
+; Adds offset to specific game object
+; a: target game obhect
+; c: 0 -> relative, 1 -> absolute
+; d: X position/offset
+; e: Y position/offset
+goc_set_game_object_by_xy:
+
+    ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
+    call goc_get_gameobject_address
+
+    ld a, c
+    cp $00
+    jr nz, .absolute
+        ld a, [hl]
+        add e
+        ld [hl], a
+        inc hl
+        ld a, [hl]
+        add d
+        ld [hl], a
+        inc hl
+        inc hl
+        inc hl
+        ld a, [hl]
+        add e
+        ld [hl], a
+        inc hl
+        ld a, [hl]
+        add d
+        ld [hl], a
+        ret
+.absolute:
+    ld a, e
+    ld [hl], a
+    inc hl
+    ld a, d
+    ld [hl], a
+    inc hl
+    inc hl
+    inc hl
+    ld a, e
+    ld [hl], a
+    inc hl
+    ld a, d
+    add $08
+    ld [hl], a
+    ret
