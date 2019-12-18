@@ -53,9 +53,6 @@ map_get_map_origin_offset:
 ; bc: initial tile address (full 16 bits tile address)
 ; de: map initial position X(d) and Y(e) [in tiles, not pixels]
 map_load_room:
-    ; Switch to target bank
-    call bac_switch_bank
-
     ; save temp variables 
     ; save map data loading attributes bit map
     push hl
@@ -544,9 +541,6 @@ map_load_room:
     ; load map logic layer
     call map_load_logic_layer
 
-    ; restore target bank
-    call bac_restore_bank
-
     ret
 
 .vertical_scrolling:
@@ -889,9 +883,6 @@ map_load_room:
     call goc_restore_hidden_position
 
     call map_load_logic_layer
-
-    ; restore bank
-    call bac_restore_bank
 
     ret
 
@@ -2018,165 +2009,70 @@ map_pixel_to_tile:
     srl a
     ret
 
-; Load room's game objects
-map_load_game_objects:
-
-    ; this must be executed before loading any game object
-    call gobj_initialize_game_object_batch
-
-    push hl
-    ld l, map_load_origin
-    call check_animation_direction
-    pop hl
-    jr nz, .normal_loading
-        ; test: load game object 0
-        call goc_find_game_object_table_slot
-        ; from this point onwards, h Holds the address of the slot in the table
-        ld d, $5*8 ; x
-        ld e, $9*8 ; y
-        ld c, $56 ; sprite
-        ld b, $00 ; For scrolling
-        call goc_initialize_game_object
+map_request_map_load:
+    ld a, 1
+    ld [map_load_request_flag], a
     ret
 
-.normal_loading:
-    ; test: load game object 0
-    call goc_find_game_object_table_slot
-    ; from this point onwards, h Holds the address of the slot in the table
-    ld d, $5*8 ; x
-    ld e, $5*8 ; y
-    ld c, $56 ; sprite
-    ld b, $01 ; For scrolling
-    call goc_initialize_game_object
+map_commit_map_load_request:
+    ld a, [map_load_request_flag]
+    cp $01
+    ret nz
 
-    ; test: load game object 0
-    call goc_find_game_object_table_slot
-    ; from this point onwards, h Holds the address of the slot in the table
-    ld d, $8*8 ; x
-    ld e, $5*8 ; y
-    ld c, $56 ; sprite
-    ld b, $01 ; For scrolling
-    call goc_initialize_game_object
+    ; initialize game object callback
+    ld a, [map_game_object_initializer_address_LSB]
+    ld l, a
+    ld a, [map_game_object_initializer_address_MSB]
+    ld h, a
+    call bac_set_gob_initializer
 
-    ; test: load game object 0
-    call goc_find_game_object_table_slot
-    ; from this point onwards, h Holds the address of the slot in the table
-    ld d, $11*8 ; x
-    ld e, $15*8 ; y
-    ld c, $56 ; sprite
-    ld b, $01 ; For scrolling
-    call goc_initialize_game_object
+    ; process object callback
+    ld a, [map_process_callback_address_LSB]
+    ld l, a
+    ld a, [map_process_callback_address_MSB]
+    ld h, a
+    call bac_set_process_callback
 
-    ; test: load game object 0
-    call goc_find_game_object_table_slot
-    ; from this point onwards, h Holds the address of the slot in the table
-    ld d, $11*8 ; x
-    ld e, $18*8 ; y
-    ld c, $56 ; sprite
-    ld b, $01 ; For scrolling
-    call goc_initialize_game_object
+    ; process init callback
+    ld a, [map_process_callback_address_LSB]
+    ld l, a
+    ld a, [map_process_callback_address_MSB]
+    ld h, a
+    call bac_set_init_callback
 
+    ; process init callback
+    ld a, [map_bank_ID_LSB]
+    ld e, a
+    ld a, [map_bank_ID_MSB]
+    ld d, a
+    call bac_set_bank_switching_intention
 
-    ; ld a, $02
-    ; ld d, $40 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
+    ; clear request flag
+    ld a, $00
+    ld [map_load_request_flag], a
 
-    ; ld a, $03
-    ; ld d, $40 ; x
-    ; ld e, $B0 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
+    ; Switch to target bank
+    call bac_switch_bank
 
-    ; ld a, $04
-    ; ld d, $10 ; x
-    ; ld e, $10 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
+    ; load map
+    ld a, [map_room_data_address_LSB]
+    ld l, a
+    ld a, [map_room_data_address_MSB]
+    ld h, a
+    ld a, [map_room_tiles_address_LSB]
+    ld c, a
+    ld a, [map_room_tiles_address_MSB]
+    ld b, a
+    ld a, [map_room_Y]
+    ld e, a
+    ld a, [map_room_X]
+    ld d, a
+    ld a, [map_loading_settings_flags]
+    call map_load_room
+        
+    ; restore target bank
+    call bac_restore_bank
 
-    ; ld a, $05
-    ; ld d, $6D ; x
-    ; ld e, $77 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $06
-    ; ld d, $97 ; x
-    ; ld e, $6D ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $07
-    ; ld d, $20 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $08
-    ; ld d, $20 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $09
-    ; ld d, $20 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $0A
-    ; ld d, $20 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $0B
-    ; ld d, $20 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $0C
-    ; ld d, $20 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $0D
-    ; ld d, $20 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $0E
-    ; ld d, $20 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $0F
-    ; ld d, $20 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $10
-    ; ld d, $20 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $11
-    ; ld d, $20 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
-    ; ld a, $12
-    ; ld d, $20 ; x
-    ; ld e, $80 ; y
-    ; ld c, $56
-    ; call goc_initialize_game_object
-
+    ; clear collision values (required before initializing)
+    call chr_clear_collision
     ret

@@ -325,6 +325,27 @@ game_object_initializer_address_HSB equ game_object_initializer_address_LSB + 1
 room_process_callback_address_LSB equ game_object_initializer_address_HSB + 1 
 room_process_callback_address_HSB equ room_process_callback_address_LSB + 1
 
+room_init_callback_address_LSB equ room_process_callback_address_HSB + 1 
+room_init_callback_address_HSB equ room_init_callback_address_LSB + 1
+
+; Async Map loading variables
+map_load_request_flag equ room_init_callback_address_HSB + 1
+map_loading_settings_flags equ map_load_request_flag + 1
+map_room_data_address_LSB equ map_loading_settings_flags + 1
+map_room_data_address_MSB equ map_room_data_address_LSB + 1
+map_room_tiles_address_LSB equ map_room_data_address_MSB + 1
+map_room_tiles_address_MSB equ map_room_tiles_address_LSB + 1
+map_room_X equ map_room_tiles_address_MSB + 1
+map_room_Y equ map_room_X + 1
+map_game_object_initializer_address_LSB equ map_room_Y + 1
+map_game_object_initializer_address_MSB equ map_game_object_initializer_address_LSB + 1
+map_process_callback_address_LSB equ map_game_object_initializer_address_MSB + 1
+map_process_callback_address_MSB equ map_process_callback_address_LSB + 1
+map_init_callback_address_LSB equ map_process_callback_address_MSB + 1
+map_init_callback_address_MSB equ map_init_callback_address_LSB + 1
+map_bank_ID_LSB equ map_init_callback_address_MSB + 1
+map_bank_ID_MSB equ map_bank_ID_LSB + 1
+
 ; Constant 
 max_gobj_per_map equ 10
 game_object_taken equ $AA

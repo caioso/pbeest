@@ -128,6 +128,10 @@ db $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $0
 db $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80
 
 ; Loads game object
+room_left_init_callback:
+    ret 
+    
+; Loads game object
 room_left_initialize_game_objects:
     ; this must be executed before loading any game object
     call gobj_initialize_game_object_batch

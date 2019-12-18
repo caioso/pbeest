@@ -153,27 +153,45 @@ main:
     ld a, $00
     ld [map_current_room_id], a
 
-    ; initialize game object
+    ; Request Map Load
     ld hl, room_initialize_game_objects
-    call bac_set_gob_initializer
-
-    ; initialize process callback addresss
+    ld a, l
+    ld [map_game_object_initializer_address_LSB], a
+    ld a, h
+    ld [map_game_object_initializer_address_MSB], a
+    ld hl, room_init_callback
+    ld a, l
+    ld [map_init_callback_address_LSB], a
+    ld a, h
+    ld [map_init_callback_address_MSB], a
     ld hl, room_process_callback
-    call bac_set_process_callback
-
-    ; load target bank to be used during map loading
-    ld d, $00
-    ld e, $02
-    call bac_set_bank_switching_intention
-
+    ld a, l
+    ld [map_process_callback_address_LSB], a
+    ld a, h
+    ld [map_process_callback_address_MSB], a
+    ld a, $02
+    ld [map_bank_ID_LSB], a
+    ld a, $00
+    ld [map_bank_ID_MSB], a
     ld a, map_tile_base_section_8000 | map_load_origin | map_load_tiles | map_load_palettes
+    ld [map_loading_settings_flags], a
     ld hl, sample_room_begin
-    ld bc, $85A0
-    ld de, $0000
-    call map_load_room
-
-    ; clear collision values (required before initializing)
-    call chr_clear_collision
+    ld a, l
+    ld [map_room_data_address_LSB], a
+    ld a, h
+    ld [map_room_data_address_MSB], a 
+    ld a, $A0
+    ld [map_room_tiles_address_LSB], a
+    ld a, $85
+    ld [map_room_tiles_address_MSB], a
+    ld a, $00
+    ld [map_room_X], a
+    ld a, $00
+    ld [map_room_Y], a
+    
+    ; Load Map
+    call map_request_map_load
+    call map_commit_map_load_request
 
     ; start display register
     ; set lcd on
@@ -223,6 +241,9 @@ main:
     call bac_switch_bank
     call bac_jump_to_process_callback
     call bac_restore_bank
+
+    ; in case a request has been submitted
+    call map_commit_map_load_request
 
 ;     ; ROOM 1 CHECK
 ;     ld a, [map_current_room_id]

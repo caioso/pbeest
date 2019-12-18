@@ -106,24 +106,29 @@ room_initialize_game_objects:
     jp bac_jump_to_game_object_initializer_return_address
 
 
+; Romm initialization callback
+room_init_callback:
+
+    ret;
+
 ; Room process callback
 room_process_callback:
-    ld a, [room_sketchpad]
-    inc a
-    ld [room_sketchpad], a
-    cp a, $1
-    jp nz, .skip_movement
-        ld a, $00
-        ld [room_sketchpad], a
+;     ld a, [room_sketchpad]
+;     inc a
+;     ld [room_sketchpad], a
+;     cp a, $1
+;     jp nz, .skip_movement
+;         ld a, $00
+;         ld [room_sketchpad], a
 
-        ; Move NPC
-        ld a, $01
-        ld d, $01
-        ld e, $00
-        ld c, $00
-        call goc_set_game_object_by_xy
+;         ; Move NPC
+;         ld a, $01
+;         ld d, $01
+;         ld e, $00
+;         ld c, $00
+;         call goc_set_game_object_by_xy
 
-.skip_movement:
+; .skip_movement:
      ; joypad test
     ld l, key_a
     call is_key_down
@@ -144,5 +149,52 @@ room_process_callback:
             ld de, dialog_page_up_end - dialog_page_up
             ld a, text_box_all_animations 
             call hud_show_text
+            jr .exit
 .end_loop:
+         ; Check edge collisions
+         ; horizontal edges collision check
+         ld a, [edget_collision_target_x]
+         cp chr_left_edge_limit
+         jr nz, .exit
+
+        ; Request Map Load
+        ld hl, room_left_initialize_game_objects
+        ld a, l
+        ld [map_game_object_initializer_address_LSB], a
+        ld a, h
+        ld [map_game_object_initializer_address_MSB], a
+        ld hl, room_left_init_callback
+        ld a, l
+        ld [map_init_callback_address_LSB], a
+        ld a, h
+        ld [map_init_callback_address_MSB], a
+        ld hl, room_left_process_callback
+        ld a, l
+        ld [map_process_callback_address_LSB], a
+        ld a, h
+        ld [map_process_callback_address_MSB], a
+        ld a, $01
+        ld [map_bank_ID_LSB], a
+        ld a, $00
+        ld [map_bank_ID_MSB], a
+        ld a, map_tile_base_section_8000 | map_load_left | map_load_tiles | map_load_palettes
+        ld [map_loading_settings_flags], a
+        ld hl, sample_room_left_begin
+        ld a, l
+        ld [map_room_data_address_LSB], a
+        ld a, h
+        ld [map_room_data_address_MSB], a 
+        ld a, $A0
+        ld [map_room_tiles_address_LSB], a
+        ld a, $85
+        ld [map_room_tiles_address_MSB], a
+        ld a, $06
+        ld [map_room_X], a
+        ld a, $0E
+        ld [map_room_Y], a
+        
+        ; Load Map
+        call map_request_map_load
+
+.exit
     jp bac_jump_to_process_callback_return_address
