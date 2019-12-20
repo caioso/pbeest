@@ -259,8 +259,8 @@ goc_initialize_game_object:
     ld a, h
     adc $00
     ld h, a
-    ; for now AA. Use another index to label the game to remove it from the transition.
-    ld a, $BB
+    ; for now AA. Use another index to label the game object to remove it from the transition.
+    ld a, $00
     ld [hl], a
     pop hl
     pop af

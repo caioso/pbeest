@@ -228,7 +228,7 @@ main:
 
 .main_loop
     nop
-    call display_wait_vblank
+    ;call display_wait_vblank
 
     ; read input
     call joypad

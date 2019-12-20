@@ -7,7 +7,7 @@
 chr_top_edge_limit equ $06
 chr_bottom_edge_limit equ $90
 chr_left_edge_limit equ $FF
-chr_right_edge_limit equ $A0
+chr_right_edge_limit equ $9E
 
 
 ; load character tiles

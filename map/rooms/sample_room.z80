@@ -96,7 +96,7 @@ room_initialize_game_objects:
     ld d, $5*8 ; x
     ld e, $9*8 ; y
     ld c, $56 ; sprite
-    ld b, $00 ; For scrolling
+    ld b, $01 ; For scrolling
     call goc_initialize_game_object
 
     ; TEMP!!!

@@ -1798,7 +1798,7 @@ map_scroll_map_horizontally_if_needed:
 
         push hl
 .wait
-        call bgc_wait_for_VRAM
+        ;call bgc_wait_for_VRAM
         push hl
         call ram_get_player_game_obj_address
         inc hl
@@ -1849,7 +1849,7 @@ map_scroll_map_horizontally_if_needed:
 .scroll_left:
     push hl
 .wait_2
-    call bgc_wait_for_VRAM
+    ;call bgc_wait_for_VRAM
     push hl
     call ram_get_player_game_obj_address
     inc hl
@@ -1906,7 +1906,7 @@ map_scroll_map_vertically_if_needed:
 
     push hl
 .wait
-    call bgc_wait_for_VRAM
+    ;call bgc_wait_for_VRAM
     push hl
     call ram_get_player_game_obj_address
     ld a, [hl]
@@ -1955,7 +1955,7 @@ map_scroll_map_vertically_if_needed:
 .scroll_down:
     push hl
 .wait_2
-    call bgc_wait_for_VRAM
+    ;call bgc_wait_for_VRAM
     push hl
     call ram_get_player_game_obj_address
     ld a, [hl]
