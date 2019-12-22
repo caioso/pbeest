@@ -236,12 +236,26 @@ goc_initialize_game_object:
     push af
     ld a, $90
     cp e
-    jr c, .finish
+    jp c, .finish
 
 .check_x:
     pop af
 
-    ; Check on-screen case
+    push af
+    push hl
+    ld l, map_load_right
+    call check_animation_direction
+    pop hl
+    pop af
+    jr nz, .scroll_right_bonudaries
+        ; Check on-screen case
+        push af
+        ld a, $00
+        cp d
+        jr c, .finish
+        jr .mark_goj
+
+.scroll_right_bonudaries:
     push af
     ld a, $A0
     cp d
