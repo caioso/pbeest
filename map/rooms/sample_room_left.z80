@@ -179,8 +179,8 @@ room_left_process_callback:
     ; Check edge collisions
     ; horizontal edges collision check
     ld a, [edget_collision_target_x]
-    cp $FE
-    jr z, .exit
+    cp chr_right_edge_limit
+    jr nz, .exit
 
     ; Request Map Load
     ld hl, room_initialize_game_objects

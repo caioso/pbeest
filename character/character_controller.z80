@@ -7,7 +7,7 @@
 chr_top_edge_limit equ $06
 chr_bottom_edge_limit equ $90
 chr_left_edge_limit equ $FF
-chr_right_edge_limit equ $9E
+chr_right_edge_limit equ $A0
 
 
 ; load character tiles
@@ -155,7 +155,10 @@ chr_move_character_down:
     call chr_check_vertical_edges
     cp $00
     jr nz, .continue_collision_check
+        ld a, [map_current_y_offset]
+        ld b, a
         ld a, c
+        sub b
         ld [edget_collision_target_y], a
         pop hl
         pop bc
@@ -324,7 +327,10 @@ chr_move_character_up:
     call chr_check_vertical_edges
     cp $00
     jr nz, .continue_collision_check
+        ld a, [map_current_y_offset]
+        ld b, a
         ld a, c
+        sub b
         ld [edget_collision_target_y], a
         pop hl
         pop bc
@@ -492,7 +498,10 @@ chr_move_character_left:
     call chr_check_horizontal_edges
     cp $00
     jr nz, .continue_collision_check
+        ld a, [map_current_x_offset]
+        ld c, a
         ld a, b
+        sub c
         ld [edget_collision_target_x], a
         pop hl
         pop bc
@@ -654,7 +663,10 @@ chr_move_character_right:
     call chr_check_horizontal_edges
     cp $00
     jr nz, .continue_collision_check
+        ld a, [map_current_x_offset]
+        ld c, a
         ld a, b
+        sub c
         ld [edget_collision_target_x], a
         pop hl
         pop bc
