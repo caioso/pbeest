@@ -195,14 +195,14 @@ room_process_callback:
         
         ; Load Map
         call map_request_map_load
-        jr .exit
+        jp .exit
 
 .check_right:
-        ; Check edge collisions
+         ; Check edge collisions
          ; horizontal edges collision check
          ld a, [edget_collision_target_x]
          cp chr_right_edge_limit
-         jr nz, .exit
+         jr nz, .check_up
 
          ; Request Map Load
         ld hl, room_right_initialize_game_objects
@@ -242,8 +242,100 @@ room_process_callback:
         
         ; Load Map
         call map_request_map_load
+        jp .exit
+
+.check_up:
+        ; Check edge collisions
+        ; horizontal edges collision check
+        ld a, [edget_collision_target_y]
+        cp chr_top_edge_limit
+        jr nz, .check_bottom
+
+        ; Request Map Load
+        ld hl, room_top_initialize_game_objects
+        ld a, l
+        ld [map_game_object_initializer_address_LSB], a
+        ld a, h
+        ld [map_game_object_initializer_address_MSB], a
+        ld hl, room_top_init_callback
+        ld a, l
+        ld [map_init_callback_address_LSB], a
+        ld a, h
+        ld [map_init_callback_address_MSB], a
+        ld hl, room_top_process_callback
+        ld a, l
+        ld [map_process_callback_address_LSB], a
+        ld a, h
+        ld [map_process_callback_address_MSB], a
+        ld a, $01
+        ld [map_bank_ID_LSB], a
+        ld a, $00
+        ld [map_bank_ID_MSB], a
+        ld a, map_tile_base_section_8000 | map_load_above | map_load_tiles | map_load_palettes
+        ld [map_loading_settings_flags], a
+        ld hl, sample_room_top_begin
+        ld a, l
+        ld [map_room_data_address_LSB], a
+        ld a, h
+        ld [map_room_data_address_MSB], a 
+        ld a, $A0
+        ld [map_room_tiles_address_LSB], a
+        ld a, $85
+        ld [map_room_tiles_address_MSB], a
+        ld a, $01
+        ld [map_room_X], a
+        ld a, $0E
+        ld [map_room_Y], a
+        
+        ; Load Map
+        call map_request_map_load
         jr .exit
 
+.check_bottom:
+        ; Check edge collisions
+        ; horizontal edges collision check
+        ld a, [edget_collision_target_y]
+        cp chr_bottom_edge_limit
+        jr nz, .exit
+
+        ; Request Map Load
+        ld hl, room_bottom_initialize_game_objects
+        ld a, l
+        ld [map_game_object_initializer_address_LSB], a
+        ld a, h
+        ld [map_game_object_initializer_address_MSB], a
+        ld hl, room_bottom_init_callback
+        ld a, l
+        ld [map_init_callback_address_LSB], a
+        ld a, h
+        ld [map_init_callback_address_MSB], a
+        ld hl, room_bottom_process_callback
+        ld a, l
+        ld [map_process_callback_address_LSB], a
+        ld a, h
+        ld [map_process_callback_address_MSB], a
+        ld a, $01
+        ld [map_bank_ID_LSB], a
+        ld a, $00
+        ld [map_bank_ID_MSB], a
+        ld a, map_tile_base_section_8000 | map_load_below | map_load_tiles | map_load_palettes
+        ld [map_loading_settings_flags], a
+        ld hl, sample_room_bottom_begin
+        ld a, l
+        ld [map_room_data_address_LSB], a
+        ld a, h
+        ld [map_room_data_address_MSB], a 
+        ld a, $A0
+        ld [map_room_tiles_address_LSB], a
+        ld a, $85
+        ld [map_room_tiles_address_MSB], a
+        ld a, $0A
+        ld [map_room_X], a
+        ld a, $00
+        ld [map_room_Y], a
+        
+        ; Load Map
+        call map_request_map_load
 
 .exit
     jp bac_jump_to_process_callback_return_address

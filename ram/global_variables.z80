@@ -50,7 +50,9 @@ map_current_x equ map_current_height + 1
 map_current_y equ map_current_x + 1
 map_current_x_offset equ map_current_y + 1
 map_current_y_offset equ map_current_x_offset + 1
-map_current_room_id equ map_current_y_offset + 1
+map_real_x equ map_current_y_offset + 1
+map_real_y equ map_real_x + 1
+map_current_room_id equ map_real_y + 1
 map_current_LUT_address_byte_1 equ map_current_room_id + 1
 map_current_LUT_address_byte_2 equ map_current_LUT_address_byte_1 + 1
 

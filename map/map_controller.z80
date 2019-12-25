@@ -17,24 +17,59 @@ map_initialize_map_controller:
     ld [map_current_height], a
     ret
 
-; Calculates virual (0,0) (in tiles), based on the current map position.
-; l: offset X
-; h: offset Y
-; a: 0: left, 1: right
-; return hl holds the origin offset
-map_get_map_origin_offset:
-    ; X position + Offset
-    ld a, [map_current_x_offset]
-    cpl 
-    inc a
-    ld l, a
-   
-    ld a, [map_current_y_offset]
-    cpl
-    inc a
-    add a, 8
-    ld h, a
+; Calculate Rwal Map's Origin X and Y
+map_calculate_map_real_positions:
 
+    push bc
+    ; Expression for left loading
+    ; Real X = MAP X - (MAP X Offset)/8
+    ; if RealX < 0 -> add 32 (wrap around)
+    ld a, [map_current_x]
+    ld c, a
+    ; divide map current offset  by 3
+    ld a, [map_current_x_offset]
+    rrc a
+    rrc a
+    rrc a
+    ld b, a
+    ld a, c
+    sub b
+    ld c, a
+    
+    ld a, $80
+    and c
+    cp $00
+    ld a, c
+    jr z, .skip_test_left_x
+        ld a, c
+        add 32 ; Max Map Buffer Y
+.skip_test_left_x:
+    ld [map_real_x], a
+
+    ; Real Y = MAP Y - (MAP Y Offset)/8
+    ; if RealY < 0 -> add 32 (wrap around)
+    ld a, [map_current_y]
+    ld c, a
+    ; divide map current offset  by 3
+    ld a, [map_current_y_offset]
+    rrc a
+    rrc a
+    rrc a
+    ld b, a
+    ld a, c
+    sub b
+    ld c, a
+    
+    ld a, $80
+    and c
+    cp $00
+    ld a, c
+    jr z, .skip_test_left_y
+        ld a, c
+        add 32 ; Max Map Buffer Y
+.skip_test_left_y:
+    ld [map_real_y], a
+    pop bc
     ret
 
 ; Loads Room data (tiles, palletes and logic) at a specific position in the video buffer (video buffer size 32x32). With or without animations.
@@ -294,9 +329,6 @@ map_load_room:
     call map_width_times_height
 
 .tile_loading_outer_loop_horizontal:
-    ; TODO: THE INTITIAL y VALUE SHOULD BE CALCULATED BASED ON THE SCREEN OFFSET, NOT ALWAYS 0.
-    ; THIS IS ALSO VALID FOR VERTICAL SCREENS (IN THIS CASE THE x POSITION WILL BE CONSIDERED).
-    ; ram_general_use_variable_9 holds the actual tile in VRAM, ram_general_use_variable_17
     push hl
     ld a, [map_current_y_offset]
     srl a
@@ -540,6 +572,9 @@ map_load_room:
 
     ; load map logic layer
     call map_load_logic_layer
+
+    ; Intiialize Map real X/Y
+    call map_calculate_map_real_positions
 
     ret
 
@@ -883,6 +918,9 @@ map_load_room:
     call goc_restore_hidden_position
 
     call map_load_logic_layer
+
+    ; Calculate map's real X/Y
+    call map_calculate_map_real_positions
 
     ret
 

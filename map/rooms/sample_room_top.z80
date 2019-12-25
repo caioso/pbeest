@@ -127,6 +127,11 @@ db $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $0
 db $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $80
 db $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $00, $00, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80
 
+; Romm initialization callback
+room_top_init_callback:
+
+    ret;
+
 ; Loads game object
 room_top_initialize_game_objects:
     ; this must be executed before loading any game object

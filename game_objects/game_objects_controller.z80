@@ -134,6 +134,8 @@ goc_initialize_game_object:
     pop af
 
     ; mark goc in usage table
+    ; This means the game object is meant to stay on sreen during the transition.
+    ; Game objects that already were on screen will be unloaded but the marked Gobjs will remain
     push af
     ld hl, gobj_usage_table
     add l
@@ -162,205 +164,276 @@ goc_initialize_game_object:
     cp $00
     jp z, .clear_af
 
-    push hl
-    call map_get_map_origin_offset
+    ; For mage objects that are meant to scroll in to the screen, calculate their position 
+    ; so that the scroll will natureally slide them in (by adding +1/-1, depending on the direction of the scroll)
 
+    ; Process
+    ; 1 - locate the target map's initial X/Y
     push hl
-    ld l, map_load_left
-    call check_animation_direction
+    ld a, [map_real_x]
+    ld a, [map_real_y]
     pop hl
-    jr nz, .scroll_right
-        ld a, l
-        sub $A0
-        add d
-        ld d, a
-        ld a, h
-        add e
-        ld e, a
-        jr .continue
-.scroll_right:
-        push hl
-        ld l, map_load_right
-        call check_animation_direction
-        pop hl
-        jr nz, .scroll_up
-            ld a, l
-            add $A0
-            add d
-            ld d, a
-            ld a, h
-            add e
-            ld e, a
-            jr .continue
-.scroll_up:
-        push hl
-        ld l, map_load_above
-        call check_animation_direction
-        pop hl
-        jr nz, .scroll_down
-            ld a, h
-            sub $90
-            add e
-            ld e, a
-            ld a, l
-            add d
-            ld d, a
-            jr .continue
-.scroll_down:
-        push hl
-        ld l, map_load_below
-        call check_animation_direction
-        pop hl
-        jr nz, .no_scroll
-            ld a, h
-            add $90
-            add e
-            ld e, a
-            ld a, l
-            add d
-            ld d, a
-            jr .continue
-.no_scroll:
-            ld a, h
-            add e
-            ld e, a
-            ld a, l
-            add d
-            ld d, a
-            jr .continue
-.continue:
-    pop hl
-    pop af
+
+;     push hl
+;     call map_get_map_origin_offset
+
+;     push hl
+;     ld l, map_load_left
+;     call check_animation_direction
+;     pop hl
+;     jr nz, .scroll_right
+;         ld a, l
+;         add d
+;         sub $A0
+        
+;         ; Check whether the subtraction did not result in wrap around
+;         cp $A0
+;         jr nc, .scroll_left_within_screen
+;         jr z, .scroll_left_within_screen
+;         add $16
+
+; .scroll_left_within_screen:
+;         ld d, a
+;         ld a, h
+;         add e
+;         ld e, a
+;         jr .continue
+; .scroll_right:
+;         push hl
+;         ld l, map_load_right
+;         call check_animation_direction
+;         pop hl
+;         jr nz, .scroll_up
+;             ld a, l
+;             add $A0
+;             add d
+;             ld d, a
+;             ld a, h
+;             add e
+;             ld e, a
+;             jr .continue
+; .scroll_up:
+;         push hl
+;         ld l, map_load_above
+;         call check_animation_direction
+;         pop hl
+;         jr nz, .scroll_down
+;             ld a, h
+;             add e
+;             sub $90
+;             ld e, a
+;             ld a, l
+;             add d
+;             ld d, a
+;             jr .continue
+; .scroll_down:
+;         push hl
+;         ld l, map_load_below
+;         call check_animation_direction
+;         pop hl
+;         jr nz, .no_scroll
+;             ld a, h
+;             add $90
+;             add e
+;             ld e, a
+;             ld a, l
+;             add d
+;             ld d, a
+;             jr .continue
+; .no_scroll:
+;             ld a, h
+;             add e
+;             ld e, a
+;             ld a, l
+;             add d
+;             ld d, a
+;             jr .continue
+; .continue:
+;     pop hl
+;     pop af
     
-    ; Check on-screen case
-    push af
-    ld a, $90
-    cp e
-    jp c, .finish
+;     ; Check on-screen case
+;     push af
+;     ld a, $90
+;     cp e
+;     jp c, .finish
 
-.check_x:
-    pop af
-
-    push af
-    push hl
-    ld l, map_load_right
-    call check_animation_direction
-    pop hl
-    pop af
-    jr nz, .scroll_right_bonudaries
-        ; Check on-screen case
-        push af
-        ld a, $00
-        cp d
-        jr c, .finish
-        jr .mark_goj
-
-.scroll_right_bonudaries:
-    push af
-    ld a, $A0
-    cp d
-    jr c, .finish
-    jr .mark_goj
-
-.mark_goj:
-    pop af
-
-    push af
-    push hl
-    ld hl, gobj_usage_table
-    add l
-    ld l, a
-    ld a, h
-    adc $00
-    ld h, a
-    ; for now AA. Use another index to label the game object to remove it from the transition.
-    ld a, $00
-    ld [hl], a
-    pop hl
-    pop af
-
-    push hl
-    push af
-    ; Save position to logic_map region
-    ld a, [gobt_batch_size]
-    ld hl, gobt_batch_size
-    inc hl
-
-    ; multiply 'a' by 4 (X and Y)
-    sla a
-    sla a
-
-    ; add a to hl
-    add l
-    ld l, a
-    ld a, h
-    adc $00
-    ld h, a
-    pop af
-    ld [hl], a
-    inc hl
-    ; reserve 1 byte to simplify calculation (always mutiply by 4).
-    inc hl
-
-    push hl
-    ld l, map_load_left
-    call check_animation_direction
-    pop hl
-    jr nz, .correct_scroll_right
-        ld a, d
-        add a, $A0
-        ld d, a
-        jr .finish_loading
-.correct_scroll_right:
-    push hl
-    ld l, map_load_right
-    call check_animation_direction
-    pop hl
-    jr nz, .correct_scroll_up
-        ld a, d
-        sub a, $A0
-        ld d, a
-        jr .finish_loading
-.correct_scroll_up:
-    push hl
-    ld l, map_load_above
-    call check_animation_direction
-    pop hl
-    jr nz, .correct_scroll_down
-        ld a, e
-        add a, $90
-        ld e, a
-        jr .finish_loading
-.correct_scroll_down:
-    push hl
-    ld l, map_load_below
-    call check_animation_direction
-    pop hl
-    jr nz, .finish_loading
-        ld a, e
-        sub a, $90
-        ld e, a
-
-.finish_loading:
-    ld a, e
-    ld [hl], e
-    inc hl
-    ld [hl], d
-    pop hl
-
-    ; increment the amount of game objects in the list
-    ld a, [gobt_batch_size]
-    inc a
-    ld [gobt_batch_size], a
-
-    ld a, $00
-    ld d, a
-    ld e, a
-    jr .skip_position_adjustment
+; .check_x:
+;     pop af
     
-.finish:
-    pop af
-    jr .skip_position_adjustment
+;     push af
+;     push hl
+;     ; Check whether the game object will be on screen or out during the transition
+;     ; gameobjects on screen must to go .finish
+;     ; operation: Gox >= map_get_map_origin_offset.x [l] && Gox <= map_get_map_origin_offset.x [l] + width
+;     call map_get_map_origin_offset
+;     ; Determine initial and final screen X
+
+;     push hl
+;     ld l, map_load_origin
+;     call check_animation_direction
+;     pop hl
+;     jr nz, .correct_for_left
+;         ld a, d
+;         sub l
+;         cp $A0
+;         jr c, .x_prepare_to_finish
+;         jr z, .x_prepare_to_finish
+;         jr .x_prepare_to_mark
+; .correct_for_left:
+;     push hl
+;     ld l, map_load_left
+;     call check_animation_direction
+;     pop hl
+;     jr nz, .correct_for_right
+;         ld a, d
+;         sub l
+;         add $A0
+;         cp $A0
+;         jr c, .x_prepare_to_finish
+;         jr z, .x_prepare_to_finish
+;         jr .x_prepare_to_mark
+; .correct_for_right:
+;         ld a, d
+;         sub l
+;         sub $A0
+;         cp $A0
+;         jr c, .x_prepare_to_finish
+;         jr z, .x_prepare_to_finish
+;         jr .x_prepare_to_mark
+
+; .x_prepare_to_finish:
+;     pop hl
+;     pop af
+;     push af
+;     jr .finish
+
+; .x_prepare_to_mark:
+;     pop hl
+;     pop af
+;     push af
+
+; ;     push af
+; ;     push hl
+; ;     ld l, map_load_right
+; ;     call check_animation_direction
+; ;     pop hl
+; ;     pop af
+; ;     jr nz, .scroll_right_bonudaries
+; ;         ; Check on-screen case
+; ;         push af
+; ;         ld a, $00
+; ;         cp d
+; ;         jr c, .finish
+; ;         jr .mark_goj
+
+; ; .scroll_right_bonudaries:
+; ;     ; Check on-screen case
+; ;     push af
+; ;     ld a, $A0
+; ;     cp d
+; ;     jr c, .finish
+; ;     jr .mark_goj
+
+; .mark_goj:
+;     pop af
+
+;     push af
+;     push hl
+;     ld hl, gobj_usage_table
+;     add l
+;     ld l, a
+;     ld a, h
+;     adc $00
+;     ld h, a
+;     ; for now AA. Use another index to label the game object to remove it from the transition.
+;     ld a, $00
+;     ld [hl], a
+;     pop hl
+;     pop af
+
+;     push hl
+;     push af
+;     ; Save position to logic_map region
+;     ld a, [gobt_batch_size]
+;     ld hl, gobt_batch_size
+;     inc hl
+
+;     ; multiply 'a' by 4 (X and Y)
+;     sla a
+;     sla a
+
+;     ; add a to hl
+;     add l
+;     ld l, a
+;     ld a, h
+;     adc $00
+;     ld h, a
+;     pop af
+;     ld [hl], a
+;     inc hl
+;     ; reserve 1 byte to simplify calculation (always mutiply by 4).
+;     inc hl
+
+;     push hl
+;     ld l, map_load_left
+;     call check_animation_direction
+;     pop hl
+;     jr nz, .correct_scroll_right
+;         ld a, d
+;         add a, $A0
+;         ld d, a
+;         jr .finish_loading
+; .correct_scroll_right:
+;     push hl
+;     ld l, map_load_right
+;     call check_animation_direction
+;     pop hl
+;     jr nz, .correct_scroll_up
+;         ld a, d
+;         sub a, $A0
+;         ld d, a
+;         jr .finish_loading
+; .correct_scroll_up:
+;     push hl
+;     ld l, map_load_above
+;     call check_animation_direction
+;     pop hl
+;     jr nz, .correct_scroll_down
+;         ld a, e
+;         add a, $90
+;         ld e, a
+;         jr .finish_loading
+; .correct_scroll_down:
+;     push hl
+;     ld l, map_load_below
+;     call check_animation_direction
+;     pop hl
+;     jr nz, .finish_loading
+;         ld a, e
+;         sub a, $90
+;         ld e, a
+
+; .finish_loading:
+;     ld a, e
+;     ld [hl], e
+;     inc hl
+;     ld [hl], d
+;     pop hl
+
+;     ; increment the amount of game objects in the list
+;     ld a, [gobt_batch_size]
+;     inc a
+;     ld [gobt_batch_size], a
+
+;     ld a, $00
+;     ld d, a
+;     ld e, a
+;     jr .skip_position_adjustment
+    
+; .finish:
+;     pop af
+;     jr .skip_position_adjustment
 
 .clear_af:
     pop af
