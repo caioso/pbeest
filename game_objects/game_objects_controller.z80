@@ -168,11 +168,25 @@ goc_initialize_game_object:
     ; so that the scroll will natureally slide them in (by adding +1/-1, depending on the direction of the scroll)
 
     ; Process
-    ; 1 - locate the target map's initial X/Y
-    push hl
+    ; Calculate new position relative to the map origin
     ld a, [map_real_x]
+    ; convert X from tiles to pixels
+    rlc a
+    rlc a
+    rlc a
+    add d
+    ld d, a
     ld a, [map_real_y]
-    pop hl
+    ; convert Y from tiles to pixels
+    rlc a
+    rlc a
+    rlc a
+    add e
+    ld e, a
+
+    ; Check whether the target game object will end-up visible on screen
+    ld a, [map_current_x]
+    ld a, [map_current_y]
 
 ;     push hl
 ;     call map_get_map_origin_offset
