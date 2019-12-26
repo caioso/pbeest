@@ -297,9 +297,17 @@ map_load_room:
     ; [ram_general_use_variable_12] holds the final X value to be stored in map_current_x
     ld [ram_general_use_variable_12], a
     ; only required for maps loaded to the left. Adjust 12 in case of wraparound
-    call map_adjust_final_map_x
 
-    ; ; Load game objects
+    call map_adjust_final_map_x
+    call map_adjust_final_map_y
+
+    ld a, [ram_general_use_variable_12]
+    ld [map_current_x], a
+
+    ; Calculate map's real X/Y
+    call map_calculate_map_real_positions
+
+    ; Load game objects
     push bc
     push de
     push hl
@@ -512,10 +520,6 @@ map_load_room:
         call map_scroll_bg_horizontally_with_animation
         pop bc
         pop hl
-    
-    ; update map X
-    ld a, [ram_general_use_variable_12]
-    ld [map_current_x], a
 
     ; Adjust Player Character Position
     push hl
@@ -573,9 +577,6 @@ map_load_room:
     ; load map logic layer
     call map_load_logic_layer
 
-    ; Intiialize Map real X/Y
-    call map_calculate_map_real_positions
-
     ret
 
 .vertical_scrolling:
@@ -590,8 +591,15 @@ map_load_room:
     ld [ram_general_use_variable_12], a
     ; only required for upwards movement. Adjust 12 in case of wraparound
     call map_adjust_final_map_y
+    call map_adjust_final_map_x
 
-    ; ; Load game objects
+    ld a, [ram_general_use_variable_12]
+    ld [map_current_y], a
+
+    ; Calculate map's real X/Y
+    call map_calculate_map_real_positions
+
+    ; Load game objects
     push bc
     push de
     push hl
@@ -848,9 +856,6 @@ map_load_room:
         pop hl
 
 .map_load_complete:
-    ; update map Y
-    ld a, [ram_general_use_variable_12]
-    ld [map_current_y], a
 
     ; Adjust Player Character Position
     push hl
@@ -918,9 +923,6 @@ map_load_room:
     call goc_restore_hidden_position
 
     call map_load_logic_layer
-
-    ; Calculate map's real X/Y
-    call map_calculate_map_real_positions
 
     ret
 
