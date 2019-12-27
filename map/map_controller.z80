@@ -1617,7 +1617,7 @@ map_scroll_bg_vertically_with_animation:
     ld d, -4
     ld e, $00
     ld b, $01 ; a indicate that the scrolling is for screen transitions, so game objects will be unloaded
-    call goc_scroll_game_objects
+    call goc_scroll_game_objects_excluding_player
     call display_wait_vblank
     call _HRAM
     pop bc
@@ -1639,7 +1639,7 @@ map_scroll_bg_vertically_with_animation:
     ld d, 4
     ld e, $00
     ld b, $01 ; a indicate that the scrolling is for screen transitions, so game objects will be unloaded
-    call goc_scroll_game_objects
+    call goc_scroll_game_objects_excluding_player
     call display_wait_vblank
     call _HRAM
     pop bc
@@ -1750,7 +1750,7 @@ map_scroll_bg_horizontally_with_animation:
     ld d, $00
     ld e, -4
     ld b, $01 ; a indicate that the scrolling is for screen transitions, so game objects will be unloaded
-    call goc_scroll_game_objects
+    call goc_scroll_game_objects_excluding_player
     call display_wait_vblank
     call _HRAM
     pop bc
@@ -1771,7 +1771,7 @@ map_scroll_bg_horizontally_with_animation:
     ld d, $00
     ld e, 4
     ld b, $01 ; a indicate that the scrolling is for screen transitions, so game objects will be unloaded
-    call goc_scroll_game_objects
+    call goc_scroll_game_objects_excluding_player
     call display_wait_vblank
     call _HRAM
     pop bc
@@ -1875,7 +1875,7 @@ map_scroll_map_horizontally_if_needed:
             ld d, $00
             ld e, -1
             ld b, $00 ; a indicate that the srolling is not for screen transitions, so game objects will not be unloaded
-            call goc_scroll_game_objects
+            call goc_scroll_game_objects_excluding_player
 
             ld a, [map_current_x_offset]
             inc a
@@ -1917,7 +1917,7 @@ map_scroll_map_horizontally_if_needed:
         ld d, $00
         ld e, 1
         ld b, $00 ; a indicate that the scrolling is for screen transitions, so game objects will be unloaded
-        call goc_scroll_game_objects
+        call goc_scroll_game_objects_excluding_player
 
         ld a, [map_current_x_offset]
         dec a
@@ -1980,7 +1980,7 @@ map_scroll_map_vertically_if_needed:
             ld d, -1
             ld e, $00
             ld b, $00 ; a indicate that the srolling is not for screen transitions, so game objects will not be unloaded
-            call goc_scroll_game_objects
+            call goc_scroll_game_objects_excluding_player
 
             ld a, [map_current_y_offset]
             inc a
@@ -2021,7 +2021,7 @@ map_scroll_map_vertically_if_needed:
         ld d, 1
         ld e, $00
         ld b, $00 ; a indicate that the srolling is not for screen transitions, so game objects will not be unloaded
-        call goc_scroll_game_objects
+        call goc_scroll_game_objects_excluding_player
 
         ld a, [map_current_y_offset]
         dec a

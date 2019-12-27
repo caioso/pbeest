@@ -89,6 +89,7 @@ db $80, $80, $80, $80, $80, $80, $80, $80, $80, $00, $00, $80, $80, $80, $80, $8
 room_initialize_game_objects:
     ; this must be executed before loading any game object
     call gobj_initialize_game_object_batch
+    
     ; load room 1's game objects
     ; test: load game object 0
     call goc_find_game_object_table_slot

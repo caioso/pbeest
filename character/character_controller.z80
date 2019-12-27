@@ -41,6 +41,10 @@ chr_initialize_character:
     call goc_find_game_object_table_slot
     ld [ram_player_character_id], a
 
+    ld a, $00
+    ld [map_real_x], a
+    ld [map_real_y], a
+    ld a, [ram_player_character_id]
     ; from this point onwards, h Holds the address of the slot in the table
     call goc_initialize_game_object
     

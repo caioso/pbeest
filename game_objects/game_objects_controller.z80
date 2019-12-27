@@ -29,7 +29,7 @@ goc_normalize_game_object_usage_table:
     ld d, $00
 .continue:
     ld a, [hl]
-    cp $AA
+    cp game_object_taken
     jr nz, .skip_cleanup
         ld a, $00
         ld [hl], a
@@ -46,6 +46,7 @@ goc_normalize_game_object_usage_table:
 
 ; restore hidden game objects position
 goc_restore_hidden_position:
+ret 
     push hl
     push bc
     push de
@@ -122,386 +123,80 @@ gobj_initialize_game_object_batch:
 ; b: Is the initialization meant for map loading?
 goc_initialize_game_object:
 
-    ; set table
+    ; three things to do
+    ; update positions based on the real map's origin
+    ; load game object data into the DMA mempory location
+    ; mark the game object as taken in the gobj_table.
+
+    ; save af to be used in the DMA memory initialization
     push af
-    ld hl, gobj_table
-    add l
-    ld l, a
-    ld a, h
-    adc $00
-    ld h, a
-    ld [hl], game_object_taken
-    pop af
-
-    ; mark goc in usage table
-    ; This means the game object is meant to stay on sreen during the transition.
-    ; Game objects that already were on screen will be unloaded but the marked Gobjs will remain
-    push af
-    ld hl, gobj_usage_table
-    add l
-    ld l, a
-    ld a, h
-    adc $00
-    ld h, a
-
-    ; Load the table with the value of AA (generic marker) into hl
-    ld a, b
-    cp $00
-    jr z, .load_zero
-        ld a, $AA
-        jr .load_marker
-.load_zero:
-        ld a, $00
-.load_marker:
-    ld [hl], a
-    pop af
-
-    push af
-    ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
-    call goc_get_gameobject_address
-
-    ld a, b
-    cp $00
-    jp z, .clear_af
-
-    ; For mage objects that are meant to scroll in to the screen, calculate their position 
-    ; so that the scroll will natureally slide them in (by adding +1/-1, depending on the direction of the scroll)
-
-    ; Process
-    ; Calculate new position relative to the map origin
     ld a, [map_real_x]
-    ; convert X from tiles to pixels
-    rlc a
-    rlc a
-    rlc a
+    sla a
+    sla a
+    sla a
     add d
     ld d, a
     ld a, [map_real_y]
-    ; convert Y from tiles to pixels
-    rlc a
-    rlc a
-    rlc a
+    sla a
+    sla a
+    sla a
     add e
     ld e, a
-
-    ; Check whether the target game object will end-up visible on screen
-    ld a, [map_current_x]
-    ld a, [map_current_y]
-
-;     push hl
-;     call map_get_map_origin_offset
-
-;     push hl
-;     ld l, map_load_left
-;     call check_animation_direction
-;     pop hl
-;     jr nz, .scroll_right
-;         ld a, l
-;         add d
-;         sub $A0
-        
-;         ; Check whether the subtraction did not result in wrap around
-;         cp $A0
-;         jr nc, .scroll_left_within_screen
-;         jr z, .scroll_left_within_screen
-;         add $16
-
-; .scroll_left_within_screen:
-;         ld d, a
-;         ld a, h
-;         add e
-;         ld e, a
-;         jr .continue
-; .scroll_right:
-;         push hl
-;         ld l, map_load_right
-;         call check_animation_direction
-;         pop hl
-;         jr nz, .scroll_up
-;             ld a, l
-;             add $A0
-;             add d
-;             ld d, a
-;             ld a, h
-;             add e
-;             ld e, a
-;             jr .continue
-; .scroll_up:
-;         push hl
-;         ld l, map_load_above
-;         call check_animation_direction
-;         pop hl
-;         jr nz, .scroll_down
-;             ld a, h
-;             add e
-;             sub $90
-;             ld e, a
-;             ld a, l
-;             add d
-;             ld d, a
-;             jr .continue
-; .scroll_down:
-;         push hl
-;         ld l, map_load_below
-;         call check_animation_direction
-;         pop hl
-;         jr nz, .no_scroll
-;             ld a, h
-;             add $90
-;             add e
-;             ld e, a
-;             ld a, l
-;             add d
-;             ld d, a
-;             jr .continue
-; .no_scroll:
-;             ld a, h
-;             add e
-;             ld e, a
-;             ld a, l
-;             add d
-;             ld d, a
-;             jr .continue
-; .continue:
-;     pop hl
-;     pop af
-    
-;     ; Check on-screen case
-;     push af
-;     ld a, $90
-;     cp e
-;     jp c, .finish
-
-; .check_x:
-;     pop af
-    
-;     push af
-;     push hl
-;     ; Check whether the game object will be on screen or out during the transition
-;     ; gameobjects on screen must to go .finish
-;     ; operation: Gox >= map_get_map_origin_offset.x [l] && Gox <= map_get_map_origin_offset.x [l] + width
-;     call map_get_map_origin_offset
-;     ; Determine initial and final screen X
-
-;     push hl
-;     ld l, map_load_origin
-;     call check_animation_direction
-;     pop hl
-;     jr nz, .correct_for_left
-;         ld a, d
-;         sub l
-;         cp $A0
-;         jr c, .x_prepare_to_finish
-;         jr z, .x_prepare_to_finish
-;         jr .x_prepare_to_mark
-; .correct_for_left:
-;     push hl
-;     ld l, map_load_left
-;     call check_animation_direction
-;     pop hl
-;     jr nz, .correct_for_right
-;         ld a, d
-;         sub l
-;         add $A0
-;         cp $A0
-;         jr c, .x_prepare_to_finish
-;         jr z, .x_prepare_to_finish
-;         jr .x_prepare_to_mark
-; .correct_for_right:
-;         ld a, d
-;         sub l
-;         sub $A0
-;         cp $A0
-;         jr c, .x_prepare_to_finish
-;         jr z, .x_prepare_to_finish
-;         jr .x_prepare_to_mark
-
-; .x_prepare_to_finish:
-;     pop hl
-;     pop af
-;     push af
-;     jr .finish
-
-; .x_prepare_to_mark:
-;     pop hl
-;     pop af
-;     push af
-
-; ;     push af
-; ;     push hl
-; ;     ld l, map_load_right
-; ;     call check_animation_direction
-; ;     pop hl
-; ;     pop af
-; ;     jr nz, .scroll_right_bonudaries
-; ;         ; Check on-screen case
-; ;         push af
-; ;         ld a, $00
-; ;         cp d
-; ;         jr c, .finish
-; ;         jr .mark_goj
-
-; ; .scroll_right_bonudaries:
-; ;     ; Check on-screen case
-; ;     push af
-; ;     ld a, $A0
-; ;     cp d
-; ;     jr c, .finish
-; ;     jr .mark_goj
-
-; .mark_goj:
-;     pop af
-
-;     push af
-;     push hl
-;     ld hl, gobj_usage_table
-;     add l
-;     ld l, a
-;     ld a, h
-;     adc $00
-;     ld h, a
-;     ; for now AA. Use another index to label the game object to remove it from the transition.
-;     ld a, $00
-;     ld [hl], a
-;     pop hl
-;     pop af
-
-;     push hl
-;     push af
-;     ; Save position to logic_map region
-;     ld a, [gobt_batch_size]
-;     ld hl, gobt_batch_size
-;     inc hl
-
-;     ; multiply 'a' by 4 (X and Y)
-;     sla a
-;     sla a
-
-;     ; add a to hl
-;     add l
-;     ld l, a
-;     ld a, h
-;     adc $00
-;     ld h, a
-;     pop af
-;     ld [hl], a
-;     inc hl
-;     ; reserve 1 byte to simplify calculation (always mutiply by 4).
-;     inc hl
-
-;     push hl
-;     ld l, map_load_left
-;     call check_animation_direction
-;     pop hl
-;     jr nz, .correct_scroll_right
-;         ld a, d
-;         add a, $A0
-;         ld d, a
-;         jr .finish_loading
-; .correct_scroll_right:
-;     push hl
-;     ld l, map_load_right
-;     call check_animation_direction
-;     pop hl
-;     jr nz, .correct_scroll_up
-;         ld a, d
-;         sub a, $A0
-;         ld d, a
-;         jr .finish_loading
-; .correct_scroll_up:
-;     push hl
-;     ld l, map_load_above
-;     call check_animation_direction
-;     pop hl
-;     jr nz, .correct_scroll_down
-;         ld a, e
-;         add a, $90
-;         ld e, a
-;         jr .finish_loading
-; .correct_scroll_down:
-;     push hl
-;     ld l, map_load_below
-;     call check_animation_direction
-;     pop hl
-;     jr nz, .finish_loading
-;         ld a, e
-;         sub a, $90
-;         ld e, a
-
-; .finish_loading:
-;     ld a, e
-;     ld [hl], e
-;     inc hl
-;     ld [hl], d
-;     pop hl
-
-;     ; increment the amount of game objects in the list
-;     ld a, [gobt_batch_size]
-;     inc a
-;     ld [gobt_batch_size], a
-
-;     ld a, $00
-;     ld d, a
-;     ld e, a
-;     jr .skip_position_adjustment
-    
-; .finish:
-;     pop af
-;     jr .skip_position_adjustment
-
-.clear_af:
     pop af
 
-.skip_position_adjustment:
-    ; Note: In global_variables.z80 will holds the two halfs of the sprites in sequence.
-    ; That's why hl is always incremented between each value loaded to the game object.
-    ; Y
+    ; save gobj index in the table to be used later in the gobj_table
+    push af
+    ; Get game object address (stored in hl)
+    call goc_get_gameobject_address
+
+    ; load game object data into the target game object address
     ld a, e
     ld [hl], a
     inc hl
-
-    ; X
     ld a, d
     ld [hl], a
     inc hl
-
-    ; Tile
     ld a, c
     ld [hl], a
     inc hl
-
-    ; Attribute
-    ld a, $00
+    ld a, $00 ; No attribute change for now
     ld [hl], a
     inc hl
 
-    ; Y
+    ; load data fot second half
     ld a, e
     ld [hl], a
     inc hl
-
-    ; X (+0x8)
     ld a, d
-    cp $00
-    jr z, .skip_extra
+    ; x = x + 8
     add a, $08
-.skip_extra:
     ld [hl], a
-    inc hl
-
-    ; Tile 2
-    ; The four parts of game object (4 tiles) must be loaded in sequence in memory.
+    inc hl 
     ld a, c
+    ; sprite = sprite + 2
     add a, $02
     ld [hl], a
     inc hl
-
-    ; Attribute
-    ld a, $00
+    ld a, $00 ; No attribute change for now
     ld [hl], a
-    inc hl
 
-    ; load total game objects in the map
+    pop af
+
+    ; temp save index
+    ld b, a
+
+    ld hl, gobj_table
+    ld a, l
+    add b
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+    
+    ld a, game_object_taken
+    ld [hl], a
+
+    ; Update total game objects
     ld a, [gobj_total_game_objects]
     inc a
     ld [gobj_total_game_objects], a
@@ -685,134 +380,66 @@ goc_find_game_object_table_slot:
 ; e: amount in X
 ; d: amoint in Y
 ; b: is for transition? (1: will unload out of bounds GameObjects, 0: will not unload them)
-goc_scroll_game_objects:
+goc_scroll_game_objects_excluding_player:
     
-    ld a, [ram_general_use_variable_1]
-    push af
-    ld a, [ram_general_use_variable_2]
-    push af
-
-    ; save b
-    ld a, b
-    ld [ram_general_use_variable_2], a
-
-    ld a, gobj_table_end - gobj_table
-    ; add the player's game object
-    inc a
-    ld c, a
-    ld b, $00
-
-.update_game_object:
-    ; initialize counter
-    ld a, $00
-    ld [ram_general_use_variable_1], a
-
-    ld hl, gobj_table
-    ld a, b
-    add l
-    ld l, a
-    ld a, h
-    adc $00
-    ld h, a
-
-    ; if $FF (game pbject has not been taken), skip
-    ld a, [hl]
-    cp $FF
-    jr z, .skip
-
-    ; check whether A is the player character.
+    ld c, $00
+    ; Load game objects, add offset and continue
+.continue:
     ld a, [ram_player_character_id]
-    cp b
-    jr z, .skip
+    cp c
+    jr z, .skip_scroll
 
-    ld a, b
+    ld a, c
+    call goc_is_game_object_in_use
+    cp $01
+    jr nz, .skip_scroll
+        ld a, c
+        call goc_get_gameobject_address
+        ld a, [hl]
+        add d
+        ld [hl], a
+        inc hl
+        ld a, [hl]
+        add e
+        ld [hl], a
+        inc hl
+        inc hl
+        inc hl
+        ld a, [hl]
+        add d
+        ld [hl], a
+        inc hl
+        ld a, [hl]
+        add e
+        ld [hl], a
+.skip_scroll:
+    inc c
+    ld a, c
+    cp 20 ; gobj_table size
+    jr nz, .continue
+    ret
 
-    ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
-    call goc_get_gameobject_address
-
-    ; Adjust Positions
-    ld a, [hl]
-    add a, d
-    ld [hl], a
-    ; Check whether Y is outside of the screen Height
-    cp $90
-    jr c, .continue_update_1
-        ld a, $01
-        ld [ram_general_use_variable_1], a
-
-.continue_update_1:
-    inc hl
-    ld a, [hl]
-    add a, e
-    ld [hl], a
-
-    ; Check whether X is outside of the screen Width
-    cp $A0
-    jr c, .continue_update_2
-        ld a, $01
-        ld [ram_general_use_variable_1], a
-
-.continue_update_2:
-    inc hl
-    inc hl
-    inc hl
-    ld a, [hl]
-    add a, d
-    ld [hl], a
-    inc hl
-    ld a, [hl]
-    add a, e
-    ld [hl], a
-
-    ld hl, gobj_usage_table
-    ld a, b
-    add l
+; checks the status of the gameobject in gobj_table
+; a: target game object index
+; return a:0 not in use, 1 in use.
+goc_is_game_object_in_use:
+    push bc
+    ld hl, gobj_table
+    ld b, a
+    ld a, l
+    add b
     ld l, a
     ld a, h
     adc $00
     ld h, a
+    pop bc
     ld a, [hl]
-    cp $AA
-    jr z, .skip
-    cp $BB
-    jr z, .skip
-    ld a, [ram_general_use_variable_2]
-    cp $00
-    jr z, .skip
-
-    ; Check whether the game object in the list must be cleared
-    ld a, [ram_general_use_variable_1]
-    cp $01
-    jr nz, .skip
-        push hl
-        ; clear the entry in the game object usage table
-        ld hl, gobj_usage_table
-        ld a, b
-        add l
-        ld l, a
-        ld a, h
-        adc $00
-        ld h, a
-        ; FF means the entry is not used. anything else means it has been taken.
-        ld a, $FF
-        ld [hl], a
-        pop hl
-
-        ; clear game object
-        ld a, b
-        call goc_clear_game_object
-.skip:
-    inc b
-    ld a, b
-    cp c
-    jr z, .finish
-    jr .update_game_object
-
-.finish:
-    pop af
-    ld [ram_general_use_variable_2], a
-    pop af
-    ld [ram_general_use_variable_1], a
+    cp $FF ; Not-taken gameobject
+    jr z, .not_taken
+        ld a, $01
+        ret 
+.not_taken:
+    ld a, $00
     ret
 
 ; Detects collisiton between character [ram_player_character_id] and character 
