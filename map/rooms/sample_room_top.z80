@@ -135,7 +135,7 @@ room_top_init_callback:
 ; Loads game object
 room_top_initialize_game_objects:
     ; this must be executed before loading any game object
-    call gobj_initialize_game_object_batch
+    call gobj_intitialize_game_object_transition_animation_table
 
     ; test: load game object 0
     call goc_find_game_object_table_slot
@@ -143,7 +143,7 @@ room_top_initialize_game_objects:
     ld d, $5*8 ; x
     ld e, $5*8 ; y
     ld c, $56 ; sprite
-    ld b, $01 ; For scrolling
+    ld b, $00 ; default attributes
     call goc_initialize_game_object
 
     ; test: load game object 0
@@ -152,7 +152,7 @@ room_top_initialize_game_objects:
     ld d, $8*8 ; x
     ld e, $5*8 ; y
     ld c, $56 ; sprite
-    ld b, $01 ; For scrolling
+    ld b, $00 ; default attributes
     call goc_initialize_game_object
 
     ; test: load game object 0
@@ -161,7 +161,7 @@ room_top_initialize_game_objects:
     ld d, $11*8 ; x
     ld e, $15*8 ; y
     ld c, $56 ; sprite
-    ld b, $01 ; For scrolling
+    ld b, $00 ; default attributes
     call goc_initialize_game_object
 
     ; test: load game object 0
@@ -170,7 +170,7 @@ room_top_initialize_game_objects:
     ld d, $11*8 ; x
     ld e, $18*8 ; y
     ld c, $56 ; sprite
-    ld b, $01 ; For scrolling
+    ld b, $00 ; default attributes
     call goc_initialize_game_object
 
     jp bac_jump_to_game_object_initializer_return_address

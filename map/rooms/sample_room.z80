@@ -88,7 +88,7 @@ db $80, $80, $80, $80, $80, $80, $80, $80, $80, $00, $00, $80, $80, $80, $80, $8
 ; Loads game object
 room_initialize_game_objects:
     ; this must be executed before loading any game object
-    call gobj_initialize_game_object_batch
+    call gobj_intitialize_game_object_transition_animation_table
     
     ; load room 1's game objects
     ; test: load game object 0
@@ -97,7 +97,7 @@ room_initialize_game_objects:
     ld d, $5*8 ; x
     ld e, $9*8 ; y
     ld c, $56 ; sprite
-    ld b, $01 ; For scrolling
+    ld b, $00 ; default attributes
     call goc_initialize_game_object
 
     ; TEMP!!!

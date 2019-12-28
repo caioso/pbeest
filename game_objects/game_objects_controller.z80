@@ -3,124 +3,180 @@
 ; Developed by Caio Souza Oliveira
 ; 01 Oct 2019
 
-; Initializes game objec map table
-goc_initialize_game_object_usage_table:
+; Preapare memory to receive a batch of game objects (to be used during map transition animation *ONLY*)
+; *NOTE* The table is always initialized with $FF (to avoid confusion with game object index 0)
+gobj_intitialize_game_object_transition_animation_table:
+    push bc
     push hl
-    push de
-    ld hl, gobj_usage_table
-    ld d, $00
+    ld c, $00
+    ld hl, gobj_transition_table
 .continue:
     ld a, $FF
     ld [hl], a
     inc hl
-    inc d
-    ld a, d
-    cp 20
-    jr nz, .continue
-    pop de
-    pop hl
-    ret
-
-; Normalize game objec map table
-goc_normalize_game_object_usage_table:
-    push hl
-    push de
-    ld hl, gobj_usage_table
-    ld d, $00
-.continue:
-    ld a, [hl]
-    cp game_object_taken
-    jr nz, .skip_cleanup
-        ld a, $00
-        ld [hl], a
-
-.skip_cleanup:
-    inc hl
-    inc d
-    ld a, d
-    cp 20
-    jr nz, .continue
-    pop de
-    pop hl
-    ret
-
-; restore hidden game objects position
-goc_restore_hidden_position:
-ret 
-    push hl
-    push bc
-    push de
-    ld a, [gobt_batch_size]
-
-    cp $00
-    jr z, .finish_up
-
-    ld b, a
-    ld c, $00
-
-    ld de, gobt_batch_size
-    inc de
-.restore_position:
-
-    ; get index
-    ld a, [de]
-    call goc_get_gameobject_address
-    ; from this point onwards, hl has the address of the target game object
-    inc de
-    inc de
-    push bc
-    ld a, [de]
-    ld c, a
-    ; Note: In global_variables.z80 will holds the two halfs of the sprites in sequence.
-    ; That's why hl is always incremented between each value loaded to the game object.
-    ; Y
-    ld [hl], a
-    inc hl
-
-    inc de
-    ld a, [de]
-    ld b, a
-    ; X
-    ld [hl], a
-    inc hl
-    inc hl
-    inc hl
-
-    ld a, c
-    ld [hl], a
-    inc hl
-
-    ld a, b
-    add a, $08
-    ld [hl], a
-    inc hl
-    inc hl
-    inc hl
-
-    inc de
-    pop bc 
     inc c
     ld a, c
-    cp b
-    jr nz, .restore_position
-
-.finish_up:
-    pop de
-    pop bc
+    cp gobj_transition_table_size
+    jr nz, .continue
     pop hl
+    pop bc
     ret
 
-; Preapare memory to receive a batch of game objects (to be used during map loading *ONLY*)
-gobj_initialize_game_object_batch:
-    ld a, $00
-    ld [gobt_batch_size], a
-    ret
-
-; Initialize Game Object
+; Store game object into transition table for use during transition
 ; a: Target game object index (0-15)
 ; de: game object position (d: X, e: Y)
 ; c: target game object sprite
-; b: Is the initialization meant for map loading?
+; b: attribute
+goc_insert_game_object_on_transition_table:
+    ; Calculate address within the transition table, based on the provided index.
+    push af
+    push hl
+    push de
+    push bc
+    push af
+    ; hl holds the GOBJ index
+    ld l, a
+    ld h, 0
+    ; de holds the size of a single entru in the table (5 bytes)
+    ld e, $05
+    ld d, $00
+
+    ; only DE will be used
+    call mul_DE_HL_BCDEu
+
+    ld hl, gobj_transition_table
+    ld a, e
+    add l
+    ld l, a
+    ld a, d
+    adc h
+    ld h, a
+    pop af 
+    pop bc
+    pop de
+
+    ; From this point onwards, hl holds the initial address of the given entry in the table
+    ld [hl], a ; first entry holds the index
+    inc hl
+    ld a, e
+    ld [hl], a
+    inc hl
+    ld a, d
+    ld [hl], a
+    inc hl
+    ld a, c
+    ld [hl], a
+    inc hl
+    ld a, b
+    ld [hl], a 
+
+    pop hl
+    pop af
+    ret
+
+; Game Objects that 
+goc_bring_all_other_game_objects_to_screen:
+    push af
+    push hl
+    push bc
+    push de
+    ; Run through the table, looking for game objects not on screen
+    ld hl, gobj_transition_table
+    ld de, sprite_memory_begin
+    ld c, $00
+.continue:
+    ld a, [hl]
+    cp $FF
+    jr z, .skip_iteration
+    ; Check whether the game object is already on screen (higher nibble is 1)
+    and $10
+    cp $10
+    jr z, .skip_iteration
+
+        ; load the target position into the target game object
+        push bc
+        inc hl
+        ld a, [hl]
+        ; save for later
+        ld c, a
+        ld [de], a
+        inc hl
+        inc de
+        ld a, [hl]
+        ; save for later
+        ld b, a
+        ld [de], a
+
+        ; increment hl/de for the next iteration
+        ld a, l
+        add $03
+        ld l, a
+        ld a, h
+        adc $00
+        ld h, a
+        
+        ld a, e
+        add $03
+        ld e, a
+        ld a, d
+        adc $00
+        ld d, a
+
+        ld a, c
+        ld [de], a
+        inc de
+        ld a, b
+        ; calculate X of the second half
+        add $08
+        ld [de], a
+
+        ld a, e
+        add $03
+        ld e, a
+        ld a, d
+        adc $00
+        ld d, a
+
+        pop bc
+
+    jr .increment_counter
+
+.skip_iteration:
+    ; increment hl/de for the next iteration
+    ld a, l
+    add $05
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+    
+    ld a, e
+    add $08
+    ld e, a
+    ld a, d
+    adc $00
+    ld d, a
+
+.increment_counter:
+    inc c
+    ld a, c
+    ; Since we are going 'struct-by-struct' the whole loop only runs 20 times (gobj_table_size)
+    cp gobj_table_size
+    jr nz, .continue
+
+    pop de
+    pop bc
+    pop hl
+    pop af
+    ret
+
+; Initialize Game Object.
+; *NOTE* since the player character should not be updated during transition, this function avoids adding the player character to the 
+;        game object transition table.
+; a: Target game object index (0-15)
+; de: game object position (d: X, e: Y)
+; c: target game object sprite
+; b: attribute
 goc_initialize_game_object:
 
     ; three things to do
@@ -144,6 +200,27 @@ goc_initialize_game_object:
     ld e, a
     pop af
 
+    push bc
+    push af
+    ld c, a
+    ld a, [ram_player_character_id]
+    cp c
+    jr z, .player_character_found_skip_adding_to_transition
+        pop af
+        pop bc
+        ; store game object on transition table
+        call goc_insert_game_object_on_transition_table
+
+        ; since the sprite data has been loaded to transition table, hide all game obejcts (set x/y to 0)
+        ; They will be brought back to the screen durign the transition or clean up steps.
+        ld de, $00
+        jr .skip_stack_correction
+
+.player_character_found_skip_adding_to_transition
+    pop af
+    pop bc
+    
+.skip_stack_correction:
     ; save gobj index in the table to be used later in the gobj_table
     push af
     ; Get game object address (stored in hl)
@@ -159,7 +236,7 @@ goc_initialize_game_object:
     ld a, c
     ld [hl], a
     inc hl
-    ld a, $00 ; No attribute change for now
+    ld a, b ; No attribute change for now
     ld [hl], a
     inc hl
 
@@ -177,7 +254,7 @@ goc_initialize_game_object:
     add a, $02
     ld [hl], a
     inc hl
-    ld a, $00 ; No attribute change for now
+    ld a, b ; No attribute change for now
     ld [hl], a
 
     pop af

@@ -114,9 +114,6 @@ main:
     ; initialize gob table
     call goc_initialize_gobj_table
 
-    ; Intializae gob usage table
-    call goc_initialize_game_object_usage_table
-
     ; TEMP
     ; load intial background palettes
     ld hl, hud_palette_begin
@@ -139,7 +136,7 @@ main:
     ld d, $50 ; x
     ld e, $48 ; y
     ld c, $56 ; sprite
-    ld b, $00 ; For scrolling
+    ld b, $00 ; default attributes
     call chr_initialize_character
 
     ; Initialize Map controller

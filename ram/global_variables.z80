@@ -56,9 +56,6 @@ map_current_room_id equ map_real_y + 1
 map_current_LUT_address_byte_1 equ map_current_room_id + 1
 map_current_LUT_address_byte_2 equ map_current_LUT_address_byte_1 + 1
 
-; temporary variables to be used on *BATCH GAME OBJECT* loading
-gobt_batch_size equ map_logic
-
 ; Player Charcater Offset
 character_0_offset_x equ map_current_LUT_address_byte_2 + 1
 character_0_offset_y equ character_0_offset_x + 1
@@ -310,13 +307,27 @@ gobj_20_attr_p2 equ gobj_20_tile_p2 + 1
 ; GameObject Sprite Table
 gobj_table equ gobj_20_attr_p2 + 1
 gobj_table_end equ gobj_table + 20
+; constant
+gobj_table_size equ gobj_table_end - gobj_table
 
-; GameObject usage map
-gobj_usage_table equ gobj_table_end + 1
-gobj_usage_table_size equ 20
+; GameObject transition animation control tabel
+; This table holds the final position and gobj tile/attributes to be loaded as they appera on screen (during camera pan)
+gobj_transition_table equ map_logic
+; Table organization
+; byte 1 [4-bits]                              [4-bits]
+;        State (0 off screen / 1 on screen)    Real game object ID
+; byte 2 [8-bits] 
+;        Y
+; byte 3 [8-bits]
+;        X
+; byte 4 [8-bits]
+;        Tile ID
+; byte 5 [8-bits]
+;        Attributes
+gobj_transition_table_size equ gobj_table_size*5
 
 ; bank control
-bank_target_bank_LSB equ gobj_usage_table + 21
+bank_target_bank_LSB equ gobj_table_end + 21
 bank_target_bank_HSB equ bank_target_bank_LSB + 1
 bank_restore_bank_LSB equ bank_target_bank_HSB + 1
 bank_restore_bank_HSB equ bank_restore_bank_LSB + 1

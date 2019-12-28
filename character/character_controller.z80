@@ -34,7 +34,7 @@ chr_load_character_tiles_and_palettes:
 ; Initialize character variables
 ; de: game object position (d: X, e: Y)
 ; c: target game object sprite
-; b: Is the initialization meant for map loading?
+; b: attribute
 ; return: no return
 chr_initialize_character:
     ; get player character ID
