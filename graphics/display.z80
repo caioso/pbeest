@@ -23,3 +23,12 @@ display_wait_for_OAM:
     jr z, .wait_oam
     ei
     ret
+
+display_delay:
+.wait:
+    dec bc
+    ld a, c
+    or b
+    cp $00
+    jr nz, .wait
+    ret

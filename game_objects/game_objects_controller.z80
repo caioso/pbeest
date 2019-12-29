@@ -74,89 +74,113 @@ goc_insert_game_object_on_transition_table:
     pop af
     ret
 
-; Game Objects that 
-goc_bring_all_other_game_objects_to_screen:
+; Bring a game object to position (loading the coordinates from the gobj_transition_table) 
+goc_bring_game_object_to_screen:
+; Calculate address within the transition table, based on the provided index.
+    push bc
     push af
     push hl
-    push bc
     push de
-    ; Run through the table, looking for game objects not on screen
+    push af
+    ; hl holds the GOBJ index
+    ld l, a
+    ld h, 0
+    ; de holds the size of a single entru in the table (5 bytes)
+    ld e, $05
+    ld d, $00
+
+    ; only DE will be used
+    call mul_DE_HL_BCDEu
+
     ld hl, gobj_transition_table
-    ld de, sprite_memory_begin
-    ld c, $00
-.continue:
+    ld a, e
+    add l
+    ld l, a
+    ld a, d
+    adc h
+    ld h, a
+    pop af 
+    pop de
+
+    ld c, a
+    ; check game object status before proceeding.
     ld a, [hl]
     cp $FF
-    jr z, .skip_iteration
-    ; Check whether the game object is already on screen (higher nibble is 1)
+    jr z, .return
+    ; Check whether the game object is already on screen (higher bit is 1)
     and $10
     cp $10
-    jr z, .skip_iteration
+    jr z, .return
 
-        ; load the target position into the target game object
-        push bc
-        inc hl
-        ld a, [hl]
-        ; save for later
-        ld c, a
-        ld [de], a
-        inc hl
-        inc de
-        ld a, [hl]
-        ; save for later
-        ld b, a
-        ld [de], a
-
-        ; increment hl/de for the next iteration
-        ld a, l
-        add $03
-        ld l, a
-        ld a, h
-        adc $00
-        ld h, a
-        
-        ld a, e
-        add $03
-        ld e, a
-        ld a, d
-        adc $00
-        ld d, a
-
-        ld a, c
-        ld [de], a
-        inc de
-        ld a, b
-        ; calculate X of the second half
-        add $08
-        ld [de], a
-
-        ld a, e
-        add $03
-        ld e, a
-        ld a, d
-        adc $00
-        ld d, a
-
-        pop bc
-
-    jr .increment_counter
-
-.skip_iteration:
-    ; increment hl/de for the next iteration
-    ld a, l
-    add $05
-    ld l, a
-    ld a, h
-    adc $00
-    ld h, a
-    
+    ld a, c
+    ; Calculate address in the Sprite memory (DMA-accessible) basde on the index stored in a.
+    ; multiply a by 4
+    sla a
+    sla a
+    sla a
+    ld de, sprite_memory_begin
+    ld c, a
     ld a, e
-    add $08
+    add c
     ld e, a
     ld a, d
     adc $00
     ld d, a
 
+    ; from this point onwards, de holds the address in the sprite memory.
+    ; correct sprite position
+    inc hl ; skip index byte in gobj_transition_table
+    ld a, [hl]
+    ld [de], a
+    inc hl
+    inc de
+    ld a, [hl]
+    ld [de], a
+    
+    ; point back to Y
+    dec hl
+
+    ; calculate address of the second half
+    ld a, e
+    add $03
+    ld e, a
+    ld a, d
+    adc $00
+    ld d, a
+
+    ld a, [hl]
+    ld [de], a
+    inc hl
+    inc de
+    ld a, [hl]
+    add $08
+    ld [de], a
+
+.return:
+    pop hl
+    pop af
+    pop bc
+    ret
+
+; Bring all game objects to position (loading the coordinates from the gobj_transition_table) 
+goc_bring_all_other_game_objects_to_screen:
+    push af
+    push hl
+    push bc
+    push de
+    
+    ; Run through the table, looking for game objects not on screen
+    ld hl, gobj_transition_table
+    ld de, sprite_memory_begin
+    ld c, $00
+.continue:
+
+    ld a, c
+    call goc_bring_game_object_to_screen
+   
+    jr .increment_counter
+
+.skip_iteration:
 .increment_counter:
     inc c
     ld a, c
@@ -213,7 +237,8 @@ goc_initialize_game_object:
 
         ; since the sprite data has been loaded to transition table, hide all game obejcts (set x/y to 0)
         ; They will be brought back to the screen durign the transition or clean up steps.
-        ld de, $00
+        ld e, $0
+        ld d, -$8
         jr .skip_stack_correction
 
 .player_character_found_skip_adding_to_transition
@@ -466,10 +491,16 @@ goc_scroll_game_objects_excluding_player:
     cp c
     jr z, .skip_scroll
 
+    ; Check whether the game object is already on screen 
+
     ld a, c
     call goc_is_game_object_in_use
-    cp $01
-    jr nz, .skip_scroll
+    cp $00
+    jr z, .skip_scroll
+    ld a, c
+    call goc_is_game_object_on_screen
+    cp $00
+    jr z, .skip_scroll
         ld a, c
         call goc_get_gameobject_address
         ld a, [hl]
@@ -513,10 +544,52 @@ goc_is_game_object_in_use:
     ld a, [hl]
     cp $FF ; Not-taken gameobject
     jr z, .not_taken
-        ld a, $01
+        ld a, $010
         ret 
 .not_taken:
     ld a, $00
+    ret
+
+; Checks whether a game object is on screen.
+; a: target game object index
+; return a:0 not on screen, 1 on screen
+goc_is_game_object_on_screen:
+    push bc
+    push hl
+    push de
+    ; hl holds the GOBJ index
+    ld l, a
+    ld h, 0
+    ; de holds the size of a single entru in the table (5 bytes)
+    ld e, $05
+    ld d, $00
+
+    ; only DE will be used
+    call mul_DE_HL_BCDEu
+
+    ld hl, gobj_transition_table
+    ld a, e
+    add l
+    ld l, a
+    ld a, d
+    adc h
+    ld h, a
+    pop de
+
+    ; check game object status before proceeding.
+    ld a, [hl]
+    ; Check whether the game object is already on screen (higher bit is 1)
+    and $10
+    cp $10
+    jr z, .on_screen
+    ld a, $00
+    pop hl
+    pop bc
+    ret
+.on_screen:
+    ld a, $01
+    pop hl
+    pop bc
     ret
 
 ; Detects collisiton between character [ram_player_character_id] and character 

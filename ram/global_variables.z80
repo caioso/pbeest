@@ -363,6 +363,10 @@ map_bank_ID_MSB equ map_bank_ID_LSB + 1
 max_gobj_per_map equ 10
 game_object_taken equ $AA
 
+; BackgroundC Controll variables
+background_scrolling_request_X equ map_bank_ID_MSB + 1
+background_scrolling_request_Y equ background_scrolling_request_X + 1
+
 ; Memory Constants
 sprite_memory_begin equ $DF00
 sprite_memory_end equ sprite_memory_begin + (4*40)

@@ -1599,7 +1599,7 @@ map_scroll_bg_vertically_with_animation:
     ld c, 2
     ld b, a
 .one_more:
-    ld hl, rSCY
+    ld hl, background_scrolling_request_Y
     ld a, b
     cp $00
     jr nz, .scroll_up
@@ -1646,8 +1646,10 @@ map_scroll_bg_vertically_with_animation:
     add a, -4
 
 .scroll_complete:
-    ld [rSCY], a
+    ld [background_scrolling_request_Y], a
     dec c
+    ; Directly call this function to update the background (otherwise it will only be called in the main loop, but map loading is blocking).
+    call bgc_safely_update_background
     ld a, c
     cp $00
     jr nz, .one_more
@@ -1732,7 +1734,7 @@ map_scroll_bg_horizontally_with_animation:
     ld c, 2
     ld b, a
 .one_more:
-    ld hl, rSCX
+    ld hl, background_scrolling_request_X
     ld a, b
     cp $00
     jr nz, .scroll_right
@@ -1778,8 +1780,10 @@ map_scroll_bg_horizontally_with_animation:
     add a, -4
 
 .scroll_complete:
-    ld [rSCX], a
+    ld [background_scrolling_request_X], a
     dec c
+    ; Directly call this function to update the background (otherwise it will only be called in the main loop, but map loading is blocking).
+    call bgc_safely_update_background
     ld a, c
     cp $00
     jr nz, .one_more
@@ -1791,7 +1795,7 @@ map_scroll_bg_to_target_position_without_animation:
     sla a
     sla a
     sla a
-    ld [rSCY], a
+    ld [background_scrolling_request_Y], a
     ret
 
 ; checks whether current scroll direction is the one matching in l
@@ -1863,9 +1867,9 @@ map_scroll_map_horizontally_if_needed:
         cp l
         pop hl
         jr z, .finish_not_scrolled
-            ld a, [rSCX]
+            ld a, [background_scrolling_request_X]
             inc a
-            ld [rSCX], a
+            ld [background_scrolling_request_X], a
 
             ; scroll game objects
             ld d, $00
@@ -1905,9 +1909,9 @@ map_scroll_map_horizontally_if_needed:
     ld a, [map_current_x_offset]
     cp $00
     jr z, .finish_not_scrolled
-        ld a, [rSCX]
+        ld a, [background_scrolling_request_X]
         dec a
-        ld [rSCX], a
+        ld [background_scrolling_request_X], a
 
         ; scroll game objects
         ld d, $00
@@ -1968,9 +1972,9 @@ map_scroll_map_vertically_if_needed:
     cp l
     pop hl
     jr z, .finish_not_scrolled
-            ld a, [rSCY]
+            ld a, [background_scrolling_request_Y]
             inc a
-            ld [rSCY], a
+            ld [background_scrolling_request_Y], a
 
             ; scroll game objects
             ld d, -1
@@ -2009,9 +2013,9 @@ map_scroll_map_vertically_if_needed:
     ld a, [map_current_y_offset]
     cp $00
     jr z, .finish_not_scrolled
-        ld a, [rSCY]
+        ld a, [background_scrolling_request_Y]
         dec a
-        ld [rSCY], a
+        ld [background_scrolling_request_Y], a
 
         ; scroll game objects
         ld d, 1

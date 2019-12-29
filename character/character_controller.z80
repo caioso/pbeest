@@ -837,7 +837,6 @@ chr_player_controlled_character_loop:
     call is_key_down_or_held
     jr z, .end_character_movement
         ; Move Character Up
-        call ram_get_player_game_obj_address
         call chr_move_character_right
 
 .end_character_movement:

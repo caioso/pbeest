@@ -285,7 +285,7 @@ room_process_callback:
         ld [map_room_tiles_address_MSB], a
         ld a, $01
         ld [map_room_X], a
-        ld a, $0E
+        ld a, $0C
         ld [map_room_Y], a
         
         ; Load Map

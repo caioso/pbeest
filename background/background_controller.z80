@@ -11,9 +11,19 @@ bgc_initialize_background:
     ld a, 0
     ld [rSCX], a
     ld [rSCY], a
+    ld [background_scrolling_request_X], a
+    ld [background_scrolling_request_X], a
     
     ; clear screen
     call clear_lcd
+    ret
+
+bgc_safely_update_background:
+    ld a, [background_scrolling_request_X]
+    ld [rSCX], a
+    ld a, [background_scrolling_request_Y]
+    ld [rSCY], a
+    
     ret
 
 ; loads background palettes
