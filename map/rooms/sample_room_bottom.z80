@@ -105,7 +105,7 @@ room_bottom_initialize_game_objects:
     ; test: load game object 0
     call goc_find_game_object_table_slot
     ; from this point onwards, h Holds the address of the slot in the table
-    ld d, $5*8 ; x
+    ld d, 10*8 ; x
     ld e, $5*8 ; y
     ld c, $56 ; sprite
     ld b, $00 ; default attributes
@@ -114,7 +114,7 @@ room_bottom_initialize_game_objects:
     ; test: load game object 0
     call goc_find_game_object_table_slot
     ; from this point onwards, h Holds the address of the slot in the table
-    ld d, $8*8 ; x
+    ld d, 13*8 ; x
     ld e, $5*8 ; y
     ld c, $56 ; sprite
     ld b, $00 ; default attributes

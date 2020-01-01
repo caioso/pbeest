@@ -569,6 +569,7 @@ map_load_room:
 .adjust_x_position:
 
     ; Bring remaining game objects to screen
+    ld a, 1
     call goc_bring_all_other_game_objects_to_screen
 
     ; load map logic layer
@@ -915,6 +916,17 @@ map_load_room:
 .load_logic:
 
     ; Bring remaining game objects to screen
+    push hl
+    ld l, map_load_origin
+    call check_animation_direction
+    pop hl
+    cp $01
+    jr z, .no_scroll
+        ld a, $01
+        jr .bring_the_non_scrolling_gobj_to_screen
+.no_scroll:
+    ld a, $00
+.bring_the_non_scrolling_gobj_to_screen:
     call goc_bring_all_other_game_objects_to_screen
 
     ; load logic layer
