@@ -743,7 +743,13 @@ goc_should_game_object_be_brought_in:
     ld h, a
     pop de
 
-   
+    ; There is a configuration of the offsets signs (positive/negative) for each screen scrolling type. set them here.
+    push hl
+    ld l, map_load_above
+    call check_animation_direction
+    pop hl
+    cp $01
+    jr nz, .check_below
     ; check game object status before proceeding.
     ; THIS IS ONLY VALID FOR Y for now
     inc hl
@@ -751,28 +757,73 @@ goc_should_game_object_be_brought_in:
     ld c, a
     ld a, [background_scrolling_request_Y]
     cp c
-    jr z, .yes
+    jr z, .above_yes
     inc c
     cp c
-    jr z, .yes
+    jr z, .above_yes
     inc c
     cp c
-    jr z, .yes
+    jr z, .above_yes
     inc c
     cp c
-    jr z, .yes
+    jr z, .above_yes
     inc c
     cp c
-    jr nz, .not
-.yes:    
+    jp nz, .not
+
+.above_yes:    
     ; return position is in hl
     inc hl 
     ld a, [hl]
     ld l, a
-    ld a, c
-    ld b, a
+    ; Set game object at the top of the screen.        
+    ld a, $08
+    ld c, a
+    ld h, a
+    
+    ; return as true
+    ld a, 1
+    pop bc
+    ret
+
+.check_below:
+; There is a configuration of the offsets signs (positive/negative) for each screen scrolling type. set them here.
+    push hl
+    ld l, map_load_below
+    call check_animation_direction
+    pop hl
+    cp $01
+    jr nz, .not
+    ; check game object status before proceeding.
+    ; THIS IS ONLY VALID FOR Y for now
+    inc hl
+    ld a, [hl]
+    ld c, a
     ld a, [background_scrolling_request_Y]
-    sub b
+    ; The bottom of the screen appears first in this case. Add screen height to the scrolling position.
+    add $90
+    cp c
+    jr z, .below_yes
+    dec c
+    cp c
+    jr z, .below_yes
+    dec c
+    cp c
+    jr z, .below_yes
+    dec c
+    cp c
+    jr z, .below_yes
+    dec c
+    cp c
+    jp nz, .not
+
+.below_yes:
+    ; return position is in hl
+    inc hl 
+    ld a, [hl]
+    ld l, a
+    ; Set game object at the bottom of the screen
+    ld a, $98
     ld c, a
     ld h, a
     
