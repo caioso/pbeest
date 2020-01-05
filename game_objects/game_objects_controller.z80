@@ -410,7 +410,7 @@ goc_initialize_game_object:
     ld [hl], a
     inc hl
 
-    ; load data fot second half
+    ; load data for second half
     ld a, e
     ld [hl], a
     inc hl
@@ -440,7 +440,7 @@ goc_initialize_game_object:
     adc $00
     ld h, a
     
-    ld a, game_object_taken
+    ld a, game_object_taken_for_transition
     ld [hl], a
 
     ; Update total game objects
@@ -841,7 +841,7 @@ goc_should_game_object_be_brought_in:
 ; scroll all game objects by a given amount on X and Y based on camera movement
 ; e: amount in X
 ; d: amoint in Y
-; b: is for transition? (1: will unload out of bounds GameObjects, 0: will not unload them)
+; b: is for transition? (1: will load game objects from the transition table to the DMA memory as the camera pans; 0: simply scroll valid GOBJ)
 goc_scroll_game_objects_excluding_player:
     
     ld c, $00
@@ -856,10 +856,14 @@ goc_scroll_game_objects_excluding_player:
     call goc_is_game_object_in_use
     cp $00
     jr z, .skip_scroll
+    ld a, b
+    cp $00
+    jr z, .just_scroll
     ld a, c
     call goc_is_game_object_on_screen
     cp $00
     jr z, .check_whether_it_should_be_loaded_in
+.just_scroll:
         ld a, c
         call goc_get_gameobject_address
         ld a, [hl]
@@ -900,6 +904,29 @@ goc_scroll_game_objects_excluding_player:
     ld a, c
     cp 20 ; gobj_table size
     jr nz, .continue
+    ret
+
+; Normalize game object map table (convert's game_object_taken_for_transition ($AA) into game_object_taken ($BB))
+goc_normalize_game_object_usage_table:
+    push hl
+    push de
+    ld hl, gobj_table
+    ld d, $00
+.continue:
+    ld a, [hl]
+    cp game_object_taken_for_transition
+    jr nz, .skip_cleanup
+        ld a, game_object_taken
+        ld [hl], a
+
+.skip_cleanup:
+    inc hl
+    inc d
+    ld a, d
+    cp 20
+    jr nz, .continue
+    pop de
+    pop hl
     ret
 
 ; checks the status of the gameobject in gobj_table

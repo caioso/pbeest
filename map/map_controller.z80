@@ -572,6 +572,9 @@ map_load_room:
     ld a, 1
     call goc_bring_all_other_game_objects_to_screen
 
+    ; Normalizes usage table so that the current screen's game obeject is distinguishable from others during the next transition.
+    call goc_normalize_game_object_usage_table
+
     ; load map logic layer
     call map_load_logic_layer
 
@@ -927,7 +930,12 @@ map_load_room:
 .no_scroll:
     ld a, $00
 .bring_the_non_scrolling_gobj_to_screen:
+
+    ; Bring all remaining game objects to screen.
     call goc_bring_all_other_game_objects_to_screen
+
+    ; Normalizes usage table so that the current screen's game obeject is distinguishable from others during the next transition.
+    call goc_normalize_game_object_usage_table
 
     ; load logic layer
     call map_load_logic_layer
