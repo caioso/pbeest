@@ -271,6 +271,9 @@ map_load_room:
     ld [map_current_LUT_address_byte_2], a
     ld [ram_general_use_variable_6], a
 
+    ; hides non-visible game objecst 
+    call goc_hide_non_visible_gobj_for_the_transition
+
     ; Check the scrolling direction
     push hl
     ld l, map_load_origin
@@ -571,6 +574,9 @@ map_load_room:
     ; Bring remaining game objects to screen
     ld a, 1
     call goc_bring_all_other_game_objects_to_screen
+
+    ; Remove old game objects froms creen
+    call goc_remove_game_objects_after_transition
 
     ; Normalizes usage table so that the current screen's game obeject is distinguishable from others during the next transition.
     call goc_normalize_game_object_usage_table
@@ -933,6 +939,9 @@ map_load_room:
 
     ; Bring all remaining game objects to screen.
     call goc_bring_all_other_game_objects_to_screen
+
+    ; Remove old game objects froms creen
+    call goc_remove_game_objects_after_transition
 
     ; Normalizes usage table so that the current screen's game obeject is distinguishable from others during the next transition.
     call goc_normalize_game_object_usage_table

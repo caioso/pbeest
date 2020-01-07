@@ -906,6 +906,187 @@ goc_scroll_game_objects_excluding_player:
     jr nz, .continue
     ret
 
+; Runs through the game object table, looking for game objects that are not on screen.
+; move them to 0 during the transition. This function does not really removes the game object, but hide it during the transition only.
+; goc_remove_game_objects_after_transition will do it.
+goc_hide_non_visible_gobj_for_the_transition:
+    push hl
+    push bc
+    push de
+
+    ld c, $00
+.continue:
+
+    ld a, [ram_player_character_id]
+    cp c
+    jr z, .skip
+
+    ld a, c
+    ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
+    call goc_get_gameobject_address
+
+    ; Y
+    ld a, [hl]
+    ld d, a
+    inc hl
+
+    ; X
+    ld a, [hl]
+    ld e, a
+
+    call goc_is_visible
+    cp $01
+    jr z, .skip
+        ; point to Y again
+        dec hl
+
+        ld a, $00
+        ld [hl], a
+        inc hl
+
+        ; X
+        ld [hl], a
+        inc hl
+
+        ; Tile
+        ld [hl], a
+        inc hl
+
+        ; Attribute
+        ld [hl], a
+        inc hl
+
+        ; Y
+        ld [hl], a
+        inc hl
+
+        ; X
+        ld [hl], a
+        inc hl
+
+        ld [hl], a
+        inc hl
+
+        ; Attribute
+        ld [hl], a
+        inc hl
+        
+
+.skip:
+    inc c
+    ld a, 20
+    cp c
+    jr nz, .continue
+
+    pop de
+    pop bc
+    pop hl
+    ret
+
+; Checks whether a game objects is visble
+; d: gobj Y
+; e: gobj X
+; return a: 1 visible, 0: not visible
+goc_is_visible:
+
+    ; X (left) 
+    ld a, $A0
+    cp e
+    jr c, .not_visible
+
+    ; Y (left)
+    ld a, $90
+    cp d
+    jr c, .not_visible
+
+.visible
+    ld a, $01
+    ret
+
+.not_visible:
+    ld a, $00
+    ret
+
+; Remvoe remaining game objects from screen and table after the transition animation is complete.
+goc_remove_game_objects_after_transition:
+    push hl
+    push bc
+    push de
+
+    ld c, $00
+.continue:
+
+    ld a, [ram_player_character_id]
+    cp c
+    jr z, .skip
+
+    ; calulate address based on index 'c' into gobj_table
+    ld hl, gobj_table
+    ld a, l
+    add c
+    ld l, a
+    ld a, h
+    adc $00
+    ld h, a
+   
+    ; check whether the game object must be removed after the transtion
+    ld a, [hl]
+    cp game_object_taken
+    jr nz, .skip
+        
+        ; if take, clear entry and remove element from screen, decrement game object counter.
+        ld a, $FF
+        ld [hl], a
+
+        ld a, c
+        ; After calling goc_get_gameobject_address, hl holds the address to the target game object sprite
+        call goc_get_gameobject_address
+
+        ld a, $00
+        ld [hl], a
+        inc hl
+
+        ; X
+        ld [hl], a
+        inc hl
+
+        ; Tile
+        ld [hl], a
+        inc hl
+
+        ; Attribute
+        ld [hl], a
+        inc hl
+
+        ; Y
+        ld [hl], a
+        inc hl
+
+        ; X
+        ld [hl], a
+        inc hl
+
+        ld [hl], a
+        inc hl
+
+        ; Attribute
+        ld [hl], a
+        inc hl
+
+        dec a
+        ld [gobj_total_game_objects], a
+
+.skip:
+    inc c
+    ld a, 20
+    cp c
+    jr nz, .continue
+
+    pop de
+    pop bc
+    pop hl
+    ret
+
 ; Normalize game object map table (convert's game_object_taken_for_transition ($AA) into game_object_taken ($BB))
 goc_normalize_game_object_usage_table:
     push hl

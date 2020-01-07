@@ -132,8 +132,8 @@ room_bottom_initialize_game_objects:
     ; test: load game object 0
     call goc_find_game_object_table_slot
     ; from this point onwards, h Holds the address of the slot in the table
-    ld d, 3*8 ; x
-    ld e, 15*8 ; y
+    ld d, 15*8 ; x
+    ld e, 17*8 ; y
     ld c, $56 ; sprite
     ld b, $00 ; default attributes
     call goc_initialize_game_object
@@ -142,5 +142,50 @@ room_bottom_initialize_game_objects:
 
 ; Room process callback
 room_bottom_process_callback:
-    nop
+        ; Check edge collisions
+    ; horizontal edges collision check
+    ld a, [edget_collision_target_y]
+    cp chr_top_edge_limit
+    jr nz, .room_bottom_exit
+
+    ; Request Map Load
+    ld hl, room_initialize_game_objects
+    ld a, l
+    ld [map_game_object_initializer_address_LSB], a
+    ld a, h
+    ld [map_game_object_initializer_address_MSB], a
+    ld hl, room_init_callback
+    ld a, l
+    ld [map_init_callback_address_LSB], a
+    ld a, h
+    ld [map_init_callback_address_MSB], a
+    ld hl, room_process_callback
+    ld a, l
+    ld [map_process_callback_address_LSB], a
+    ld a, h
+    ld [map_process_callback_address_MSB], a
+    ld a, $02
+    ld [map_bank_ID_LSB], a
+    ld a, $00
+    ld [map_bank_ID_MSB], a
+    ld a, map_tile_base_section_8000 | map_load_above
+    ld [map_loading_settings_flags], a
+    ld hl, sample_room_begin
+    ld a, l
+    ld [map_room_data_address_LSB], a
+    ld a, h
+    ld [map_room_data_address_MSB], a 
+    ld a, $A0
+    ld [map_room_tiles_address_LSB], a
+    ld a, $85
+    ld [map_room_tiles_address_MSB], a
+    ld a, $00
+    ld [map_room_X], a
+    ld a, $00
+    ld [map_room_Y], a
+    
+    ; Load Map
+    call map_request_map_load
+
+.room_bottom_exit:
     jp bac_jump_to_process_callback_return_address
