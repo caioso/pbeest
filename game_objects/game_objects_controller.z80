@@ -863,6 +863,45 @@ goc_scroll_game_objects_excluding_player:
     call goc_is_game_object_on_screen
     cp $00
     jr z, .check_whether_it_should_be_loaded_in
+        ; check whether the game_object should be removed after scrolling out
+        ; use goc_is_game_object_in_use to return the status of the game object in the list
+        ld a, c
+        call goc_is_game_object_in_use
+        cp game_object_taken
+        jr nz, .just_scroll
+            ; check whether the game object is out of the screen
+            push de
+            ld a, c
+            call goc_get_gameobject_address
+            ld a, [hl]
+            ld e,a
+            inc hl
+            ld a, [hl]
+            ld d, a
+            call goc_is_visible 
+            cp $01
+            jr z, .finish_out_of_screen_removal_check
+                ; if not visible, hide the game object up to the end of the animation.
+                dec hl
+                dec hl
+                ld a, $00
+                ld [hl], a
+                inc hl
+                ld [hl], a
+                inc hl
+                ld [hl], a
+                inc hl
+                ld [hl], a
+                inc hl
+                ld [hl], a
+                inc hl
+                ld [hl], a
+                inc hl
+                ld [hl], a
+                inc hl
+                ld [hl], a
+.finish_out_of_screen_removal_check:
+            pop de
 .just_scroll:
         ld a, c
         call goc_get_gameobject_address
@@ -1127,7 +1166,7 @@ goc_is_game_object_in_use:
     ld a, [hl]
     cp $FF ; Not-taken gameobject
     jr z, .not_taken
-        ld a, $01
+        ld a, [hl]
         ret 
 .not_taken:
     ld a, $00
