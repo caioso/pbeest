@@ -727,7 +727,7 @@ goc_should_game_object_be_brought_in:
     ; hl holds the GOBJ index
     ld l, a
     ld h, 0
-    ; de holds the size of a single entru in the table (5 bytes)
+    ; de holds the size of a single entry in the table (5 bytes)
     ld e, $05
     ld d, $00
 
@@ -750,26 +750,25 @@ goc_should_game_object_be_brought_in:
     pop hl
     cp $01
     jr nz, .check_below
-    ; check game object status before proceeding.
-    ; THIS IS ONLY VALID FOR Y for now
-    inc hl
-    ld a, [hl]
-    ld c, a
-    ld a, [background_scrolling_request_Y]
-    cp c
-    jr z, .above_yes
-    inc c
-    cp c
-    jr z, .above_yes
-    inc c
-    cp c
-    jr z, .above_yes
-    inc c
-    cp c
-    jr z, .above_yes
-    inc c
-    cp c
-    jp nz, .not
+        ; Point hl to Y position.
+        inc hl
+        ld a, [hl]
+        ld c, a
+        ld a, [background_scrolling_request_Y]
+        cp c
+        jr z, .above_yes
+        inc c
+        cp c
+        jr z, .above_yes
+        inc c
+        cp c
+        jr z, .above_yes
+        inc c
+        cp c
+        jr z, .above_yes
+        inc c
+        cp c
+        jp nz, .not
 
 .above_yes:    
     ; return position is in hl
@@ -778,7 +777,6 @@ goc_should_game_object_be_brought_in:
     ld l, a
     ; Set game object at the top of the screen.        
     ld a, $08
-    ld c, a
     ld h, a
     
     ; return as true
@@ -793,29 +791,28 @@ goc_should_game_object_be_brought_in:
     call check_animation_direction
     pop hl
     cp $01
-    jr nz, .not
-    ; check game object status before proceeding.
-    ; THIS IS ONLY VALID FOR Y for now
-    inc hl
-    ld a, [hl]
-    ld c, a
-    ld a, [background_scrolling_request_Y]
-    ; The bottom of the screen appears first in this case. Add screen height to the scrolling position.
-    add $90
-    cp c
-    jr z, .below_yes
-    dec c
-    cp c
-    jr z, .below_yes
-    dec c
-    cp c
-    jr z, .below_yes
-    dec c
-    cp c
-    jr z, .below_yes
-    dec c
-    cp c
-    jp nz, .not
+    jr nz, .check_left
+        ; Point hl to Y position.
+        inc hl
+        ld a, [hl]
+        ld c, a
+        ld a, [background_scrolling_request_Y]
+        ; The bottom of the screen appears first in this case. Add screen height to the scrolling position.
+        add $90
+        cp c
+        jr z, .below_yes
+        dec c
+        cp c
+        jr z, .below_yes
+        dec c
+        cp c
+        jr z, .below_yes
+        dec c
+        cp c
+        jr z, .below_yes
+        dec c
+        cp c
+        jp nz, .not
 
 .below_yes:
     ; return position is in hl
@@ -824,8 +821,50 @@ goc_should_game_object_be_brought_in:
     ld l, a
     ; Set game object at the bottom of the screen
     ld a, $98
-    ld c, a
     ld h, a
+    
+    ; return as true
+    ld a, 1
+    pop bc
+    ret
+
+.check_left:
+; There is a configuration of the offsets signs (positive/negative) for each screen scrolling type. set them here.
+    push hl
+    ld l, map_load_left
+    call check_animation_direction
+    pop hl
+    cp $01
+    jr nz, .not
+        ; point hl to X position.
+        inc hl
+        inc hl 
+        ld a, [hl]
+        ld c, a
+        ld a, [background_scrolling_request_X]
+        cp c
+        jr z, .left_yes
+        inc c
+        cp c
+        jr z, .left_yes
+        inc c
+        cp c
+        jr z, .left_yes
+        inc c
+        cp c
+        jr z, .left_yes
+        inc c
+        cp c
+        jp nz, .not
+
+.left_yes:
+    ; return position is in hl
+    dec hl 
+    ld a, [hl]
+    ld h, a
+    ; Set game object at the bottom of the screen
+    ld a, $08
+    ld l, a
     
     ; return as true
     ld a, 1
