@@ -151,12 +151,21 @@ goc_bring_game_object_to_screen:
     jr nz, .check_below
 
         ; map_current_y_offset and map_current_x_offset are already in *pixels*
-        ; Y negative, X positive
+        ; Y negative
         ld a, [map_current_y_offset]
         cpl 
         inc a
         ld b, a
-        ld a, [map_current_x_offset]
+        ld a, [map_real_y]
+        sla a
+        sla a
+        sla a
+        cpl
+        inc a
+        add b
+        ld b, a
+        ; X does not change
+        ld a, $00
         ld c, a
         jr .position_set
 
@@ -169,10 +178,19 @@ goc_bring_game_object_to_screen:
     jr nz, .check_left
 
         ; map_current_y_offset and map_current_x_offset are already in *pixels*
-        ; Y positive, X positive
+        ; Y positive
         ld a, [map_current_y_offset]
         ld b, a
-        ld a, [map_current_x_offset]
+        ld a, [map_real_y]
+        sla a
+        sla a
+        sla a
+        cpl
+        inc a
+        add b
+        ld b, a
+        ; X does not change
+        ld a, $00
         ld c, a
         jr .position_set
 
@@ -185,22 +203,39 @@ goc_bring_game_object_to_screen:
     jr nz, .check_right
 
         ; map_current_y_offset and map_current_x_offset are already in *pixels*
-        ; Y positive, X negative
-        ld a, [map_current_y_offset]
+        ; Y does not change
+        ld a, $00
         ld b, a
+        ; X negative
         ld a, [map_current_x_offset]
         cpl
         inc a
+        ld c, a
+        ld a, [map_real_x]
+        sla a
+        sla a
+        sla a
+        cpl
+        inc a
+        add c
         ld c, a
         jr .position_set
 
 .check_right:
 
         ; map_current_y_offset and map_current_x_offset are already in *pixels*
-        ; Y positive, X positive
-        ld a, [map_current_y_offset]
+        ; Y does not change
+        ld a, $00
         ld b, a
         ld a, [map_current_x_offset]
+        ld c, a
+        ld a, [map_real_x]
+        sla a
+        sla a
+        sla a
+        cpl
+        inc a
+        add c
         ld c, a
         jr .position_set
     
@@ -829,13 +864,13 @@ goc_should_game_object_be_brought_in:
     ret
 
 .check_left:
-; There is a configuration of the offsets signs (positive/negative) for each screen scrolling type. set them here.
+    ; There is a configuration of the offsets signs (positive/negative) for each screen scrolling type. set them here.
     push hl
     ld l, map_load_left
     call check_animation_direction
     pop hl
     cp $01
-    jr nz, .not
+    jr nz, .check_right
         ; point hl to X position.
         inc hl
         inc hl 
@@ -858,23 +893,109 @@ goc_should_game_object_be_brought_in:
         jp nz, .not
 
 .left_yes:
-    ; return position is in hl
-    dec hl 
+    ; Check whether the Y position is on screen
+    ld a, c ; X
+    ld e, a
+    dec hl
     ld a, [hl]
-    ld h, a
-    ; Set game object at the bottom of the screen
-    ld a, $08
-    ld l, a
-    
-    ; return as true
-    ld a, 1
-    pop bc
-    ret
+    ld d, a ; Y
+    call goc_is_within_screen_real_rectangle
+    cp $00
+    jr z, .not
+
+        ; return position is in hl 
+        ld a, [hl]
+        ld h, a
+        ; Set game object at the bottom of the screen
+        ld a, $08
+        ld l, a
+        
+        ; return as true
+        ld a, 1
+        pop bc
+        ret
+
+.check_right:
+    ; There is a configuration of the offsets signs (positive/negative) for each screen scrolling type. set them here.
+    push hl
+    ld l, map_load_right
+    call check_animation_direction
+    pop hl
+    cp $01
+    jr nz, .not
+        ; point hl to X position.
+        inc hl
+        inc hl 
+        ld a, [hl]
+        ld c, a
+        ld a, [background_scrolling_request_X]
+        cp c
+        jr z, .right_yes
+        dec c
+        cp c
+        jr z, .right_yes
+        dec c
+        cp c
+        jr z, .right_yes
+        dec c
+        cp c
+        jr z, .right_yes
+        dec c
+        cp c
+        jp nz, .not
+
+.right_yes:
+    ; Check whether the Y position is on screen
+    ld a, c ; X
+    ld e, a
+    dec hl
+    ld a, [hl]
+    ld d, a ; Y
+    call goc_is_within_screen_real_rectangle
+    cp $00
+    jr z, .not
+
+        ; return position is in hl 
+        ld a, [hl]
+        ld h, a
+        ; Set game object at the bottom of the screen
+        ld a, $A8
+        ld l, a
+        
+        ; return as true
+        ld a, 1
+        pop bc
+        ret
 
 ; The game object will still have to appear, but not yet
 .not:
     ld a, 0 
     pop bc
+    ret
+
+;Determines whether a game object is visible on screen. based on the real screen position (relative to buffer coordinates)
+; e: X position
+; d: Y position
+; return a: 0 not visible, 1 visible
+goc_is_within_screen_real_rectangle:
+    ; CONSIDER WRAP UP AS
+    ; laod current map X/Y
+    
+    ; if (y >= screen.y && y <= screen.y + $90)
+    ;    on Screen
+
+    ld a, [background_scrolling_request_Y]
+    cp d
+    jr nc, .not_on_y
+    ld a, [background_scrolling_request_Y]
+    add $90
+    cp d
+    jr c, .not_on_y
+    ld a, $01
+    ret
+
+.not_on_y:
+    ld a, $00
     ret
 
 ; scroll all game objects by a given amount on X and Y based on camera movement

@@ -572,7 +572,7 @@ map_load_room:
 .adjust_x_position:
 
     ; Bring remaining game objects to screen
-    ld a, 1
+    ld a, $01
     call goc_bring_all_other_game_objects_to_screen
 
     ; Remove old game objects froms creen
@@ -938,6 +938,7 @@ map_load_room:
 .bring_the_non_scrolling_gobj_to_screen:
 
     ; Bring all remaining game objects to screen.
+    ld a, $01
     call goc_bring_all_other_game_objects_to_screen
 
     ; Remove old game objects froms creen
